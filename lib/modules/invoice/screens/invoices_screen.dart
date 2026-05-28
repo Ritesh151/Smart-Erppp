@@ -647,7 +647,8 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                             icon: Icons.edit_outlined,
                             color: _T.warning,
                             onTap: () {
-                              if (invoice.status == InvoiceStatus.draft) {
+                              if (invoice.status == InvoiceStatus.draft ||
+                                  invoice.status == InvoiceStatus.sent) {
                                 context.push(
                                   '/invoices/${invoice.id}/edit',
                                 );
@@ -722,7 +723,10 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                 children: [
                   SlidableAction(
                     onPressed: (_) {
-                      context.push('/invoices/${invoice.id}/edit');
+                      if (invoice.status == InvoiceStatus.draft ||
+                          invoice.status == InvoiceStatus.sent) {
+                        context.push('/invoices/${invoice.id}/edit');
+                      }
                     },
                     backgroundColor: _T.warning,
                     foregroundColor: Colors.white,

@@ -8,6 +8,7 @@ import 'package:SmartERP/core/extensions/context_extensions.dart';
 import 'package:SmartERP/core/extensions/date_extensions.dart';
 import 'package:SmartERP/core/models/invoice_model.dart';
 import 'package:SmartERP/core/models/payment_model.dart';
+import 'package:SmartERP/core/utils/download_helper.dart';
 import 'package:SmartERP/core/widgets/app_button.dart';
 import 'package:SmartERP/modules/invoice/providers/invoice_provider.dart';
 import 'package:SmartERP/modules/invoice/providers/payment_provider.dart';
@@ -631,6 +632,9 @@ class _InvoiceDetailScreenState
   }
 
   Widget _buildTotalsCard(InvoiceModel invoice) {
+    final cgst = invoice.taxAmount / 2;
+    final sgst = invoice.taxAmount / 2;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -645,14 +649,18 @@ class _InvoiceDetailScreenState
           ),
           const SizedBox(height: 24),
           _buildTotalRow('Subtotal', '₹${invoice.subtotal.toStringAsFixed(2)}'),
-          const SizedBox(height: 12),
-          _buildTotalRow('Tax', '₹${invoice.taxAmount.toStringAsFixed(2)}'),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
+          _buildTotalRow('CGST @ 9%', '₹${cgst.toStringAsFixed(2)}'),
+          const SizedBox(height: 8),
+          _buildTotalRow('SGST @ 9%', '₹${sgst.toStringAsFixed(2)}'),
+          const SizedBox(height: 8),
           _buildTotalRow(
             'Discount',
             '-₹${invoice.discountAmount.toStringAsFixed(2)}',
             valueColor: _T.warning,
           ),
+          const SizedBox(height: 8),
+          _buildTotalRow('Round Off', '₹${invoice.roundOff.toStringAsFixed(2)}'),
           const SizedBox(height: 12),
           Container(
             width: double.infinity,
@@ -674,7 +682,7 @@ class _InvoiceDetailScreenState
                   ),
                 ),
                 Text(
-                  '₹${invoice.totalAmount.toStringAsFixed(2)}',
+                  '₹${invoice.grandTotalRounded.toStringAsFixed(0)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -1112,17 +1120,25 @@ class _InvoiceDetailScreenState
   ) async {
     try {
       final items = provider.selectedInvoiceItems;
-      final path = await _pdfService.saveHtmlToFile(
+      final htmlContent = _pdfService.generateInvoiceHtml(
         invoice: invoice,
         items: items,
       );
+
+      final fileName = 'invoice_${invoice.invoiceNumber.replaceAll('/', '_')}.html';
+
+      await downloadInvoiceHtml(
+        htmlContent: htmlContent,
+        fileName: fileName,
+      );
+
       if (mounted) {
-        context.showSnackBar('Invoice PDF saved to: $path');
+        context.showSnackBar('Invoice downloaded successfully');
       }
     } catch (e) {
       if (mounted) {
         context.showSnackBar(
-          'Failed to download PDF: $e',
+          'Failed to download invoice: $e',
           isError: true,
         );
       }

@@ -2,17 +2,24 @@ import 'package:flutter/foundation.dart';
 import 'package:SmartERP/core/exceptions/app_exception.dart';
 import 'package:SmartERP/core/models/invoice_item_model.dart';
 import 'package:SmartERP/core/models/invoice_model.dart';
+import 'package:SmartERP/core/models/product_model.dart';
 import 'package:SmartERP/core/utils/logger.dart';
 import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
+import 'package:SmartERP/modules/products/providers/product_provider.dart';
 import 'package:uuid/uuid.dart';
 
 class InvoiceProvider extends ChangeNotifier {
   final InvoiceService _service;
   VoidCallback? onDataChanged;
+  ProductProvider? _productProvider;
 
   InvoiceProvider({required InvoiceService service, VoidCallback? onDataChanged})
       : _service = service,
         onDataChanged = onDataChanged;
+
+  void attachProductProvider(ProductProvider productProvider) {
+    _productProvider = productProvider;
+  }
 
   List<InvoiceModel> _invoices = [];
   InvoiceModel? _selectedInvoice;
@@ -45,6 +52,35 @@ class InvoiceProvider extends ChangeNotifier {
 
   double get editingTotalAmount =>
       editingSubtotal + editingTaxAmount - _editingDiscount;
+
+  double get editingCgstAmount => editingTaxAmount / 2;
+  double get editingSgstAmount => editingTaxAmount / 2;
+  double get editingIgstAmount => 0.0;
+
+  double get editingRoundOff {
+    final rounded = editingTotalAmount.roundToDouble();
+    return rounded - editingTotalAmount;
+  }
+
+  double get editingGrandTotal => editingTotalAmount + editingRoundOff;
+
+  String? validateStockForItems() {
+    if (_productProvider == null) return null;
+    for (final item in _editingItems) {
+      if (item.productId.isNotEmpty) {
+        final product = _productProvider!.products
+            .where((p) => p.id == item.productId)
+            .toList();
+        if (product.isNotEmpty) {
+          final available = product.first.stockQuantity;
+          if (item.quantity.toInt() > available) {
+            return 'Insufficient stock for ${item.productName}. Available: $available, Requested: ${item.quantity.toInt()}';
+          }
+        }
+      }
+    }
+    return null;
+  }
 
   List<InvoiceModel> get invoices {
     if (_filterStatus != null) {
@@ -552,18 +588,35 @@ class InvoiceProvider extends ChangeNotifier {
     double taxRate = 0,
     double discountRate = 0,
   }) {
-    final item = InvoiceItemModel.create(
-      productId: productId,
-      productName: productName,
-      hsnCode: hsnCode,
-      description: description,
-      quantity: quantity,
-      unit: unit,
-      unitPrice: unitPrice,
-      taxRate: taxRate,
-      discountRate: discountRate,
+    final existingIndex = _editingItems.indexWhere(
+      (i) => i.productId == productId && productId.isNotEmpty,
     );
-    _editingItems.add(item);
+
+    if (existingIndex != -1) {
+      final existing = _editingItems[existingIndex];
+      final newQty = existing.quantity + quantity;
+      final subtotal = existing.unitPrice * newQty;
+      final discountAmt = subtotal * (existing.discountRate / 100);
+      final taxableAmt = subtotal - discountAmt;
+      final amount = taxableAmt + (taxableAmt * existing.taxRate / 100);
+      _editingItems[existingIndex] = existing.copyWith(
+        quantity: newQty,
+        amount: amount,
+      );
+    } else {
+      final item = InvoiceItemModel.create(
+        productId: productId,
+        productName: productName,
+        hsnCode: hsnCode,
+        description: description,
+        quantity: quantity,
+        unit: unit,
+        unitPrice: unitPrice,
+        taxRate: taxRate,
+        discountRate: discountRate,
+      );
+      _editingItems.add(item);
+    }
     notifyListeners();
   }
 

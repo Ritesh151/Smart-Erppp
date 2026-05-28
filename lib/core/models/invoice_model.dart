@@ -201,6 +201,17 @@ class InvoiceModel extends HiveObject {
   bool get isPartiallyPaid => paidAmount > 0 && paidAmount < totalAmount;
   bool get isDraft => status == InvoiceStatus.draft;
   bool get isCancelled => status == InvoiceStatus.cancelled;
+
+  double get cgstAmount => taxAmount / 2;
+  double get sgstAmount => taxAmount / 2;
+  double get igstAmount => 0.0;
+
+  double get roundOff {
+    final rounded = totalAmount.roundToDouble();
+    return rounded - totalAmount;
+  }
+
+  double get grandTotalRounded => totalAmount + roundOff;
 }
 
 @HiveType(typeId: 7)

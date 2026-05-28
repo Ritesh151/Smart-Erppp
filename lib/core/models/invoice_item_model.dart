@@ -146,4 +146,10 @@ class InvoiceItemModel extends HiveObject {
   double get discountAmount => subtotal * (discountRate / 100);
   double get taxableAmount => subtotal - discountAmount;
   double get taxAmount => taxableAmount * (taxRate / 100);
+  double get cgstAmount => taxAmount / 2;
+  double get sgstAmount => taxAmount / 2;
+  double get igstAmount => 0.0;
+  double get cgstRate => taxRate / 2;
+  double get sgstRate => taxRate / 2;
+  double get igstRate => 0.0;
 }

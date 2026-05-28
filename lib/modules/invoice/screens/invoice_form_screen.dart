@@ -10,10 +10,13 @@ import 'package:SmartERP/core/constants/app_constants.dart';
 import 'package:SmartERP/core/extensions/context_extensions.dart';
 import 'package:SmartERP/core/models/invoice_item_model.dart';
 import 'package:SmartERP/core/models/invoice_model.dart';
+import 'package:SmartERP/core/models/product_model.dart';
 import 'package:SmartERP/core/widgets/app_button.dart';
 import 'package:SmartERP/core/widgets/app_text_field.dart';
+import 'package:SmartERP/core/widgets/product_selector_dialog.dart';
 import 'package:SmartERP/modules/invoice/providers/customer_provider.dart';
 import 'package:SmartERP/modules/invoice/providers/invoice_provider.dart';
+import 'package:SmartERP/modules/products/providers/product_provider.dart';
 
 class _T {
   static const gradientStart = Color(0xFF4F6EF7);
@@ -83,6 +86,8 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
       final pathParams = GoRouterState.of(context).pathParameters;
       final id = pathParams['id'];
 
+      context.read<ProductProvider>().loadProducts();
+
       if (id != null && id.isNotEmpty) {
         _isEditMode = true;
         _editInvoiceId = id;
@@ -95,31 +100,17 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     });
   }
 
-  void _loadInvoiceForEdit(String id) {
+  void _loadInvoiceForEdit(String id) async {
     final provider = context.read<InvoiceProvider>();
-    final invoice = provider.invoices.firstWhere(
-      (i) => i.id == id,
-      orElse: () => InvoiceModel(
-        id: '',
-        invoiceNumber: '',
-        customerId: '',
-        customerName: '',
-        itemIds: [],
-        subtotal: 0,
-        taxAmount: 0,
-        discountAmount: 0,
-        totalAmount: 0,
-        paidAmount: 0,
-        status: InvoiceStatus.draft,
-        invoiceDate: DateTime.now(),
-        dueDate: DateTime.now(),
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    );
-
-    if (invoice.id.isNotEmpty) {
-      provider.populateEditingFromInvoice(invoice);
+    
+    await provider.loadInvoiceDetails(id);
+    
+    final invoice = provider.selectedInvoice;
+    if (invoice != null && invoice.id.isNotEmpty) {
+      provider.populateEditingFromInvoice(
+        invoice,
+        items: provider.selectedInvoiceItems,
+      );
       _editInvoiceNumber = invoice.invoiceNumber;
       _notesController.text = invoice.notes ?? '';
       _termsController.text = invoice.termsAndConditions ?? '';
@@ -910,13 +901,13 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
   Future<void> _showAddItemDialog(
     BuildContext context,
     InvoiceProvider provider,
-  ) {
-    final nameController = TextEditingController();
-    final hsnController = TextEditingController();
+  ) async {
+    final product = await ProductSelectorDialog.show(context);
+    if (product == null || !mounted) return;
+
     final qtyController = TextEditingController(text: '1');
-    final priceController = TextEditingController();
-    final taxController = TextEditingController();
     final discountController = TextEditingController();
+    final priceController = TextEditingController(text: product.price.toString());
 
     return showDialog(
       context: context,
@@ -925,26 +916,81 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(22),
           ),
-          title: const Text(
-            'Add Item',
-            style: TextStyle(fontWeight: FontWeight.w800),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  product.productName,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                AppTextField(
-                  controller: nameController,
-                  label: 'Product Name *',
-                  hintText: 'e.g. Cement Bag',
-                  prefixIcon: const Icon(Icons.shopping_bag_outlined),
-                ),
-                const SizedBox(height: 16),
-                AppTextField(
-                  controller: hsnController,
-                  label: 'HSN Code',
-                  hintText: 'e.g. 25232910',
-                  prefixIcon: const Icon(Icons.tag),
+                if (product.hsnCode != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F7FA),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'HSN: ${product.hsnCode}  |  Unit: ${product.unit}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF6B7280),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: product.isOutOfStock
+                        ? const Color(0xFFFEF2F2)
+                        : product.isLowStock
+                            ? const Color(0xFFFFFBEB)
+                            : const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        product.isOutOfStock
+                            ? Icons.error_outline
+                            : product.isLowStock
+                                ? Icons.warning_amber_rounded
+                                : Icons.check_circle_outline,
+                        size: 16,
+                        color: product.isOutOfStock
+                            ? const Color(0xFFEF4444)
+                            : product.isLowStock
+                                ? const Color(0xFFF59E0B)
+                                : const Color(0xFF10B981),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Available Stock: ${product.stockQuantity} ${product.unit}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: product.isOutOfStock
+                              ? const Color(0xFFEF4444)
+                              : product.isLowStock
+                                  ? const Color(0xFFF59E0B)
+                                  : const Color(0xFF10B981),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 AppTextField(
@@ -965,16 +1011,6 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                     decimal: true,
                   ),
                   prefixIcon: const Icon(Icons.currency_rupee_rounded),
-                ),
-                const SizedBox(height: 16),
-                AppTextField(
-                  controller: taxController,
-                  label: 'Tax Rate %',
-                  hintText: 'e.g. 18',
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  prefixIcon: const Icon(Icons.percent_rounded),
                 ),
                 const SizedBox(height: 16),
                 AppTextField(
@@ -1001,13 +1037,21 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               ),
               child: TextButton(
                 onPressed: () {
-                  final name = nameController.text.trim();
                   final qty = double.tryParse(qtyController.text) ?? 1;
-                  final price = double.tryParse(priceController.text) ?? 0;
+                  final price =
+                      double.tryParse(priceController.text) ?? product.price;
 
-                  if (name.isEmpty) {
+                  if (qty <= 0) {
                     context.showSnackBar(
-                      'Product name is required',
+                      'Quantity must be greater than 0',
+                      isError: true,
+                    );
+                    return;
+                  }
+
+                  if (qty > product.stockQuantity) {
+                    context.showSnackBar(
+                      'Insufficient stock. Available: ${product.stockQuantity}',
                       isError: true,
                     );
                     return;
@@ -1022,15 +1066,13 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                   }
 
                   provider.addItem(
-                    productId: '',
-                    productName: name,
-                    hsnCode: hsnController.text.trim().isEmpty
-                        ? null
-                        : hsnController.text.trim(),
+                    productId: product.id,
+                    productName: product.productName,
+                    hsnCode: product.hsnCode,
                     quantity: qty,
-                    unit: 'Piece',
+                    unit: product.unit,
                     unitPrice: price,
-                    taxRate: double.tryParse(taxController.text) ?? 0,
+                    taxRate: 18.0,
                     discountRate:
                         double.tryParse(discountController.text) ?? 0,
                   );
@@ -1067,8 +1109,12 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               const SizedBox(height: 22),
 
               _buildTotalRow('Subtotal', '₹${provider.editingSubtotal.toStringAsFixed(2)}'),
-              const SizedBox(height: 12),
-              _buildTotalRow('Tax', '₹${provider.editingTaxAmount.toStringAsFixed(2)}'),
+              const SizedBox(height: 8),
+              _buildTotalRow('CGST @ 9%', '₹${provider.editingCgstAmount.toStringAsFixed(2)}'),
+              const SizedBox(height: 8),
+              _buildTotalRow('SGST @ 9%', '₹${provider.editingSgstAmount.toStringAsFixed(2)}'),
+              const SizedBox(height: 8),
+              _buildTotalRow('IGST @ 18%', '₹${provider.editingIgstAmount.toStringAsFixed(2)}'),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -1134,6 +1180,11 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 8),
+              _buildTotalRow(
+                'Round Off',
+                '₹${provider.editingRoundOff.toStringAsFixed(2)}',
+              ),
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
@@ -1155,7 +1206,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                       ),
                     ),
                     Text(
-                      '₹${provider.editingTotalAmount.toStringAsFixed(2)}',
+                      '₹${provider.editingGrandTotal.toStringAsFixed(0)}',
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -1494,6 +1545,12 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
       return;
     }
 
+    final stockError = provider.validateStockForItems();
+    if (stockError != null) {
+      context.showSnackBar(stockError, isError: true);
+      return;
+    }
+
     try {
       if (_isEditMode && _editInvoiceId != null) {
         await provider.updateInvoice(_editInvoiceId!);
@@ -1501,8 +1558,6 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
         await provider.saveDraft();
       } else {
         await provider.createInvoice();
-        if (status == InvoiceStatus.sent && _editInvoiceId == null) {
-        }
       }
 
       if (mounted) {

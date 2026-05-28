@@ -62,316 +62,310 @@ class AppRouter {
           child: const LoginScreen(),
         ),
       ),
-      ShellRoute(
-        builder: (context, state, child) => AppShell(child: child),
+      GoRoute(
+        path: AppRoutes.dashboard,
+        name: 'dashboard',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const DashboardScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.products,
+        name: 'products',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const ProductsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.productCreate,
+        name: 'product-create',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const ProductFormScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.productDetails,
+        name: 'product-detail',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return _buildShellPage(
+            context: context,
+            state: state,
+            child: ProductDetailScreen(productId: id),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.productEdit,
+        name: 'product-edit',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return _buildShellPage(
+            context: context,
+            state: state,
+            child: ProductFormScreen(productId: id),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.finance,
+        name: 'finance',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const FinanceScreen(),
+        ),
         routes: [
           GoRoute(
-            path: AppRoutes.dashboard,
-            name: 'dashboard',
-            pageBuilder: (context, state) => _buildPageWithTransition(
+            path: 'create-sale',
+            name: 'finance-create-sale',
+            pageBuilder: (context, state) => _buildShellPage(
               context: context,
               state: state,
-              child: const DashboardScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.products,
-            name: 'products',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const ProductsScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.productCreate,
-            name: 'product-create',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const ProductFormScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.productDetails,
-            name: 'product-detail',
-            pageBuilder: (context, state) {
-              final id = state.pathParameters['id']!;
-              return _buildPageWithTransition(
-                context: context,
-                state: state,
-                child: ProductDetailScreen(productId: id),
-              );
-            },
-          ),
-          GoRoute(
-            path: AppRoutes.productEdit,
-            name: 'product-edit',
-            pageBuilder: (context, state) {
-              final id = state.pathParameters['id']!;
-              return _buildPageWithTransition(
-                context: context,
-                state: state,
-                child: ProductFormScreen(productId: id),
-              );
-            },
-          ),
-          GoRoute(
-            path: AppRoutes.finance,
-            name: 'finance',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const FinanceScreen(),
-            ),
-            routes: [
-              GoRoute(
-                path: 'create-sale',
-                name: 'finance-create-sale',
-                pageBuilder: (context, state) => _buildPageWithTransition(
-                  context: context,
-                  state: state,
-                  child: CreateSaleScreen(),
-                ),
-              ),
-            ],
-          ),
-          GoRoute(
-            path: AppRoutes.transport,
-            name: 'transport',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: TransportScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.invoices,
-            name: 'invoices',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const InvoicesScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.invoiceCreate,
-            name: 'invoice-create',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const InvoiceFormScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.invoiceDetails,
-            name: 'invoice-detail',
-            pageBuilder: (context, state) {
-              final id = state.pathParameters['id']!;
-              return _buildPageWithTransition(
-                context: context,
-                state: state,
-                child: InvoiceDetailScreen(invoiceId: id),
-              );
-            },
-          ),
-          GoRoute(
-            path: AppRoutes.invoiceEdit,
-            name: 'invoice-edit',
-            pageBuilder: (context, state) {
-              final id = state.pathParameters['id']!;
-              return _buildPageWithTransition(
-                context: context,
-                state: state,
-                child: const InvoiceFormScreen(),
-              );
-            },
-          ),
-          GoRoute(
-            path: AppRoutes.invoicePayments,
-            name: 'invoice-payments',
-            pageBuilder: (context, state) {
-              final id = state.pathParameters['id']!;
-              return _buildPageWithTransition(
-                context: context,
-                state: state,
-                child: PaymentHistoryScreen(invoiceId: id),
-              );
-            },
-          ),
-          GoRoute(
-            path: AppRoutes.customers,
-            name: 'customers',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const CustomersScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.customerCreate,
-            name: 'customer-create',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const CustomerFormScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.customerDetails,
-            name: 'customer-detail',
-            pageBuilder: (context, state) {
-              final id = state.pathParameters['id']!;
-              return _buildPageWithTransition(
-                context: context,
-                state: state,
-                child: CustomerDetailScreen(customerId: id),
-              );
-            },
-          ),
-          GoRoute(
-            path: AppRoutes.customerEdit,
-            name: 'customer-edit',
-            pageBuilder: (context, state) {
-              final id = state.pathParameters['id']!;
-              return _buildPageWithTransition(
-                context: context,
-                state: state,
-                child: CustomerFormScreen(customerId: id),
-              );
-            },
-          ),
-          GoRoute(
-            path: AppRoutes.expenses,
-            name: 'expenses',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const ExpensesScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.expenseAdd,
-            name: 'expense-add',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const AddExpenseScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.expenseSummary,
-            name: 'expense-summary',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const ExpenseSummaryScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.payroll,
-            name: 'payroll',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const PayrollScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.reports,
-            name: 'reports',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const ReportsHomeScreen(),
-            ),
-            routes: [
-              GoRoute(
-                path: 'sales',
-                name: 'reports-sales',
-                pageBuilder: (context, state) => _buildPageWithTransition(
-                  context: context,
-                  state: state,
-                  child: SalesRegisterScreen(),
-                ),
-              ),
-              GoRoute(
-                path: 'purchases',
-                name: 'reports-purchases',
-                pageBuilder: (context, state) => _buildPageWithTransition(
-                  context: context,
-                  state: state,
-                  child: PurchaseRegisterScreen(),
-                ),
-              ),
-              GoRoute(
-                path: 'expenses',
-                name: 'reports-expenses',
-                pageBuilder: (context, state) => _buildPageWithTransition(
-                  context: context,
-                  state: state,
-                  child: const ExpenseStatementScreen(),
-                ),
-              ),
-              GoRoute(
-                path: 'gst',
-                name: 'reports-gst',
-                pageBuilder: (context, state) => _buildPageWithTransition(
-                  context: context,
-                  state: state,
-                  child: GstSummaryScreen(),
-                ),
-              ),
-              GoRoute(
-                path: 'stock',
-                name: 'reports-stock',
-                pageBuilder: (context, state) => _buildPageWithTransition(
-                  context: context,
-                  state: state,
-                  child: const StockStatementScreen(),
-                ),
-              ),
-              GoRoute(
-                path: 'profit',
-                name: 'reports-profit',
-                pageBuilder: (context, state) => _buildPageWithTransition(
-                  context: context,
-                  state: state,
-                  child: const ProfitLossScreen(),
-                ),
-              ),
-              GoRoute(
-                path: 'payroll',
-                name: 'reports-payroll',
-                pageBuilder: (context, state) => _buildPageWithTransition(
-                  context: context,
-                  state: state,
-                  child: const PayrollReportScreen(),
-                ),
-              ),
-            ],
-          ),
-          GoRoute(
-            path: AppRoutes.settings,
-            name: 'settings',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const SettingsScreen(),
-            ),
-          ),
-          GoRoute(
-            path: '/purchases/add',
-            name: 'purchases-add',
-            pageBuilder: (context, state) => _buildPageWithTransition(
-              context: context,
-              state: state,
-              child: const Scaffold(
-                body: Center(child: Text('Coming Soon')),
-              ),
+              child: CreateSaleScreen(),
             ),
           ),
         ],
+      ),
+      GoRoute(
+        path: AppRoutes.transport,
+        name: 'transport',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: TransportScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.invoices,
+        name: 'invoices',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const InvoicesScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.invoiceCreate,
+        name: 'invoice-create',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const InvoiceFormScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.invoiceDetails,
+        name: 'invoice-detail',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return _buildShellPage(
+            context: context,
+            state: state,
+            child: InvoiceDetailScreen(invoiceId: id),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.invoiceEdit,
+        name: 'invoice-edit',
+        pageBuilder: (context, state) {
+          return _buildShellPage(
+            context: context,
+            state: state,
+            child: const InvoiceFormScreen(),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.invoicePayments,
+        name: 'invoice-payments',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return _buildShellPage(
+            context: context,
+            state: state,
+            child: PaymentHistoryScreen(invoiceId: id),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.customers,
+        name: 'customers',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const CustomersScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.customerCreate,
+        name: 'customer-create',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const CustomerFormScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.customerDetails,
+        name: 'customer-detail',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return _buildShellPage(
+            context: context,
+            state: state,
+            child: CustomerDetailScreen(customerId: id),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.customerEdit,
+        name: 'customer-edit',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return _buildShellPage(
+            context: context,
+            state: state,
+            child: CustomerFormScreen(customerId: id),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.expenses,
+        name: 'expenses',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const ExpensesScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.expenseAdd,
+        name: 'expense-add',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const AddExpenseScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.expenseSummary,
+        name: 'expense-summary',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const ExpenseSummaryScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.payroll,
+        name: 'payroll',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const PayrollScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.reports,
+        name: 'reports',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const ReportsHomeScreen(),
+        ),
+        routes: [
+          GoRoute(
+            path: 'sales',
+            name: 'reports-sales',
+            pageBuilder: (context, state) => _buildShellPage(
+              context: context,
+              state: state,
+              child: SalesRegisterScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'purchases',
+            name: 'reports-purchases',
+            pageBuilder: (context, state) => _buildShellPage(
+              context: context,
+              state: state,
+              child: PurchaseRegisterScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'expenses',
+            name: 'reports-expenses',
+            pageBuilder: (context, state) => _buildShellPage(
+              context: context,
+              state: state,
+              child: const ExpenseStatementScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'gst',
+            name: 'reports-gst',
+            pageBuilder: (context, state) => _buildShellPage(
+              context: context,
+              state: state,
+              child: GstSummaryScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'stock',
+            name: 'reports-stock',
+            pageBuilder: (context, state) => _buildShellPage(
+              context: context,
+              state: state,
+              child: const StockStatementScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'profit',
+            name: 'reports-profit',
+            pageBuilder: (context, state) => _buildShellPage(
+              context: context,
+              state: state,
+              child: const ProfitLossScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'payroll',
+            name: 'reports-payroll',
+            pageBuilder: (context, state) => _buildShellPage(
+              context: context,
+              state: state,
+              child: const PayrollReportScreen(),
+            ),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        name: 'settings',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const SettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/purchases/add',
+        name: 'purchases-add',
+        pageBuilder: (context, state) => _buildShellPage(
+          context: context,
+          state: state,
+          child: const Scaffold(
+            body: Center(child: Text('Coming Soon')),
+          ),
+        ),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
@@ -404,6 +398,18 @@ class AppRouter {
     }
 
     return null;
+  }
+
+  Page<dynamic> _buildShellPage({
+    required BuildContext context,
+    required GoRouterState state,
+    required Widget child,
+  }) {
+    return _buildPageWithTransition(
+      context: context,
+      state: state,
+      child: AppShell(child: child),
+    );
   }
 
   Page<dynamic> _buildPageWithTransition({

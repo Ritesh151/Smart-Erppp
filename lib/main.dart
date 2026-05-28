@@ -394,11 +394,20 @@ class _SmartERPAppState extends State<SmartERPApp> {
                     context.read<DashboardProvider>().refresh();
                   } catch (_) {}
                 };
+                provider.attachProductProvider(context.read<ProductProvider>());
                 return provider;
               },
             ),
             ChangeNotifierProvider<PaymentProvider>(
-              create: (context) => PaymentProvider(context.read<PaymentService>()),
+              create: (context) {
+                final provider = PaymentProvider(context.read<PaymentService>());
+                provider.onDataChanged = () {
+                  try {
+                    context.read<DashboardProvider>().refresh();
+                  } catch (_) {}
+                };
+                return provider;
+              },
             ),
 
             // Transport Module Services & State
