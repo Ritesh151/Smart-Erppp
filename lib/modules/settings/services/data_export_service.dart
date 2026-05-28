@@ -2,16 +2,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/finance/services/finance_service.dart';
-import 'package:smarterp/modules/invoice/services/customer_service.dart';
-import 'package:smarterp/modules/invoice/services/invoice_service.dart';
-import 'package:smarterp/modules/payroll/services/attendance_service.dart';
-import 'package:smarterp/modules/payroll/services/employee_service.dart';
-import 'package:smarterp/modules/payroll/services/salary_service.dart';
-import 'package:smarterp/modules/products/services/product_service.dart';
-import 'package:smarterp/modules/transport/services/transport_service.dart';
-import 'package:smarterp/modules/transport/services/vehicle_service.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/finance/services/finance_service.dart';
+import 'package:SmartERP/modules/invoice/services/customer_service.dart';
+import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
+import 'package:SmartERP/modules/payroll/services/attendance_service.dart';
+import 'package:SmartERP/modules/payroll/services/employee_service.dart';
+import 'package:SmartERP/modules/payroll/services/salary_service.dart';
+import 'package:SmartERP/modules/products/services/product_service.dart';
+import 'package:SmartERP/modules/transport/services/transport_service.dart';
+import 'package:SmartERP/modules/transport/services/vehicle_service.dart';
 
 class DataExportService {
   final ProductService _productService;
@@ -88,10 +88,10 @@ class DataExportService {
         return items.map((c) => c.toJson()).toList();
       case 'transports':
         final items = await _transportService.getAllTransports();
-        return items.map((t) => t.toJson()).toList();
+        return items;
       case 'vehicles':
         final items = await _vehicleService.getAllVehicles();
-        return items.map((v) => v.toJson()).toList();
+        return items;
       case 'employees':
         final items = await _employeeService.getAllEmployees();
         return items.map((e) => e.toJson()).toList();

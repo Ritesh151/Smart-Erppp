@@ -163,7 +163,7 @@ lib/
 
 1. **Clone the repository**
    ```bash
-   cd smarterp
+   cd SmartERP
    ```
 
 2. **Install dependencies**
@@ -358,7 +358,7 @@ This is a production-grade enterprise application. Follow the established patter
 
 ## 📄 License
 
-Proprietary - Siddhivinayak Enterprise
+Proprietary - SmartERP
 
 ## 👨‍💻 Developer
 

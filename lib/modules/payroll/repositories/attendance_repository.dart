@@ -1,7 +1,6 @@
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/attendance_model.dart';
-import 'package:smarterp/core/storage/storage_service.dart';
-import 'package:smarterp/core/utils/logger.dart';
+import 'package:SmartERP/core/models/attendance_model.dart';
+import 'package:SmartERP/core/storage/storage_service.dart';
+import 'package:SmartERP/core/utils/logger.dart';
 
 class AttendanceRepository {
   final StorageService<Map<dynamic, dynamic>> _storage;
@@ -12,11 +11,12 @@ class AttendanceRepository {
     try {
       final data = _storage.getAll();
       return data
-          .map((item) => AttendanceModel.fromJson(Map<String, dynamic>.from(item)))
+          .map((item) =>
+              AttendanceModel.fromJson(Map<String, dynamic>.from(item)))
           .toList();
     } catch (e, stackTrace) {
       Logger.error('Failed to get all attendance records', e, stackTrace);
-      throw StorageException('Failed to retrieve attendance records');
+      return [];
     }
   }
 
@@ -31,23 +31,13 @@ class AttendanceRepository {
     }
   }
 
-  Future<void> save(AttendanceModel attendance) async {
+  Future<void> save(AttendanceModel record) async {
     try {
-      await _storage.save(attendance.id, attendance.toJson());
-      Logger.success('Attendance saved: ${attendance.employeeName} - ${attendance.date}');
+      await _storage.save(record.id, record.toJson());
+      Logger.success('Attendance saved: ${record.id}');
     } catch (e, stackTrace) {
       Logger.error('Failed to save attendance', e, stackTrace);
-      throw StorageException('Failed to save attendance');
-    }
-  }
-
-  Future<void> update(AttendanceModel attendance) async {
-    try {
-      await _storage.save(attendance.id, attendance.toJson());
-      Logger.success('Attendance updated: ${attendance.employeeName} - ${attendance.date}');
-    } catch (e, stackTrace) {
-      Logger.error('Failed to update attendance', e, stackTrace);
-      throw StorageException('Failed to update attendance');
+      rethrow;
     }
   }
 
@@ -57,110 +47,27 @@ class AttendanceRepository {
       Logger.success('Attendance deleted: $id');
     } catch (e, stackTrace) {
       Logger.error('Failed to delete attendance', e, stackTrace);
-      throw StorageException('Failed to delete attendance');
+      rethrow;
     }
   }
 
-  Future<List<AttendanceModel>> getByEmployeeId(String employeeId) async {
+  Future<Map<String, AttendanceModel>> getForDate(String uid, DateTime date) async {
     try {
       final all = await getAll();
-      return all.where((a) => a.employeeId == employeeId).toList();
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get attendance by employee', e, stackTrace);
-      return [];
-    }
-  }
-
-  Future<List<AttendanceModel>> getByDate(DateTime date) async {
-    try {
-      final all = await getAll();
-      return all.where((a) =>
-          a.date.year == date.year &&
-          a.date.month == date.month &&
-          a.date.day == date.day).toList();
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get attendance by date', e, stackTrace);
-      return [];
-    }
-  }
-
-  Future<List<AttendanceModel>> getByMonth(int month, int year) async {
-    try {
-      final all = await getAll();
-      return all.where((a) => a.date.month == month && a.date.year == year).toList();
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get attendance by month', e, stackTrace);
-      return [];
-    }
-  }
-
-  Future<List<AttendanceModel>> getByEmployeeAndMonth(
-    String employeeId, int month, int year,
-  ) async {
-    try {
-      final all = await getAll();
-      return all.where((a) =>
-          a.employeeId == employeeId &&
-          a.date.month == month &&
-          a.date.year == year).toList();
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get attendance by employee and month', e, stackTrace);
-      return [];
-    }
-  }
-
-  Future<AttendanceModel?> getByEmployeeAndDate(
-    String employeeId, DateTime date,
-  ) async {
-    try {
-      final all = await getAll();
-      return all.cast<AttendanceModel?>().firstWhere(
-        (a) =>
-            a!.employeeId == employeeId &&
-            a.date.year == date.year &&
-            a.date.month == date.month &&
-            a.date.day == date.day,
-        orElse: () => null,
-      );
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get attendance by employee and date', e, stackTrace);
-      return null;
-    }
-  }
-
-  Future<List<AttendanceModel>> getByStatus(AttendanceStatus status) async {
-    try {
-      final all = await getAll();
-      return all.where((a) => a.status == status).toList();
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get attendance by status', e, stackTrace);
-      return [];
-    }
-  }
-
-  Future<Map<AttendanceStatus, int>> getStatusCountsForMonth(
-    String employeeId, int month, int year,
-  ) async {
-    try {
-      final records = await getByEmployeeAndMonth(employeeId, month, year);
-      final counts = <AttendanceStatus, int>{};
-      for (final status in AttendanceStatus.values) {
-        counts[status] = records.where((a) => a.status == status).length;
+      final dateStr =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final map = <String, AttendanceModel>{};
+      for (final record in all) {
+        final recordDateStr =
+            '${record.date.year}-${record.date.month.toString().padLeft(2, '0')}-${record.date.day.toString().padLeft(2, '0')}';
+        if (recordDateStr == dateStr) {
+          map[record.employeeId] = record;
+        }
       }
-      return counts;
+      return map;
     } catch (e, stackTrace) {
-      Logger.error('Failed to get status counts', e, stackTrace);
+      Logger.error('Failed to get attendance for date', e, stackTrace);
       return {};
-    }
-  }
-
-  Future<int> getPresentCountForMonth(String employeeId, int month, int year) async {
-    try {
-      final records = await getByEmployeeAndMonth(employeeId, month, year);
-      return records.where((a) => a.isPresent || a.isHalfDay).length;
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get present count', e, stackTrace);
-      return 0;
     }
   }
 }

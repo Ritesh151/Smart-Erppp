@@ -2,20 +2,20 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:smarterp/core/models/backup_model.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/finance/services/finance_service.dart';
-import 'package:smarterp/modules/invoice/services/customer_service.dart';
-import 'package:smarterp/modules/invoice/services/invoice_service.dart';
-import 'package:smarterp/modules/payroll/services/attendance_service.dart';
-import 'package:smarterp/modules/payroll/services/employee_service.dart';
-import 'package:smarterp/modules/payroll/services/salary_service.dart';
-import 'package:smarterp/modules/products/services/product_service.dart';
-import 'package:smarterp/modules/settings/repositories/backup_repository.dart';
-import 'package:smarterp/modules/settings/services/notification_service.dart';
-import 'package:smarterp/modules/settings/services/settings_service.dart';
-import 'package:smarterp/modules/transport/services/transport_service.dart';
-import 'package:smarterp/modules/transport/services/vehicle_service.dart';
+import 'package:SmartERP/core/models/backup_model.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/finance/services/finance_service.dart';
+import 'package:SmartERP/modules/invoice/services/customer_service.dart';
+import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
+import 'package:SmartERP/modules/payroll/services/attendance_service.dart';
+import 'package:SmartERP/modules/payroll/services/employee_service.dart';
+import 'package:SmartERP/modules/payroll/services/salary_service.dart';
+import 'package:SmartERP/modules/products/services/product_service.dart';
+import 'package:SmartERP/modules/settings/repositories/backup_repository.dart';
+import 'package:SmartERP/modules/settings/services/notification_service.dart';
+import 'package:SmartERP/modules/settings/services/settings_service.dart';
+import 'package:SmartERP/modules/transport/services/transport_service.dart';
+import 'package:SmartERP/modules/transport/services/vehicle_service.dart';
 
 class BackupService {
   final ProductService _productService;
@@ -125,12 +125,12 @@ class BackupService {
 
     if (modules.contains('transports')) {
       final transports = await _transportService.getAllTransports();
-      data['transports'] = transports.map((t) => t.toJson()).toList();
+      data['transports'] = transports;
     }
 
     if (modules.contains('vehicles')) {
       final vehicles = await _vehicleService.getAllVehicles();
-      data['vehicles'] = vehicles.map((v) => v.toJson()).toList();
+      data['vehicles'] = vehicles;
     }
 
     if (modules.contains('employees')) {

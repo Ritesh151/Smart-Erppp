@@ -1,42 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:smarterp/core/constants/storage_keys.dart';
-import 'package:smarterp/core/extensions/context_extensions.dart';
-import 'package:smarterp/core/storage/preferences_service.dart';
-import 'package:smarterp/core/theme/app_theme.dart';
-import 'package:smarterp/core/widgets/app_shell.dart';
-import 'package:smarterp/modules/settings/providers/theme_provider.dart';
+import 'package:SmartERP/core/constants/storage_keys.dart';
+import 'package:SmartERP/core/extensions/context_extensions.dart';
+import 'package:SmartERP/core/storage/preferences_service.dart';
+import 'package:SmartERP/core/theme/app_theme.dart';
+import 'package:SmartERP/modules/settings/providers/theme_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return AppShell(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Appearance',
-              style: context.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Appearance',
+            style: context.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 16),
-            _buildThemeSelector(context),
-            const SizedBox(height: 32),
-            Text(
-              'About',
-              style: context.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          ),
+          const SizedBox(height: 16),
+          _buildThemeSelector(context),
+          const SizedBox(height: 32),
+          Text(
+            'About',
+            style: context.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 16),
-            _buildAboutSection(context),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          _buildAboutSection(context),
+        ],
       ),
     );
   }

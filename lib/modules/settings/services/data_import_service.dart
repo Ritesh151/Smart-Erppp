@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:smarterp/core/storage/storage_service.dart';
-import 'package:smarterp/core/utils/logger.dart';
+import 'package:SmartERP/core/storage/storage_service.dart';
+import 'package:SmartERP/core/utils/logger.dart';
 
 class DataImportResult {
   final int recordsImported;

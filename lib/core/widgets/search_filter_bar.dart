@@ -1,17 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:smarterp/core/constants/app_constants.dart';
-import 'package:smarterp/core/extensions/context_extensions.dart';
+import 'package:SmartERP/core/constants/app_constants.dart';
+import 'package:SmartERP/core/extensions/context_extensions.dart';
 
 class SearchFilterBar extends StatefulWidget {
   final String hintText;
   final String searchQuery;
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onClearAll;
-  
-  final List<String>? categories;
-  final String? selectedCategory;
-  final ValueChanged<String?>? onCategoryChanged;
   
   final List<Map<String, dynamic>>? statusOptions;
   final String? selectedStatus;
@@ -27,9 +23,6 @@ class SearchFilterBar extends StatefulWidget {
     required this.searchQuery,
     required this.onSearchChanged,
     required this.onClearAll,
-    this.categories,
-    this.selectedCategory,
-    this.onCategoryChanged,
     this.statusOptions,
     this.selectedStatus,
     this.onStatusChanged,
@@ -160,43 +153,12 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
               ],
             ],
           ),
-          if (widget.categories != null || widget.statusOptions != null) ...[
+          if (widget.statusOptions != null) ...[
             const SizedBox(height: 12),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  if (widget.categories != null && widget.onCategoryChanged != null) ...[
-                    DropdownButtonHideUnderline(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primary.withOpacity(0.04),
-                          borderRadius: BorderRadius.circular(AppConstants.largeBorderRadius),
-                          border: Border.all(color: colorScheme.primary.withOpacity(0.2)),
-                        ),
-                        child: DropdownButton<String?>(
-                          hint: const Text('All Categories', style: TextStyle(fontSize: 12)),
-                          value: widget.selectedCategory,
-                          onChanged: widget.onCategoryChanged,
-                          dropdownColor: colorScheme.surface,
-                          items: [
-                            const DropdownMenuItem<String?>(
-                              value: null,
-                              child: Text('All Categories', style: TextStyle(fontSize: 12)),
-                            ),
-                            ...widget.categories!.map((cat) {
-                              return DropdownMenuItem<String?>(
-                                value: cat,
-                                child: Text(cat, style: const TextStyle(fontSize: 12)),
-                              );
-                            })
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
                   if (widget.statusOptions != null && widget.onStatusChanged != null)
                     ...widget.statusOptions!.map((opt) {
                       final isSelected = widget.selectedStatus == opt['value'];

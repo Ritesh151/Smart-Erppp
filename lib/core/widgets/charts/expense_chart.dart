@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:smarterp/core/extensions/context_extensions.dart';
-import 'package:smarterp/core/widgets/app_card.dart';
-import 'package:smarterp/core/theme/theme_extensions.dart';
-import 'package:smarterp/core/models/transaction_model.dart';
+import 'package:SmartERP/core/extensions/context_extensions.dart';
+import 'package:SmartERP/core/widgets/app_card.dart';
+import 'package:SmartERP/core/theme/theme_extensions.dart';
+import 'package:SmartERP/core/models/transaction_model.dart';
 
 class ExpenseChart extends StatelessWidget {
   final List<TransactionModel> transactions;

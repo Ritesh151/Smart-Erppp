@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:smarterp/core/widgets/app_shell.dart';
-import 'package:smarterp/modules/settings/widgets/settings_page_transition.dart';
-import 'package:smarterp/modules/settings/widgets/theme_selector_widget.dart';
+import 'package:SmartERP/core/widgets/app_shell.dart';
+import 'package:SmartERP/modules/settings/widgets/settings_page_transition.dart';
+import 'package:SmartERP/modules/settings/widgets/theme_selector_widget.dart';
 
 class ThemeSettingsScreen extends StatelessWidget {
   const ThemeSettingsScreen({super.key});

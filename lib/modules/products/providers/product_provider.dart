@@ -1,16 +1,18 @@
 import 'package:flutter/foundation.dart';
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/product_model.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/products/services/product_service.dart';
-import 'package:smarterp/modules/products/services/product_seed_service.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/models/product_model.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/products/services/product_service.dart';
+import 'package:SmartERP/modules/products/services/product_seed_service.dart';
 
 class ProductProvider extends ChangeNotifier {
   final ProductService _service;
   final ProductSeedService _seedService;
   bool _initialized = false;
+  VoidCallback? onDataChanged;
 
-  ProductProvider(this._service, this._seedService);
+  ProductProvider(this._service, this._seedService, {VoidCallback? onDataChanged})
+      : onDataChanged = onDataChanged;
 
   List<ProductModel> _products = [];
   List<ProductModel> _filteredProducts = [];
@@ -20,7 +22,6 @@ class ProductProvider extends ChangeNotifier {
   bool _isSearching = false;
   String? _errorMessage;
   String _searchQuery = '';
-  String? _selectedCategory;
   StockStatus? _selectedStockStatus;
   ProductSortOption _sortOption = ProductSortOption.name;
   bool _sortAscending = true;
@@ -34,7 +35,6 @@ class ProductProvider extends ChangeNotifier {
   bool get isSearching => _isSearching;
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
-  String? get selectedCategory => _selectedCategory;
   StockStatus? get selectedStockStatus => _selectedStockStatus;
   ProductSortOption get sortOption => _sortOption;
   bool get sortAscending => _sortAscending;
@@ -69,6 +69,7 @@ class ProductProvider extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+      onDataChanged?.call();
       Logger.success('Products loaded: ${_products.length}');
     } catch (e, stackTrace) {
       _isLoading = false;
@@ -83,15 +84,10 @@ class ProductProvider extends ChangeNotifier {
     String? hsnCode,
     required double price,
     required int stockQuantity,
-    required double gstRate,
     String? description,
     String? imagePath,
-    required String category,
-    required double costPrice,
     required int minStockLevel,
     required String unit,
-    String? sku,
-    String? barcode,
   }) async {
     try {
       _isLoading = true;
@@ -103,15 +99,10 @@ class ProductProvider extends ChangeNotifier {
         hsnCode: hsnCode,
         price: price,
         stockQuantity: stockQuantity,
-        gstRate: gstRate,
         description: description,
         imagePath: imagePath,
-        category: category,
-        costPrice: costPrice,
         minStockLevel: minStockLevel,
         unit: unit,
-        sku: sku,
-        barcode: barcode,
       );
 
       _products.add(product);
@@ -119,6 +110,7 @@ class ProductProvider extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+      onDataChanged?.call();
       Logger.success('Product created successfully');
     } on ValidationException catch (e) {
       _isLoading = false;
@@ -140,15 +132,10 @@ class ProductProvider extends ChangeNotifier {
     String? hsnCode,
     required double price,
     required int stockQuantity,
-    required double gstRate,
     String? description,
     String? imagePath,
-    required String category,
-    required double costPrice,
     required int minStockLevel,
     required String unit,
-    String? sku,
-    String? barcode,
     required bool isActive,
   }) async {
     try {
@@ -162,15 +149,10 @@ class ProductProvider extends ChangeNotifier {
         hsnCode: hsnCode,
         price: price,
         stockQuantity: stockQuantity,
-        gstRate: gstRate,
         description: description,
         imagePath: imagePath,
-        category: category,
-        costPrice: costPrice,
         minStockLevel: minStockLevel,
         unit: unit,
-        sku: sku,
-        barcode: barcode,
         isActive: isActive,
       );
 
@@ -182,6 +164,7 @@ class ProductProvider extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+      onDataChanged?.call();
       Logger.success('Product updated successfully');
     } on ValidationException catch (e) {
       _isLoading = false;
@@ -213,6 +196,7 @@ class ProductProvider extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+      onDataChanged?.call();
       Logger.success('Product deleted successfully');
     } catch (e, stackTrace) {
       _isLoading = false;
@@ -256,12 +240,6 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> filterByCategory(String? category) async {
-    _selectedCategory = category;
-    _applyFiltersAndSort();
-    notifyListeners();
-  }
-
   Future<void> filterByStockStatus(StockStatus? status) async {
     _selectedStockStatus = status;
     _applyFiltersAndSort();
@@ -276,7 +254,6 @@ class ProductProvider extends ChangeNotifier {
   }
 
   void clearFilters() {
-    _selectedCategory = null;
     _selectedStockStatus = null;
     _searchQuery = '';
     _filteredProducts = [];
@@ -301,21 +278,8 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
-  Future<List<String>> getCategories() async {
-    try {
-      return await _service.getAllCategories();
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get categories', e, stackTrace);
-      return [];
-    }
-  }
-
   void _applyFiltersAndSort() {
     var filtered = List<ProductModel>.from(_products);
-
-    if (_selectedCategory != null) {
-      filtered = filtered.where((p) => p.category == _selectedCategory).toList();
-    }
 
     if (_selectedStockStatus != null) {
       filtered = filtered.where((p) => p.stockStatus == _selectedStockStatus).toList();

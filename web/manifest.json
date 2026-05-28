@@ -1,6 +1,6 @@
 {
-    "name": "smarterp",
-    "short_name": "smarterp",
+    "name": "SmartERP",
+    "short_name": "SmartERP",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

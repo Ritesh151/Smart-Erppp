@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smarterp/core/constants/app_constants.dart';
+import 'package:SmartERP/core/constants/app_constants.dart';
 
 class StatusBadge extends StatelessWidget {
   final String label;

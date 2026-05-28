@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:smarterp/core/constants/app_constants.dart';
-import 'package:smarterp/core/extensions/context_extensions.dart';
-import 'package:smarterp/core/extensions/string_extensions.dart';
-import 'package:smarterp/core/routes/app_routes.dart';
-import 'package:smarterp/core/widgets/app_button.dart';
-import 'package:smarterp/core/widgets/app_text_field.dart';
-import 'package:smarterp/modules/auth/providers/auth_provider.dart';
+import 'package:SmartERP/core/constants/app_constants.dart';
+import 'package:SmartERP/core/extensions/context_extensions.dart';
+import 'package:SmartERP/core/extensions/string_extensions.dart';
+import 'package:SmartERP/core/routes/app_routes.dart';
+import 'package:SmartERP/core/widgets/app_button.dart';
+import 'package:SmartERP/core/widgets/app_text_field.dart';
+import 'package:SmartERP/modules/auth/providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -69,9 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
       hasError = true;
     }
 
-    if (hasError) {
-      return;
-    }
+    if (hasError) return;
 
     setState(() {
       _isSubmitting = true;
@@ -111,153 +109,351 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildLogo(),
-                    const SizedBox(height: 48),
-                    _buildTitle(),
-                    const SizedBox(height: 32),
-                    _buildEmailField(),
-                    const SizedBox(height: 16),
-                    _buildPasswordField(),
-                    const SizedBox(height: 32),
-                    _buildLoginButton(),
-                    const SizedBox(height: 24),
-                    _buildFooter(),
-                  ],
+      backgroundColor: const Color(0xFFF5F7FA),
+      body: Stack(
+        children: [
+          // ── Decorative background blobs ──
+          Positioned(
+            top: -80,
+            right: -60,
+            child: Container(
+              width: 260,
+              height: 260,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF4F6EF7).withOpacity(0.08),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -100,
+            left: -80,
+            child: Container(
+              width: 320,
+              height: 320,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF4F6EF7).withOpacity(0.06),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 180,
+            left: -40,
+            child: Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF7C3AED).withOpacity(0.05),
+              ),
+            ),
+          ),
+
+          // ── Main content ──
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildHeader(),
+                        const SizedBox(height: 40),
+                        _buildCard(),
+                        const SizedBox(height: 20),
+                        _buildFooter(),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildLogo() {
-    return Icon(
-      Icons.business,
-      size: 80,
-      color: context.colorScheme.primary,
-    )
-        .animate()
-        .fadeIn(duration: 600.ms)
-        .scale(delay: 200.ms, duration: 400.ms);
-  }
-
-  Widget _buildTitle() {
+  // ── Header: logo + titles ──────────────────────────────────────────────────
+  Widget _buildHeader() {
     return Column(
       children: [
+        // Logo container
+        Container(
+          width: 76,
+          height: 76,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF4F6EF7), Color(0xFF7C3AED)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF4F6EF7).withOpacity(0.35),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: const Icon(Icons.business_rounded, size: 38, color: Colors.white),
+        )
+            .animate()
+            .fadeIn(duration: 600.ms)
+            .scale(delay: 200.ms, duration: 400.ms, curve: Curves.easeOutBack),
+
+        const SizedBox(height: 20),
+
         Text(
           AppConstants.appName,
-          style: context.textTheme.headlineLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: context.colorScheme.primary,
+          style: const TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+            color: Color(0xFF111827),
           ),
           textAlign: TextAlign.center,
         )
             .animate()
             .fadeIn(delay: 300.ms, duration: 600.ms)
-            .slideY(begin: -0.3, end: 0),
-        const SizedBox(height: 8),
+            .slideY(begin: -0.25, end: 0, curve: Curves.easeOut),
+
+        const SizedBox(height: 6),
+
         Text(
           'Enterprise Resource Planning',
-          style: context.textTheme.bodyLarge?.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.7),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: const Color(0xFF6B7280),
+            letterSpacing: 0.2,
           ),
           textAlign: TextAlign.center,
         )
             .animate()
             .fadeIn(delay: 400.ms, duration: 600.ms)
-            .slideY(begin: -0.3, end: 0),
+            .slideY(begin: -0.2, end: 0, curve: Curves.easeOut),
       ],
     );
   }
 
-  Widget _buildEmailField() {
-    return AppTextField(
-      controller: _emailController,
-      focusNode: _emailFocusNode,
-      label: 'Email',
-      hint: 'Enter your email',
-      errorText: _emailError,
-      keyboardType: TextInputType.emailAddress,
-      textInputAction: TextInputAction.next,
-      prefixIcon: const Icon(Icons.email_outlined),
-      onSubmitted: (_) {
-        _passwordFocusNode.requestFocus();
-      },
-      onChanged: (_) {
-        if (_emailError != null) {
-          setState(() {
-            _emailError = null;
-          });
-        }
-      },
+  // ── White card ─────────────────────────────────────────────────────────────
+  Widget _buildCard() {
+    return Container(
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E2A6E).withOpacity(0.07),
+            blurRadius: 30,
+            spreadRadius: 0,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(0.9),
+            blurRadius: 1,
+            offset: const Offset(0, -1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Section label
+          const Text(
+            'Welcome back 👋',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF111827),
+            ),
+          )
+              .animate()
+              .fadeIn(delay: 450.ms, duration: 500.ms)
+              .slideX(begin: -0.2, end: 0),
+
+          const SizedBox(height: 4),
+
+          const Text(
+            'Sign in to your account to continue',
+            style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+          )
+              .animate()
+              .fadeIn(delay: 500.ms, duration: 500.ms),
+
+          const SizedBox(height: 28),
+
+          // ── Email field ──
+          _buildLabel('Email address'),
+          const SizedBox(height: 6),
+          _buildStyledTextField(
+            controller: _emailController,
+            focusNode: _emailFocusNode,
+            label: 'Email',
+            hint: 'you@company.com',
+            errorText: _emailError,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
+            prefixIcon: const Icon(Icons.email_outlined, size: 20, color: Color(0xFF9CA3AF)),
+            onSubmitted: (_) => _passwordFocusNode.requestFocus(),
+            onChanged: (_) {
+              if (_emailError != null) setState(() => _emailError = null);
+            },
+          )
+              .animate()
+              .fadeIn(delay: 550.ms, duration: 500.ms)
+              .slideX(begin: -0.2, end: 0),
+
+          const SizedBox(height: 18),
+
+          // ── Password field ──
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildLabel('Password'),
+              GestureDetector(
+                onTap: () {}, // hook up forgot password if needed
+                child: const Text(
+                  'Forgot password?',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF4F6EF7),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          _buildStyledTextField(
+            controller: _passwordController,
+            focusNode: _passwordFocusNode,
+            label: 'Password',
+            hint: '••••••••',
+            errorText: _passwordError,
+            obscureText: true,
+            textInputAction: TextInputAction.done,
+            prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20, color: Color(0xFF9CA3AF)),
+            onSubmitted: (_) => _handleLogin(),
+            onChanged: (_) {
+              if (_passwordError != null) setState(() => _passwordError = null);
+            },
+          )
+              .animate()
+              .fadeIn(delay: 650.ms, duration: 500.ms)
+              .slideX(begin: -0.2, end: 0),
+
+          const SizedBox(height: 28),
+
+          // ── Login button ──
+          _buildLoginButton(),
+        ],
+      ),
     )
         .animate()
-        .fadeIn(delay: 500.ms, duration: 600.ms)
-        .slideX(begin: -0.3, end: 0);
+        .fadeIn(delay: 400.ms, duration: 700.ms)
+        .slideY(begin: 0.15, end: 0, curve: Curves.easeOut);
   }
 
-  Widget _buildPasswordField() {
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF374151),
+      ),
+    );
+  }
+
+  /// Wraps your existing AppTextField with a custom container so the outer
+  /// decoration (border-radius, shadow) is richer while AppTextField handles
+  /// the inner logic unchanged.
+  Widget _buildStyledTextField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String label,
+    required String hint,
+    String? errorText,
+    bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
+    TextInputAction textInputAction = TextInputAction.next,
+    Widget? prefixIcon,
+    ValueChanged<String>? onSubmitted,
+    ValueChanged<String>? onChanged,
+  }) {
     return AppTextField(
-      controller: _passwordController,
-      focusNode: _passwordFocusNode,
-      label: 'Password',
-      hint: 'Enter your password',
-      errorText: _passwordError,
-      obscureText: true,
-      textInputAction: TextInputAction.done,
-      prefixIcon: const Icon(Icons.lock_outlined),
-      onSubmitted: (_) {
-        _handleLogin();
-      },
-      onChanged: (_) {
-        if (_passwordError != null) {
-          setState(() {
-            _passwordError = null;
-          });
-        }
-      },
-    )
-        .animate()
-        .fadeIn(delay: 600.ms, duration: 600.ms)
-        .slideX(begin: -0.3, end: 0);
+      controller: controller,
+      focusNode: focusNode,
+      label: label,
+      hint: hint,
+      errorText: errorText,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      prefixIcon: prefixIcon,
+      onSubmitted: onSubmitted,
+      onChanged: onChanged,
+    );
   }
 
   Widget _buildLoginButton() {
-    return AppButton(
-      text: 'Login',
-      onPressed: _isSubmitting ? null : _handleLogin,
-      isLoading: _isSubmitting,
-      isFullWidth: true,
-      icon: Icons.login,
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        gradient: _isSubmitting
+            ? null
+            : const LinearGradient(
+                colors: [Color(0xFF4F6EF7), Color(0xFF7C3AED)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+        color: _isSubmitting ? const Color(0xFFE5E7EB) : null,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: _isSubmitting
+            ? []
+            : [
+                BoxShadow(
+                  color: const Color(0xFF4F6EF7).withOpacity(0.4),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+      ),
+      child: AppButton(
+        text: 'Sign In',
+        onPressed: _isSubmitting ? null : _handleLogin,
+        isLoading: _isSubmitting,
+        isFullWidth: true,
+        icon: Icons.arrow_forward_rounded,
+      ),
     )
         .animate()
-        .fadeIn(delay: 700.ms, duration: 600.ms)
-        .scale(delay: 700.ms, duration: 400.ms);
+        .fadeIn(delay: 750.ms, duration: 500.ms)
+        .scale(delay: 750.ms, duration: 400.ms, curve: Curves.easeOutBack);
   }
 
+  // ── Footer ─────────────────────────────────────────────────────────────────
   Widget _buildFooter() {
     return Text(
-      'Version ${AppConstants.appVersion}',
-      style: context.textTheme.bodySmall?.copyWith(
-        color: context.colorScheme.onSurface.withOpacity(0.5),
+      'Version ${AppConstants.appVersion}  •  Secure Login',
+      style: const TextStyle(
+        fontSize: 11,
+        color: Color(0xFFD1D5DB),
+        letterSpacing: 0.3,
       ),
       textAlign: TextAlign.center,
     )
         .animate()
-        .fadeIn(delay: 800.ms, duration: 600.ms);
+        .fadeIn(delay: 900.ms, duration: 600.ms);
   }
 }

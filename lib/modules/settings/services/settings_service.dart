@@ -1,9 +1,9 @@
-import 'package:smarterp/core/constants/storage_keys.dart';
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/settings_model.dart';
-import 'package:smarterp/core/storage/preferences_service.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/settings/repositories/settings_repository.dart';
+import 'package:SmartERP/core/constants/storage_keys.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/models/settings_model.dart';
+import 'package:SmartERP/core/storage/preferences_service.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/settings/repositories/settings_repository.dart';
 
 class SettingsService {
   final SettingsRepository _repository;

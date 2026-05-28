@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:smarterp/core/models/notification_model.dart';
-import 'package:smarterp/core/widgets/app_card.dart';
+import 'package:SmartERP/core/models/notification_model.dart';
+import 'package:SmartERP/core/widgets/app_card.dart';
 
 class NotificationCardWidget extends StatelessWidget {
   final NotificationModel notification;

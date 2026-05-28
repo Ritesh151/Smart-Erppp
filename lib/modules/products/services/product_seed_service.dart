@@ -1,6 +1,6 @@
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/data/mock/default_products.dart';
-import 'package:smarterp/modules/products/repositories/product_repository.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/core/models/product_model.dart';
+import 'package:SmartERP/modules/products/repositories/product_repository.dart';
 
 class ProductSeedService {
   final ProductRepository _repository;
@@ -24,13 +24,7 @@ class ProductSeedService {
         return;
       }
 
-      final alreadySeeded = await preventDuplicateSeed();
-      if (alreadySeeded) {
-        Logger.info('Duplicate seed prevented');
-        return;
-      }
-
-      await insertDefaultProducts();
+      await _insertRequiredDefaultProduct();
     } catch (e, stackTrace) {
       Logger.error('Product seeding failed', e, stackTrace);
     }
@@ -46,44 +40,38 @@ class ProductSeedService {
     }
   }
 
-  Future<bool> preventDuplicateSeed() async {
+  Future<void> _insertRequiredDefaultProduct() async {
     try {
-      bool hasDuplicate = false;
-      for (final product in defaultProducts) {
-        final idExists = await _repository.exists(product.id);
-        if (idExists) {
-          hasDuplicate = true;
-          break;
-        }
-        final nameExists = await _repository.productNameExists(product.productName);
-        if (nameExists) {
-          hasDuplicate = true;
-          break;
-        }
-      }
-      return hasDuplicate;
+      const defaultId = 'default-product';
+      const defaultName = 'Default Product';
+
+      final idExists = await _repository.exists(defaultId);
+      if (idExists) return;
+
+      final nameExists = await _repository.productNameExists(defaultName);
+      if (nameExists) return;
+
+      final now = DateTime.now();
+      await _repository.save(
+        ProductModel(
+          id: defaultId,
+          productName: defaultName,
+          hsnCode: null,
+          price: 0,
+          stockQuantity: 0,
+          description: 'Create your first product by editing this default product or adding a new one.',
+          imagePath: null,
+          minStockLevel: 0,
+          unit: 'Unit',
+          isActive: true,
+          isFixed: true,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+      Logger.success('Inserted required default product');
     } catch (e, stackTrace) {
-      Logger.error('Failed to validate duplicate seed', e, stackTrace);
-      return true;
-    }
-  }
-
-  Future<void> insertDefaultProducts() async {
-    try {
-      int inserted = 0;
-      for (final product in defaultProducts) {
-        final idExists = await _repository.exists(product.id);
-        if (idExists) continue;
-
-        final nameExists = await _repository.productNameExists(product.productName);
-        if (nameExists) continue;
-
-        await _repository.save(product);
-        inserted++;
-      }
-      Logger.success('Seeded $inserted default automotive products');
-    } catch (e, stackTrace) {
-      Logger.error('Failed to insert default products', e, stackTrace);
+      Logger.error('Failed to insert required default product', e, stackTrace);
       rethrow;
     }
   }

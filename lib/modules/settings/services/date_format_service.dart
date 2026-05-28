@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/settings/services/settings_service.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/settings/services/settings_service.dart';
 
 class DateFormatService {
   final SettingsService _settingsService;

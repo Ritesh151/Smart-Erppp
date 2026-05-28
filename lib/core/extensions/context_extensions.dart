@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smarterp/core/responsive/breakpoints.dart';
+import 'package:SmartERP/core/responsive/breakpoints.dart';
 
 extension ContextExtensions on BuildContext {
   ThemeData get theme => Theme.of(this);

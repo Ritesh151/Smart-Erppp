@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:smarterp/core/extensions/context_extensions.dart';
-import 'package:smarterp/core/widgets/app_card.dart';
-import 'package:smarterp/core/theme/theme_extensions.dart';
-import 'package:smarterp/core/models/product_model.dart';
+import 'package:SmartERP/core/extensions/context_extensions.dart';
+import 'package:SmartERP/core/widgets/app_card.dart';
+import 'package:SmartERP/core/theme/theme_extensions.dart';
+import 'package:SmartERP/core/models/product_model.dart';
 
 class InventoryChart extends StatelessWidget {
   final List<ProductModel> products;
@@ -15,17 +15,22 @@ class InventoryChart extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final appTheme = context.appTheme;
 
-    final Map<String, double> categoryValues = {};
+    final Map<String, double> productValues = {};
     double totalVal = 0.0;
     for (final p in products) {
       final val = p.price * p.stockQuantity;
-      categoryValues[p.category] =
-          (categoryValues[p.category] ?? 0.0) + val;
+      productValues[p.productName] = val;
       totalVal += val;
     }
 
-    final pieSections = categoryValues.entries.map((entry) {
-      final idx = categoryValues.keys.toList().indexOf(entry.key);
+    final topEntries = productValues.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final displayEntries = topEntries.length > 6
+        ? topEntries.sublist(0, 6)
+        : topEntries;
+
+    final pieSections = displayEntries.map((entry) {
+      final idx = displayEntries.indexOf(entry);
       final colors = [
         colorScheme.primary,
         colorScheme.secondary,
@@ -58,14 +63,14 @@ class InventoryChart extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Asset share percentage per material type',
+            'Asset share percentage per product',
             style: TextStyle(
               fontSize: 11,
               color: colorScheme.onSurface.withOpacity(0.4),
             ),
           ),
           const SizedBox(height: 24),
-          if (categoryValues.isEmpty)
+          if (productValues.isEmpty)
             SizedBox(
               height: 150,
               child: Center(
@@ -88,8 +93,8 @@ class InventoryChart extends StatelessWidget {
             Wrap(
               spacing: 8,
               runSpacing: 4,
-              children: categoryValues.keys.map((cat) {
-                final idx = categoryValues.keys.toList().indexOf(cat);
+              children: displayEntries.map((entry) {
+                final idx = displayEntries.indexOf(entry);
                 final colors = [
                   colorScheme.primary,
                   colorScheme.secondary,
@@ -104,7 +109,12 @@ class InventoryChart extends StatelessWidget {
                   children: [
                     Container(width: 8, height: 8, color: color),
                     const SizedBox(width: 4),
-                    Text(cat, style: const TextStyle(fontSize: 10)),
+                    Text(
+                      entry.key.length > 15
+                          ? '${entry.key.substring(0, 15)}...'
+                          : entry.key,
+                      style: const TextStyle(fontSize: 10),
+                    ),
                   ],
                 );
               }).toList(),

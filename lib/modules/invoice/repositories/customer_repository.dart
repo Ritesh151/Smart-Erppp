@@ -1,7 +1,7 @@
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/customer_model.dart';
-import 'package:smarterp/core/storage/storage_service.dart';
-import 'package:smarterp/core/utils/logger.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/models/customer_model.dart';
+import 'package:SmartERP/core/storage/storage_service.dart';
+import 'package:SmartERP/core/utils/logger.dart';
 
 class CustomerRepository {
   final StorageService<Map<dynamic, dynamic>> _storage;
@@ -65,11 +65,12 @@ class CustomerRepository {
     try {
       final customers = await getAll();
       final lowerQuery = query.toLowerCase();
-      return customers.where((c) {
-        return c.name.toLowerCase().contains(lowerQuery) ||
-            (c.email?.toLowerCase().contains(lowerQuery) ?? false) ||
-            (c.phone?.contains(lowerQuery) ?? false) ||
-            (c.gstNumber?.toLowerCase().contains(lowerQuery) ?? false);
+
+      return customers.where((customer) {
+        return customer.name.toLowerCase().contains(lowerQuery) ||
+            (customer.email?.toLowerCase().contains(lowerQuery) ?? false) ||
+            (customer.phone?.toLowerCase().contains(lowerQuery) ?? false) ||
+            (customer.city?.toLowerCase().contains(lowerQuery) ?? false);
       }).toList();
     } catch (e, stackTrace) {
       Logger.error('Failed to search customers', e, stackTrace);
@@ -82,6 +83,18 @@ class CustomerRepository {
       return _storage.containsKey(id);
     } catch (e, stackTrace) {
       Logger.error('Failed to check customer existence', e, stackTrace);
+      return false;
+    }
+  }
+
+  Future<bool> customerNameExists(String name, {String? excludeId}) async {
+    try {
+      final customers = await getAll();
+      return customers.any((c) =>
+          c.name.toLowerCase() == name.toLowerCase() &&
+          c.id != excludeId);
+    } catch (e, stackTrace) {
+      Logger.error('Failed to check customer name existence', e, stackTrace);
       return false;
     }
   }

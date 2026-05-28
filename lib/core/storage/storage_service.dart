@@ -1,20 +1,24 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/utils/logger.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/utils/logger.dart';
 
 class StorageService<T> {
   final String boxName;
-  Box<T>? _box;
+  Box<dynamic>? _box;
 
   StorageService(this.boxName);
 
   Future<void> init() async {
     try {
       if (Hive.isBoxOpen(boxName)) {
-        _box = Hive.box<T>(boxName);
+        // Reuse any already-open box. Some parts of the app open boxes without
+        // a generic type (Box<dynamic>), and Hive will throw if we try to reopen
+        // the same box with a different generic type.
+        _box = Hive.box(boxName);
         Logger.debug('Using existing box: $boxName');
       } else {
-        _box = await Hive.openBox<T>(boxName);
+        // Open without a generic type for compatibility with boxes opened elsewhere.
+        _box = await Hive.openBox(boxName);
         Logger.info('Storage box initialized: $boxName');
       }
     } catch (e, stackTrace) {
@@ -23,7 +27,16 @@ class StorageService<T> {
     }
   }
 
-  Box<T> get box {
+  Box<dynamic> get box {
+    // Some call sites trigger `init()` without awaiting it (e.g. in Provider `create`),
+    // but boxes are already opened globally during app startup. To keep the flow
+    // stable and avoid "Storage box not initialized" race conditions, attach to
+    // the open box lazily on first access.
+    if (_box == null) {
+      if (Hive.isBoxOpen(boxName)) {
+        _box = Hive.box(boxName);
+      }
+    }
     if (_box == null || !_box!.isOpen) {
       throw StorageException('Storage box not initialized: $boxName');
     }
@@ -42,7 +55,8 @@ class StorageService<T> {
 
   T? get(String key) {
     try {
-      return box.get(key);
+      final value = box.get(key);
+      return value is T ? value : null;
     } catch (e, stackTrace) {
       Logger.error('Failed to get from storage: $boxName/$key', e, stackTrace);
       return null;
@@ -52,7 +66,8 @@ class StorageService<T> {
   T? getAt(int index) {
     try {
       if (index >= 0 && index < box.length) {
-        return box.getAt(index);
+        final value = box.getAt(index);
+        return value is T ? value : null;
       }
       return null;
     } catch (e, stackTrace) {
@@ -63,7 +78,7 @@ class StorageService<T> {
 
   List<T> getAll() {
     try {
-      return box.values.toList();
+      return box.values.whereType<T>().toList();
     } catch (e, stackTrace) {
       Logger.error('Failed to get all from storage: $boxName', e, stackTrace);
       return [];

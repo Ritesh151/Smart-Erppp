@@ -5,6 +5,8 @@ class StorageKeys {
   static const String userEmail = 'user_email';
   static const String sessionToken = 'session_token';
   static const String lastLoginTime = 'last_login_time';
+  static const String loginTime = 'login_time';
+  static const String expiryTime = 'expiry_time';
   static const String selectedTheme = 'selected_theme';
   static const String sidebarCollapsed = 'sidebar_collapsed';
   static const String language = 'language';

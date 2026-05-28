@@ -1,174 +1,199 @@
 import 'package:flutter/foundation.dart';
-import 'package:smarterp/core/models/transaction_model.dart';
-import 'package:smarterp/modules/finance/models/finance_summary_model.dart';
-import 'package:smarterp/modules/finance/services/finance_service.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:uuid/uuid.dart';
+import 'package:SmartERP/core/models/transaction_model.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/finance/services/finance_service.dart';
 
 class FinanceProvider extends ChangeNotifier {
   final FinanceService _service;
 
-  FinanceProvider(this._service);
-
-  List<TransactionModel> _transactions = [];
-  List<TransactionModel> _filteredTransactions = [];
-  FinanceSummaryModel _summary = FinanceSummaryModel.empty();
   bool _isLoading = false;
   String? _errorMessage;
 
-  DateTime? _startDate;
-  DateTime? _endDate;
-  TransactionType? _selectedType;
-  String _searchQuery = '';
+  double totalSales = 0;
+  double totalPurchases = 0;
+  double netRevenue = 0;
+  double netProfit = 0;
+  double totalExpenses = 0;
+  double totalPayroll = 0;
+  double transportCost = 0;
+  double outstandingPayments = 0;
+  double pendingPayments = 0;
+  int salesCount = 0;
+  int purchasesCount = 0;
+  List<Map<String, dynamic>> monthlyRevenue = [];
+  List<Map<String, dynamic>> sales = [];
+  List<Map<String, dynamic>> purchases = [];
 
-  List<TransactionModel> get transactions => _filteredTransactions;
+  FinanceProvider(this._service);
 
-  FinanceSummaryModel get summary => _summary;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  DateTime? get startDate => _startDate;
-  DateTime? get endDate => _endDate;
-  TransactionType? get selectedType => _selectedType;
-  String get searchQuery => _searchQuery;
 
-  Future<void> loadTransactions() async {
+  FinanceSummary get summary => FinanceSummary(
+    totalSales: totalSales,
+    totalPurchases: totalPurchases,
+    netRevenue: netRevenue,
+    netProfit: netProfit,
+  );
+
+  List<TransactionModel> _transactions = [];
+  List<TransactionModel> get transactions => _transactions;
+
+  Future<void> loadFinancialSummary({DateTime? startDate, DateTime? endDate}) async {
     try {
       _isLoading = true;
       _errorMessage = null;
       notifyListeners();
 
-      _transactions = await _service.getAllTransactions();
-      _summary = await _service.getFinanceSummary(_startDate, _endDate);
-      _applyFilters();
-
-      _isLoading = false;
-      notifyListeners();
-      Logger.success('Finance transactions loaded: ${_transactions.length}');
-    } catch (e, stackTrace) {
-      _isLoading = false;
-      _errorMessage = 'Failed to load financial records';
-      notifyListeners();
-      Logger.error('Failed to load financial records', e, stackTrace);
-    }
-  }
-
-  Future<void> addTransaction({
-    required TransactionType type,
-    required double amount,
-    required DateTime date,
-    required String description,
-    String? referenceId,
-    String? category,
-  }) async {
-    try {
-      _isLoading = true;
-      _errorMessage = null;
-      notifyListeners();
-
-      final tx = TransactionModel(
-        id: const Uuid().v4(),
-        type: type,
-        amount: amount,
-        date: date,
-        description: description,
-        referenceId: referenceId,
-        category: category,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+      final summary = await _service.getFinancialSummary(
+        startDate ?? DateTime.now().subtract(const Duration(days: 365)),
+        endDate ?? DateTime.now(),
       );
 
-      await _service.saveTransaction(tx);
-      await loadTransactions(); 
+      totalSales = summary['totalSales'] as double;
+      totalPurchases = summary['totalPurchases'] as double;
+      netRevenue = summary['netRevenue'] as double;
+      netProfit = summary['netProfit'] as double;
+      totalExpenses = summary['totalExpenses'] as double;
+      totalPayroll = summary['totalPayroll'] as double;
+      transportCost = summary['transportCost'] as double;
+      outstandingPayments = summary['outstandingPayments'] as double;
+      pendingPayments = summary['pendingPayments'] as double;
+      salesCount = summary['salesCount'] as int;
+      purchasesCount = summary['purchasesCount'] as int;
+      monthlyRevenue = List<Map<String, dynamic>>.from(summary['monthlyRevenue'] as List);
+
+      _isLoading = false;
+      notifyListeners();
+      Logger.success('Financial summary loaded');
     } catch (e, stackTrace) {
       _isLoading = false;
-      _errorMessage = 'Failed to record transaction';
+      _errorMessage = 'Failed to load financial summary';
       notifyListeners();
-      Logger.error('Failed to record transaction', e, stackTrace);
-      rethrow;
+      Logger.error('Failed to load financial summary', e, stackTrace);
     }
   }
 
-  Future<void> deleteTransaction(String id, TransactionType type) async {
+  Future<void> loadSalesReport({DateTime? startDate, DateTime? endDate}) async {
     try {
       _isLoading = true;
       _errorMessage = null;
       notifyListeners();
 
-      await _service.deleteTransaction(id, type);
-      await loadTransactions(); 
+      sales = await _service.getSalesReport(
+        startDate ?? DateTime.now().subtract(const Duration(days: 365)),
+        endDate ?? DateTime.now(),
+      );
+
+      _isLoading = false;
+      notifyListeners();
+      Logger.success('Sales report loaded: ${sales.length} entries');
     } catch (e, stackTrace) {
       _isLoading = false;
-      _errorMessage = 'Failed to delete transaction';
+      _errorMessage = 'Failed to load sales report';
       notifyListeners();
-      Logger.error('Failed to delete transaction', e, stackTrace);
+      Logger.error('Failed to load sales report', e, stackTrace);
+    }
+  }
+
+  Future<void> loadPurchaseReport({DateTime? startDate, DateTime? endDate}) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      purchases = await _service.getPurchaseReport(
+        startDate ?? DateTime.now().subtract(const Duration(days: 365)),
+        endDate ?? DateTime.now(),
+      );
+
+      _isLoading = false;
+      notifyListeners();
+      Logger.success('Purchase report loaded: ${purchases.length} entries');
+    } catch (e, stackTrace) {
+      _isLoading = false;
+      _errorMessage = 'Failed to load purchase report';
+      notifyListeners();
+      Logger.error('Failed to load purchase report', e, stackTrace);
+    }
+  }
+
+  Future<void> loadTransactions() async {
+    await loadFinancialSummary();
+    await loadSalesReport();
+    await loadPurchaseReport();
+    try {
+      _transactions = await _service.getAllTransactions();
+      notifyListeners();
+    } catch (e, stackTrace) {
+      Logger.error('Failed to load transactions', e, stackTrace);
+    }
+  }
+
+  Future<void> saveSale(Map<String, dynamic> sale) async {
+    try {
+      await _service.saveSale(sale);
+      await loadTransactions();
+    } catch (e, stackTrace) {
+      _errorMessage = 'Failed to save sale';
+      notifyListeners();
+      Logger.error('Failed to save sale', e, stackTrace);
       rethrow;
     }
   }
 
-  void filterByDateRange(DateTime? start, DateTime? end) {
-    _startDate = start;
-    _endDate = end;
-    _applyFilters();
-    _recalculateSummary();
-    notifyListeners();
-  }
-
-  void filterByType(TransactionType? type) {
-    _selectedType = type;
-    _applyFilters();
-    notifyListeners();
-  }
-
-  void searchTransactions(String query) {
-    _searchQuery = query;
-    _applyFilters();
-    notifyListeners();
-  }
-
-  void clearFilters() {
-    _startDate = null;
-    _endDate = null;
-    _selectedType = null;
-    _searchQuery = '';
-    _filteredTransactions = List.from(_transactions);
-    _recalculateSummary();
-    notifyListeners();
-  }
-
-  void _applyFilters() {
-    var filtered = List<TransactionModel>.from(_transactions);
-
-    if (_startDate != null) {
-      filtered = filtered.where((tx) => tx.date.isAfter(_startDate!.subtract(const Duration(seconds: 1)))).toList();
-    }
-
-    if (_endDate != null) {
-      filtered = filtered.where((tx) => tx.date.isBefore(_endDate!.add(const Duration(seconds: 1)))).toList();
-    }
-
-    if (_selectedType != null) {
-      filtered = filtered.where((tx) => tx.type == _selectedType).toList();
-    }
-
-    if (_searchQuery.trim().isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      filtered = filtered.where((tx) => tx.description.toLowerCase().contains(q) || 
-                                       (tx.referenceId?.toLowerCase().contains(q) ?? false) || 
-                                       (tx.category?.toLowerCase().contains(q) ?? false)).toList();
-    }
-
-    _filteredTransactions = filtered;
-  }
-
-  Future<void> _recalculateSummary() async {
+  Future<void> savePurchase(Map<String, dynamic> purchase) async {
     try {
-      _summary = await _service.getFinanceSummary(_startDate, _endDate);
-    } catch (e) {
-      Logger.error('Failed to recalculate finance summary', e);
+      await _service.savePurchase(purchase);
+      await loadTransactions();
+    } catch (e, stackTrace) {
+      _errorMessage = 'Failed to save purchase';
+      notifyListeners();
+      Logger.error('Failed to save purchase', e, stackTrace);
+      rethrow;
     }
   }
 
-  Future<Map<String, double>> getMonthlySales(int year) async {
-    return await _service.getMonthlySummary(year);
+  Future<void> deleteSale(String id) async {
+    try {
+      await _service.deleteSale(id);
+      await loadTransactions();
+    } catch (e, stackTrace) {
+      _errorMessage = 'Failed to delete sale';
+      notifyListeners();
+      Logger.error('Failed to delete sale', e, stackTrace);
+      rethrow;
+    }
   }
+
+  Future<void> deletePurchase(String id) async {
+    try {
+      await _service.deletePurchase(id);
+      await loadTransactions();
+    } catch (e, stackTrace) {
+      _errorMessage = 'Failed to delete purchase';
+      notifyListeners();
+      Logger.error('Failed to delete purchase', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+}
+
+class FinanceSummary {
+  final double totalSales;
+  final double totalPurchases;
+  final double netRevenue;
+  final double netProfit;
+
+  FinanceSummary({
+    required this.totalSales,
+    required this.totalPurchases,
+    required this.netRevenue,
+    required this.netProfit,
+  });
 }

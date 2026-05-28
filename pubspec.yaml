@@ -1,4 +1,4 @@
-name: smarterp
+name: SmartERP
 description: Enterprise-grade ERP Business Management System
 publish_to: 'none'
 version: 1.0.0+1
@@ -12,6 +12,7 @@ dependencies:
 
   # State Management
   provider: ^6.1.1
+  flutter_riverpod: ^2.4.9
 
   # Local Storage
   shared_preferences: ^2.2.2

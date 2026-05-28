@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
-import 'package:smarterp/core/theme/app_theme.dart';
-import 'package:smarterp/modules/settings/providers/theme_provider.dart';
+import 'package:SmartERP/core/theme/app_theme.dart';
+import 'package:SmartERP/modules/settings/providers/theme_provider.dart';
 
 class ThemeSelectorWidget extends StatelessWidget {
   const ThemeSelectorWidget({super.key});

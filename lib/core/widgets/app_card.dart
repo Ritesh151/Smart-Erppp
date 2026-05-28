@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smarterp/core/theme/theme_extensions.dart';
+import 'package:SmartERP/core/theme/theme_extensions.dart';
 
 class AppCard extends StatelessWidget {
   final Widget child;

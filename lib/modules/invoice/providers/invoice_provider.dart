@@ -1,69 +1,85 @@
 import 'package:flutter/foundation.dart';
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/invoice_model.dart';
-import 'package:smarterp/core/models/invoice_item_model.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/invoice/services/invoice_service.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/models/invoice_item_model.dart';
+import 'package:SmartERP/core/models/invoice_model.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
+import 'package:uuid/uuid.dart';
 
 class InvoiceProvider extends ChangeNotifier {
   final InvoiceService _service;
+  VoidCallback? onDataChanged;
 
-  InvoiceProvider({
-    required InvoiceService service,
-  }) : _service = service;
+  InvoiceProvider({required InvoiceService service, VoidCallback? onDataChanged})
+      : _service = service,
+        onDataChanged = onDataChanged;
 
   List<InvoiceModel> _invoices = [];
-  List<InvoiceModel> _filteredInvoices = [];
   InvoiceModel? _selectedInvoice;
   List<InvoiceItemModel> _selectedInvoiceItems = [];
+  List<InvoiceModel> _filteredInvoices = [];
 
-  InvoiceModel? _editingInvoice;
-  List<InvoiceItemModel> _editingItems = [];
-  DateTime _editingInvoiceDate = DateTime.now();
-  DateTime _editingDueDate = DateTime.now().add(const Duration(days: 30));
-  double _editingDiscount = 0;
-  String _editingNotes = '';
-  String _editingTerms = '';
   String _editingCustomerId = '';
   String _editingCustomerName = '';
   String _editingCustomerEmail = '';
   String _editingCustomerPhone = '';
   String _editingCustomerAddress = '';
   String _editingCustomerGst = '';
+  DateTime _editingInvoiceDate = DateTime.now();
+  DateTime _editingDueDate = DateTime.now().add(const Duration(days: 30));
+  List<InvoiceItemModel> _editingItems = [];
+  double _editingDiscount = 0;
+  String _editingNotes = '';
+  String _editingTerms = '';
 
   bool _isLoading = false;
-  bool _isSearching = false;
   String? _errorMessage;
   String _searchQuery = '';
-  InvoiceStatus? _selectedStatus;
+  InvoiceStatus? _filterStatus;
 
-  List<InvoiceModel> get invoices =>
-      _filteredInvoices.isEmpty && _searchQuery.isEmpty
-          ? _invoices
-          : _filteredInvoices;
+  double get editingSubtotal =>
+      _editingItems.fold(0.0, (sum, item) => sum + item.unitPrice * item.quantity);
+
+  double get editingTaxAmount =>
+      _editingItems.fold(0.0, (sum, item) => sum + item.taxAmount);
+
+  double get editingTotalAmount =>
+      editingSubtotal + editingTaxAmount - _editingDiscount;
+
+  List<InvoiceModel> get invoices {
+    if (_filterStatus != null) {
+      return _filteredInvoices;
+    }
+    if (_searchQuery.isNotEmpty) {
+      return _filteredInvoices;
+    }
+    return _invoices;
+  }
 
   InvoiceModel? get selectedInvoice => _selectedInvoice;
   List<InvoiceItemModel> get selectedInvoiceItems => _selectedInvoiceItems;
 
-  InvoiceModel? get editingInvoice => _editingInvoice;
-  List<InvoiceItemModel> get editingItems => _editingItems;
-  DateTime get editingInvoiceDate => _editingInvoiceDate;
-  DateTime get editingDueDate => _editingDueDate;
-  double get editingDiscount => _editingDiscount;
-  String get editingNotes => _editingNotes;
-  String get editingTerms => _editingTerms;
   String get editingCustomerId => _editingCustomerId;
   String get editingCustomerName => _editingCustomerName;
   String get editingCustomerEmail => _editingCustomerEmail;
   String get editingCustomerPhone => _editingCustomerPhone;
   String get editingCustomerAddress => _editingCustomerAddress;
   String get editingCustomerGst => _editingCustomerGst;
+  DateTime get editingInvoiceDate => _editingInvoiceDate;
+  DateTime get editingDueDate => _editingDueDate;
+  List<InvoiceItemModel> get editingItems => _editingItems;
+  double get editingDiscount => _editingDiscount;
+  String get editingNotes => _editingNotes;
+  String get editingTerms => _editingTerms;
 
   bool get isLoading => _isLoading;
-  bool get isSearching => _isSearching;
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
-  InvoiceStatus? get selectedStatus => _selectedStatus;
+  InvoiceStatus? get filterStatus => _filterStatus;
+
+  bool get isFormValid =>
+      _editingCustomerName.trim().isNotEmpty &&
+      _editingItems.isNotEmpty;
 
   int get totalInvoices => _invoices.length;
   int get draftCount =>
@@ -73,15 +89,11 @@ class InvoiceProvider extends ChangeNotifier {
   int get paidCount =>
       _invoices.where((i) => i.status == InvoiceStatus.paid).length;
   int get overdueCount =>
-      _invoices.where((i) => i.status == InvoiceStatus.overdue).length;
-  int get partiallyPaidCount =>
-      _invoices.where((i) => i.status == InvoiceStatus.partiallyPaid).length;
+      _invoices.where((i) => i.isOverdue).length;
   int get cancelledCount =>
       _invoices.where((i) => i.status == InvoiceStatus.cancelled).length;
-
-  double get editingSubtotal => _editingItems.fold(0.0, (s, i) => s + i.subtotal);
-  double get editingTaxAmount => _editingItems.fold(0.0, (s, i) => s + i.taxAmount);
-  double get editingTotalAmount => editingSubtotal + editingTaxAmount - _editingDiscount;
+  double get totalOutstanding =>
+      _invoices.fold(0.0, (sum, i) => sum + i.balanceAmount);
 
   Future<void> loadInvoices() async {
     try {
@@ -93,6 +105,7 @@ class InvoiceProvider extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+      onDataChanged?.call();
       Logger.success('Invoices loaded: ${_invoices.length}');
     } catch (e, stackTrace) {
       _isLoading = false;
@@ -109,8 +122,15 @@ class InvoiceProvider extends ChangeNotifier {
       notifyListeners();
 
       _selectedInvoice = await _service.getInvoiceById(id);
+
       if (_selectedInvoice != null) {
-        _selectedInvoiceItems = await _service.getInvoiceItems(_selectedInvoice!);
+        _selectedInvoiceItems = [];
+        for (final itemId in _selectedInvoice!.itemIds) {
+          final item = await _service.getInvoiceItemById(itemId);
+          if (item != null) {
+            _selectedInvoiceItems.add(item);
+          }
+        }
       }
 
       _isLoading = false;
@@ -123,91 +143,7 @@ class InvoiceProvider extends ChangeNotifier {
     }
   }
 
-  void resetEditingState() {
-    _editingInvoice = null;
-    _editingItems.clear();
-    _editingInvoiceDate = DateTime.now();
-    _editingDueDate = DateTime.now().add(const Duration(days: 30));
-    _editingDiscount = 0;
-    _editingNotes = '';
-    _editingTerms = '';
-    _editingCustomerId = '';
-    _editingCustomerName = '';
-    _editingCustomerEmail = '';
-    _editingCustomerPhone = '';
-    _editingCustomerAddress = '';
-    _editingCustomerGst = '';
-    notifyListeners();
-  }
-
-  void addItem({
-    required String productId,
-    required String productName,
-    required double quantity,
-    required double unitPrice,
-    required double gstRate,
-    String? hsnCode,
-  }) {
-    final item = InvoiceItemModel.create(
-      productId: productId,
-      productName: productName,
-      quantity: quantity,
-      unit: 'Piece',
-      unitPrice: unitPrice,
-      taxRate: gstRate,
-      hsnCode: hsnCode,
-    );
-    _editingItems.add(item);
-    notifyListeners();
-  }
-
-  void updateItemQuantity(int index, double quantity) {
-    if (index >= 0 && index < _editingItems.length) {
-      final old = _editingItems[index];
-      _editingItems[index] = InvoiceItemModel.create(
-        productId: old.productId,
-        productName: old.productName,
-        quantity: quantity,
-        unit: old.unit,
-        unitPrice: old.unitPrice,
-        taxRate: old.taxRate,
-        discountRate: old.discountRate,
-        hsnCode: old.hsnCode,
-      );
-      notifyListeners();
-    }
-  }
-
-  void updateItemPrice(int index, double unitPrice) {
-    if (index >= 0 && index < _editingItems.length) {
-      final old = _editingItems[index];
-      _editingItems[index] = InvoiceItemModel.create(
-        productId: old.productId,
-        productName: old.productName,
-        quantity: old.quantity,
-        unit: old.unit,
-        unitPrice: unitPrice,
-        taxRate: old.taxRate,
-        discountRate: old.discountRate,
-        hsnCode: old.hsnCode,
-      );
-      notifyListeners();
-    }
-  }
-
-  void removeItem(int index) {
-    if (index >= 0 && index < _editingItems.length) {
-      _editingItems.removeAt(index);
-      notifyListeners();
-    }
-  }
-
-  void clearEditingItems() {
-    _editingItems.clear();
-    notifyListeners();
-  }
-
-  Future<void> saveDraft() async {
+  Future<void> createInvoice() async {
     try {
       _isLoading = true;
       _errorMessage = null;
@@ -216,23 +152,36 @@ class InvoiceProvider extends ChangeNotifier {
       final invoice = await _service.createInvoice(
         customerId: _editingCustomerId,
         customerName: _editingCustomerName,
-        customerEmail: _editingCustomerEmail.isNotEmpty ? _editingCustomerEmail : null,
-        customerPhone: _editingCustomerPhone.isNotEmpty ? _editingCustomerPhone : null,
-        customerAddress: _editingCustomerAddress.isNotEmpty ? _editingCustomerAddress : null,
-        customerGst: _editingCustomerGst.isNotEmpty ? _editingCustomerGst : null,
+        customerEmail: _editingCustomerEmail.isNotEmpty
+            ? _editingCustomerEmail
+            : null,
+        customerPhone: _editingCustomerPhone.isNotEmpty
+            ? _editingCustomerPhone
+            : null,
+        customerAddress: _editingCustomerAddress.isNotEmpty
+            ? _editingCustomerAddress
+            : null,
+        customerGst:
+            _editingCustomerGst.isNotEmpty ? _editingCustomerGst : null,
         invoiceDate: _editingInvoiceDate,
         dueDate: _editingDueDate,
-        items: List.from(_editingItems),
+        items: _editingItems,
+        subtotal: editingSubtotal,
+        taxAmount: editingTaxAmount,
         discountAmount: _editingDiscount,
+        totalAmount: editingTotalAmount,
         notes: _editingNotes.isNotEmpty ? _editingNotes : null,
-        termsAndConditions: _editingTerms.isNotEmpty ? _editingTerms : null,
+        termsAndConditions:
+            _editingTerms.isNotEmpty ? _editingTerms : null,
       );
 
       _invoices.add(invoice);
+      resetEditingState();
 
       _isLoading = false;
       notifyListeners();
-      Logger.success('Invoice draft saved: ${invoice.invoiceNumber}');
+      onDataChanged?.call();
+      Logger.success('Invoice created: ${invoice.invoiceNumber}');
     } on ValidationException catch (e) {
       _isLoading = false;
       _errorMessage = e.message;
@@ -240,48 +189,125 @@ class InvoiceProvider extends ChangeNotifier {
       rethrow;
     } catch (e, stackTrace) {
       _isLoading = false;
-      _errorMessage = 'Failed to save invoice';
+      _errorMessage = 'Failed to create invoice';
       notifyListeners();
-      Logger.error('Failed to save invoice', e, stackTrace);
+      Logger.error('Failed to create invoice', e, stackTrace);
       rethrow;
     }
   }
 
-  Future<void> markAsSent(String id) async {
+  Future<void> saveDraft() async {
+    _editingInvoiceDate = DateTime.now();
     try {
-      await _service.markAsSent(id);
-      await _refreshInvoice(id);
-      Logger.success('Invoice marked as sent');
-    } catch (e, stackTrace) {
-      _errorMessage = 'Failed to mark invoice as sent';
+      _isLoading = true;
+      _errorMessage = null;
       notifyListeners();
-      Logger.error('Failed to mark invoice as sent', e, stackTrace);
+
+      final invoice = await _service.createInvoice(
+        customerId: _editingCustomerId,
+        customerName: _editingCustomerName,
+        customerEmail: _editingCustomerEmail.isNotEmpty
+            ? _editingCustomerEmail
+            : null,
+        customerPhone: _editingCustomerPhone.isNotEmpty
+            ? _editingCustomerPhone
+            : null,
+        customerAddress: _editingCustomerAddress.isNotEmpty
+            ? _editingCustomerAddress
+            : null,
+        customerGst:
+            _editingCustomerGst.isNotEmpty ? _editingCustomerGst : null,
+        invoiceDate: _editingInvoiceDate,
+        dueDate: _editingDueDate,
+        items: _editingItems,
+        subtotal: editingSubtotal,
+        taxAmount: editingTaxAmount,
+        discountAmount: _editingDiscount,
+        totalAmount: editingTotalAmount,
+        notes: _editingNotes.isNotEmpty ? _editingNotes : null,
+        termsAndConditions:
+            _editingTerms.isNotEmpty ? _editingTerms : null,
+      );
+
+      _invoices.add(invoice);
+      resetEditingState();
+
+      _isLoading = false;
+      notifyListeners();
+      onDataChanged?.call();
+      Logger.success('Draft saved: ${invoice.invoiceNumber}');
+    } on ValidationException catch (e) {
+      _isLoading = false;
+      _errorMessage = e.message;
+      notifyListeners();
+      rethrow;
+    } catch (e, stackTrace) {
+      _isLoading = false;
+      _errorMessage = 'Failed to save draft';
+      notifyListeners();
+      Logger.error('Failed to save draft', e, stackTrace);
       rethrow;
     }
   }
 
-  Future<void> markAsPaid(String id, double amount) async {
+  Future<void> updateInvoice(String id) async {
     try {
-      await _service.markAsPaid(id, amount);
-      await _refreshInvoice(id);
-      Logger.success('Invoice payment recorded');
-    } catch (e, stackTrace) {
-      _errorMessage = 'Failed to mark invoice as paid';
+      _isLoading = true;
+      _errorMessage = null;
       notifyListeners();
-      Logger.error('Failed to mark invoice as paid', e, stackTrace);
-      rethrow;
-    }
-  }
 
-  Future<void> cancelInvoice(String id) async {
-    try {
-      await _service.updateInvoiceStatus(id, InvoiceStatus.cancelled);
-      await _refreshInvoice(id);
-      Logger.success('Invoice cancelled');
-    } catch (e, stackTrace) {
-      _errorMessage = 'Failed to cancel invoice';
+      final updatedInvoice = await _service.updateInvoice(
+        id: id,
+        customerId: _editingCustomerId,
+        customerName: _editingCustomerName,
+        customerEmail: _editingCustomerEmail.isNotEmpty
+            ? _editingCustomerEmail
+            : null,
+        customerPhone: _editingCustomerPhone.isNotEmpty
+            ? _editingCustomerPhone
+            : null,
+        customerAddress: _editingCustomerAddress.isNotEmpty
+            ? _editingCustomerAddress
+            : null,
+        customerGst:
+            _editingCustomerGst.isNotEmpty ? _editingCustomerGst : null,
+        invoiceDate: _editingInvoiceDate,
+        dueDate: _editingDueDate,
+        items: _editingItems,
+        subtotal: editingSubtotal,
+        taxAmount: editingTaxAmount,
+        discountAmount: _editingDiscount,
+        totalAmount: editingTotalAmount,
+        notes: _editingNotes.isNotEmpty ? _editingNotes : null,
+        termsAndConditions:
+            _editingTerms.isNotEmpty ? _editingTerms : null,
+      );
+
+      final index = _invoices.indexWhere((i) => i.id == id);
+      if (index != -1) {
+        _invoices[index] = updatedInvoice;
+      }
+
+      if (_selectedInvoice?.id == id) {
+        _selectedInvoice = updatedInvoice;
+      }
+
+      resetEditingState();
+
+      _isLoading = false;
       notifyListeners();
-      Logger.error('Failed to cancel invoice', e, stackTrace);
+      onDataChanged?.call();
+      Logger.success('Invoice updated successfully');
+    } on ValidationException catch (e) {
+      _isLoading = false;
+      _errorMessage = e.message;
+      notifyListeners();
+      rethrow;
+    } catch (e, stackTrace) {
+      _isLoading = false;
+      _errorMessage = 'Failed to update invoice';
+      notifyListeners();
+      Logger.error('Failed to update invoice', e, stackTrace);
       rethrow;
     }
   }
@@ -302,6 +328,7 @@ class InvoiceProvider extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+      onDataChanged?.call();
       Logger.success('Invoice deleted successfully');
     } catch (e, stackTrace) {
       _isLoading = false;
@@ -312,138 +339,302 @@ class InvoiceProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _refreshInvoice(String id) async {
-    final index = _invoices.indexWhere((i) => i.id == id);
-    if (index != -1) {
-      final refreshed = await _service.getInvoiceById(id);
-      if (refreshed != null) {
-        _invoices[index] = refreshed;
-      }
-    }
-    if (_selectedInvoice?.id == id) {
-      _selectedInvoice = await _service.getInvoiceById(id);
-    }
-    notifyListeners();
-  }
-
-  void setEditingInvoiceDate(DateTime date) {
-    _editingInvoiceDate = date;
-    notifyListeners();
-  }
-
-  void setEditingDueDate(DateTime date) {
-    _editingDueDate = date;
-    notifyListeners();
-  }
-
-  void setEditingDiscount(double discount) {
-    _editingDiscount = discount;
-    notifyListeners();
-  }
-
-  void setEditingNotes(String notes) {
-    _editingNotes = notes;
-    notifyListeners();
-  }
-
-  void setEditingTerms(String terms) {
-    _editingTerms = terms;
-    notifyListeners();
-  }
-
-  void setEditingCustomerId(String id) {
-    _editingCustomerId = id;
-    notifyListeners();
-  }
-
-  void setEditingCustomerName(String name) {
-    _editingCustomerName = name;
-    notifyListeners();
-  }
-
-  void setEditingCustomerEmail(String email) {
-    _editingCustomerEmail = email;
-    notifyListeners();
-  }
-
-  void setEditingCustomerPhone(String phone) {
-    _editingCustomerPhone = phone;
-    notifyListeners();
-  }
-
-  void setEditingCustomerAddress(String address) {
-    _editingCustomerAddress = address;
-    notifyListeners();
-  }
-
-  void setEditingCustomerGst(String gst) {
-    _editingCustomerGst = gst;
-    notifyListeners();
-  }
-
-  void selectInvoice(InvoiceModel? invoice) {
-    _selectedInvoice = invoice;
-    if (invoice != null) {
-      loadInvoiceDetails(invoice.id);
-    } else {
-      _selectedInvoiceItems = [];
+  Future<void> markAsSent(String id) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
       notifyListeners();
+
+      await _service.markAsSent(id);
+
+      final index = _invoices.indexWhere((i) => i.id == id);
+      if (index != -1) {
+        _invoices[index] = _invoices[index].copyWith(
+          status: InvoiceStatus.sent,
+          updatedAt: DateTime.now(),
+        );
+      }
+
+      if (_selectedInvoice?.id == id) {
+        _selectedInvoice = _selectedInvoice!.copyWith(
+          status: InvoiceStatus.sent,
+          updatedAt: DateTime.now(),
+        );
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      onDataChanged?.call();
+      Logger.success('Invoice marked as sent');
+    } catch (e, stackTrace) {
+      _isLoading = false;
+      _errorMessage = 'Failed to mark invoice as sent';
+      notifyListeners();
+      Logger.error('Failed to mark invoice as sent', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> markAsPaid(String id, double amount) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      await _service.markAsPaid(id, amount);
+
+      final invoice = await _service.getInvoiceById(id);
+      if (invoice != null) {
+        final index = _invoices.indexWhere((i) => i.id == id);
+        if (index != -1) {
+          _invoices[index] = invoice;
+        }
+        if (_selectedInvoice?.id == id) {
+          _selectedInvoice = invoice;
+        }
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      onDataChanged?.call();
+      Logger.success('Invoice marked as paid');
+    } catch (e, stackTrace) {
+      _isLoading = false;
+      _errorMessage = 'Failed to mark invoice as paid';
+      notifyListeners();
+      Logger.error('Failed to mark invoice as paid', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> cancelInvoice(String id) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      await _service.cancelInvoice(id);
+
+      final index = _invoices.indexWhere((i) => i.id == id);
+      if (index != -1) {
+        _invoices[index] = _invoices[index].copyWith(
+          status: InvoiceStatus.cancelled,
+          updatedAt: DateTime.now(),
+        );
+      }
+
+      if (_selectedInvoice?.id == id) {
+        _selectedInvoice = _selectedInvoice!.copyWith(
+          status: InvoiceStatus.cancelled,
+          updatedAt: DateTime.now(),
+        );
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      onDataChanged?.call();
+      Logger.success('Invoice cancelled');
+    } catch (e, stackTrace) {
+      _isLoading = false;
+      _errorMessage = 'Failed to cancel invoice';
+      notifyListeners();
+      Logger.error('Failed to cancel invoice', e, stackTrace);
+      rethrow;
     }
   }
 
   Future<void> searchInvoices(String query) async {
     try {
-      _isSearching = true;
+      _isLoading = true;
       _searchQuery = query;
       notifyListeners();
 
       if (query.trim().isEmpty) {
         _filteredInvoices = [];
       } else {
-        final q = query.toLowerCase();
-        _filteredInvoices = _invoices.where((i) {
-          return i.invoiceNumber.toLowerCase().contains(q) ||
-              i.customerName.toLowerCase().contains(q) ||
-              i.customerPhone?.toLowerCase().contains(q) == true;
-        }).toList();
+        _filteredInvoices = await _service.searchInvoices(query);
       }
 
-      _isSearching = false;
+      _isLoading = false;
       notifyListeners();
     } catch (e, stackTrace) {
-      _isSearching = false;
+      _isLoading = false;
       notifyListeners();
       Logger.error('Failed to search invoices', e, stackTrace);
     }
   }
 
-  void filterByStatus(InvoiceStatus? status) {
-    _selectedStatus = status;
-    _applyFilters();
+  Future<void> filterByStatus(InvoiceStatus? status) async {
+    try {
+      _isLoading = true;
+      _filterStatus = status;
+      notifyListeners();
+
+      if (status == null) {
+        _filteredInvoices = [];
+      } else {
+        _filteredInvoices = await _service.getInvoicesByStatus(status);
+      }
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e, stackTrace) {
+      _isLoading = false;
+      notifyListeners();
+      Logger.error('Failed to filter invoices', e, stackTrace);
+    }
+  }
+
+  void resetEditingState() {
+    _editingCustomerId = '';
+    _editingCustomerName = '';
+    _editingCustomerEmail = '';
+    _editingCustomerPhone = '';
+    _editingCustomerAddress = '';
+    _editingCustomerGst = '';
+    _editingInvoiceDate = DateTime.now();
+    _editingDueDate = DateTime.now().add(const Duration(days: 30));
+    _editingItems = [];
+    _editingDiscount = 0;
+    _editingNotes = '';
+    _editingTerms = '';
+    notifyListeners();
+  }
+
+  void setEditingCustomerId(String value) {
+    _editingCustomerId = value;
+    notifyListeners();
+  }
+
+  void setEditingCustomerName(String value) {
+    _editingCustomerName = value;
+    notifyListeners();
+  }
+
+  void setEditingCustomerEmail(String value) {
+    _editingCustomerEmail = value;
+    notifyListeners();
+  }
+
+  void setEditingCustomerPhone(String value) {
+    _editingCustomerPhone = value;
+    notifyListeners();
+  }
+
+  void setEditingCustomerAddress(String value) {
+    _editingCustomerAddress = value;
+    notifyListeners();
+  }
+
+  void setEditingCustomerGst(String value) {
+    _editingCustomerGst = value;
+    notifyListeners();
+  }
+
+  void setEditingInvoiceDate(DateTime value) {
+    _editingInvoiceDate = value;
+    notifyListeners();
+  }
+
+  void setEditingDueDate(DateTime value) {
+    _editingDueDate = value;
+    notifyListeners();
+  }
+
+  void addItem({
+    required String productId,
+    required String productName,
+    String? hsnCode,
+    String? description,
+    required double quantity,
+    required String unit,
+    required double unitPrice,
+    double taxRate = 0,
+    double discountRate = 0,
+  }) {
+    final item = InvoiceItemModel.create(
+      productId: productId,
+      productName: productName,
+      hsnCode: hsnCode,
+      description: description,
+      quantity: quantity,
+      unit: unit,
+      unitPrice: unitPrice,
+      taxRate: taxRate,
+      discountRate: discountRate,
+    );
+    _editingItems.add(item);
+    notifyListeners();
+  }
+
+  void removeItem(int index) {
+    if (index >= 0 && index < _editingItems.length) {
+      _editingItems.removeAt(index);
+      notifyListeners();
+    }
+  }
+
+  void updateItemQuantity(int index, double qty) {
+    if (index >= 0 && index < _editingItems.length) {
+      final item = _editingItems[index];
+      final subtotal = item.unitPrice * qty;
+      final discountAmount = subtotal * (item.discountRate / 100);
+      final taxableAmount = subtotal - discountAmount;
+      final amount = taxableAmount + (taxableAmount * item.taxRate / 100);
+      _editingItems[index] = item.copyWith(quantity: qty, amount: amount);
+      notifyListeners();
+    }
+  }
+
+  void updateItemPrice(int index, double price) {
+    if (index >= 0 && index < _editingItems.length) {
+      final item = _editingItems[index];
+      final subtotal = price * item.quantity;
+      final discountAmount = subtotal * (item.discountRate / 100);
+      final taxableAmount = subtotal - discountAmount;
+      final amount = taxableAmount + (taxableAmount * item.taxRate / 100);
+      _editingItems[index] = item.copyWith(unitPrice: price, amount: amount);
+      notifyListeners();
+    }
+  }
+
+  void setEditingDiscount(double value) {
+    _editingDiscount = value;
+    notifyListeners();
+  }
+
+  void setEditingNotes(String value) {
+    _editingNotes = value;
+    notifyListeners();
+  }
+
+  void setEditingTerms(String value) {
+    _editingTerms = value;
+    notifyListeners();
+  }
+
+  void populateEditingFromInvoice(InvoiceModel invoice,
+      {List<InvoiceItemModel>? items}) {
+    _editingCustomerId = invoice.customerId;
+    _editingCustomerName = invoice.customerName;
+    _editingCustomerEmail = invoice.customerEmail ?? '';
+    _editingCustomerPhone = invoice.customerPhone ?? '';
+    _editingCustomerAddress = invoice.customerAddress ?? '';
+    _editingCustomerGst = invoice.customerGst ?? '';
+    _editingInvoiceDate = invoice.invoiceDate;
+    _editingDueDate = invoice.dueDate;
+    _editingItems = items ?? [];
+    _editingDiscount = invoice.discountAmount;
+    _editingNotes = invoice.notes ?? '';
+    _editingTerms = invoice.termsAndConditions ?? '';
     notifyListeners();
   }
 
   void clearSearch() {
     _searchQuery = '';
     _filteredInvoices = [];
+    _filterStatus = null;
     notifyListeners();
-  }
-
-  void clearFilters() {
-    _selectedStatus = null;
-    _searchQuery = '';
-    _filteredInvoices = [];
-    notifyListeners();
-  }
-
-  void _applyFilters() {
-    var filtered = List<InvoiceModel>.from(_invoices);
-
-    if (_selectedStatus != null) {
-      filtered = filtered.where((i) => i.status == _selectedStatus).toList();
-    }
-
-    _filteredInvoices = filtered;
   }
 
   void clearError() {

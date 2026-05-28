@@ -1,13 +1,15 @@
 import 'package:flutter/foundation.dart';
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/customer_model.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/invoice/services/customer_service.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/models/customer_model.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/invoice/services/customer_service.dart';
 
 class CustomerProvider extends ChangeNotifier {
   final CustomerService _service;
+  VoidCallback? onDataChanged;
 
-  CustomerProvider(this._service);
+  CustomerProvider(this._service, {VoidCallback? onDataChanged})
+      : onDataChanged = onDataChanged;
 
   List<CustomerModel> _customers = [];
   List<CustomerModel> _filteredCustomers = [];
@@ -28,9 +30,7 @@ class CustomerProvider extends ChangeNotifier {
   bool get isSearching => _isSearching;
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
-
   int get totalCustomers => _customers.length;
-  int get activeCustomers => _customers.where((c) => c.isActive).length;
 
   Future<void> loadCustomers() async {
     try {
@@ -42,6 +42,7 @@ class CustomerProvider extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+      onDataChanged?.call();
       Logger.success('Customers loaded: ${_customers.length}');
     } catch (e, stackTrace) {
       _isLoading = false;
@@ -81,6 +82,7 @@ class CustomerProvider extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+      onDataChanged?.call();
       Logger.success('Customer created successfully');
     } on ValidationException catch (e) {
       _isLoading = false;
@@ -113,7 +115,7 @@ class CustomerProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
-      final updated = await _service.updateCustomer(
+      final updatedCustomer = await _service.updateCustomer(
         id: id,
         name: name,
         email: email,
@@ -128,11 +130,16 @@ class CustomerProvider extends ChangeNotifier {
 
       final index = _customers.indexWhere((c) => c.id == id);
       if (index != -1) {
-        _customers[index] = updated;
+        _customers[index] = updatedCustomer;
+      }
+
+      if (_selectedCustomer?.id == id) {
+        _selectedCustomer = updatedCustomer;
       }
 
       _isLoading = false;
       notifyListeners();
+      onDataChanged?.call();
       Logger.success('Customer updated successfully');
     } on ValidationException catch (e) {
       _isLoading = false;
@@ -163,6 +170,7 @@ class CustomerProvider extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+      onDataChanged?.call();
       Logger.success('Customer deleted successfully');
     } catch (e, stackTrace) {
       _isLoading = false;
@@ -194,14 +202,14 @@ class CustomerProvider extends ChangeNotifier {
     }
   }
 
-  void clearSearch() {
-    _searchQuery = '';
-    _filteredCustomers = [];
+  void selectCustomer(CustomerModel? customer) {
+    _selectedCustomer = customer;
     notifyListeners();
   }
 
-  void selectCustomer(CustomerModel? customer) {
-    _selectedCustomer = customer;
+  void clearSearch() {
+    _searchQuery = '';
+    _filteredCustomers = [];
     notifyListeners();
   }
 

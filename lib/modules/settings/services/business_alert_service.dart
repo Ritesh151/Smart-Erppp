@@ -1,7 +1,7 @@
-import 'package:smarterp/core/models/notification_model.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/settings/services/app_intelligence_service.dart';
-import 'package:smarterp/modules/settings/services/notification_service.dart';
+import 'package:SmartERP/core/models/notification_model.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/settings/services/app_intelligence_service.dart';
+import 'package:SmartERP/modules/settings/services/notification_service.dart';
 
 class BusinessAlert {
   final String id;

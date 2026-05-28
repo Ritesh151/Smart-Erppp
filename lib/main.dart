@@ -1,90 +1,94 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' hide Provider, ChangeNotifierProvider, Consumer;
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:smarterp/core/constants/storage_keys.dart';
-import 'package:smarterp/core/routes/app_router.dart';
-import 'package:smarterp/core/services/auth_service.dart';
-import 'package:smarterp/core/services/mock_data_service.dart';
-import 'package:smarterp/core/storage/storage_service.dart';
-import 'package:smarterp/core/storage/preferences_service.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/auth/providers/auth_provider.dart';
-import 'package:smarterp/modules/settings/providers/theme_provider.dart';
-import 'package:smarterp/modules/products/repositories/product_repository.dart';
-import 'package:smarterp/modules/products/services/product_service.dart';
-import 'package:smarterp/modules/products/services/product_seed_service.dart';
-import 'package:smarterp/modules/products/providers/product_provider.dart';
-import 'package:smarterp/modules/finance/repositories/finance_repository.dart';
-import 'package:smarterp/modules/finance/services/finance_service.dart';
-import 'package:smarterp/modules/finance/providers/finance_provider.dart';
-import 'package:smarterp/modules/invoice/repositories/customer_repository.dart';
-import 'package:smarterp/modules/invoice/repositories/invoice_repository.dart';
-import 'package:smarterp/modules/invoice/repositories/payment_repository.dart';
-import 'package:smarterp/modules/invoice/services/customer_service.dart';
-import 'package:smarterp/modules/invoice/services/invoice_service.dart';
-import 'package:smarterp/modules/invoice/services/payment_service.dart';
-import 'package:smarterp/modules/invoice/services/pdf_service.dart';
-import 'package:smarterp/modules/invoice/providers/customer_provider.dart';
-import 'package:smarterp/modules/invoice/providers/invoice_provider.dart';
-import 'package:smarterp/modules/invoice/providers/payment_provider.dart';
-import 'package:smarterp/modules/transport/repositories/transport_repository.dart';
-import 'package:smarterp/modules/transport/repositories/vehicle_repository.dart';
-import 'package:smarterp/modules/transport/services/transport_service.dart';
-import 'package:smarterp/modules/transport/services/vehicle_service.dart';
-import 'package:smarterp/modules/transport/services/transport_status_service.dart';
-import 'package:smarterp/modules/transport/services/transport_search_service.dart';
-import 'package:smarterp/modules/transport/services/allocation_engine.dart';
-import 'package:smarterp/modules/transport/providers/transport_provider.dart';
-import 'package:smarterp/modules/transport/providers/vehicle_provider.dart';
-import 'package:smarterp/modules/transport/providers/transport_analytics_provider.dart';
-import 'package:smarterp/modules/payroll/repositories/employee_repository.dart';
-import 'package:smarterp/modules/payroll/repositories/attendance_repository.dart';
-import 'package:smarterp/modules/payroll/repositories/salary_repository.dart';
-import 'package:smarterp/modules/payroll/services/employee_service.dart';
-import 'package:smarterp/modules/payroll/services/attendance_service.dart';
-import 'package:smarterp/modules/payroll/services/salary_service.dart';
-import 'package:smarterp/modules/payroll/services/payroll_service.dart';
-import 'package:smarterp/modules/payroll/services/employee_search_service.dart';
-import 'package:smarterp/modules/payroll/services/employee_filter_service.dart';
-import 'package:smarterp/modules/payroll/services/salary_calculation_service.dart';
-import 'package:smarterp/modules/payroll/services/salary_payment_service.dart';
-import 'package:smarterp/modules/payroll/providers/employee_provider.dart';
-import 'package:smarterp/modules/payroll/providers/attendance_provider.dart';
-import 'package:smarterp/modules/payroll/providers/salary_provider.dart';
-import 'package:smarterp/modules/payroll/providers/payroll_provider.dart';
-import 'package:smarterp/modules/reports/repositories/report_repository.dart';
-import 'package:smarterp/modules/reports/repositories/sales_report_repository.dart';
-import 'package:smarterp/modules/reports/repositories/expense_report_repository.dart';
-import 'package:smarterp/modules/reports/repositories/payroll_report_repository.dart';
-import 'package:smarterp/modules/reports/services/report_service.dart';
-import 'package:smarterp/modules/reports/services/analytics_service.dart';
-import 'package:smarterp/modules/reports/services/business_intelligence_service.dart';
-import 'package:smarterp/modules/reports/services/report_export_service.dart';
-import 'package:smarterp/modules/reports/providers/report_provider.dart';
-import 'package:smarterp/modules/reports/providers/analytics_provider.dart';
-import 'package:smarterp/modules/reports/providers/business_intelligence_provider.dart';
-import 'package:smarterp/modules/settings/repositories/settings_repository.dart';
-import 'package:smarterp/modules/settings/repositories/notification_repository.dart';
-import 'package:smarterp/modules/settings/repositories/backup_repository.dart';
-import 'package:smarterp/modules/settings/services/settings_service.dart';
-import 'package:smarterp/modules/settings/services/theme_service.dart';
-import 'package:smarterp/modules/settings/services/notification_service.dart';
-import 'package:smarterp/modules/settings/services/preferences_service.dart' as settings_pref;
-import 'package:smarterp/modules/settings/services/date_format_service.dart';
-import 'package:smarterp/modules/settings/services/low_stock_service.dart';
-import 'package:smarterp/modules/settings/services/stock_alert_service.dart';
-import 'package:smarterp/modules/settings/services/salary_reminder_service.dart';
-import 'package:smarterp/modules/settings/services/backup_service.dart';
-import 'package:smarterp/modules/settings/services/restore_service.dart';
-import 'package:smarterp/modules/settings/services/data_export_service.dart';
-import 'package:smarterp/modules/settings/services/data_import_service.dart';
-import 'package:smarterp/modules/settings/services/app_intelligence_service.dart';
-import 'package:smarterp/modules/settings/services/business_alert_service.dart';
-import 'package:smarterp/modules/settings/services/settings_search_service.dart';
-import 'package:smarterp/modules/settings/services/settings_filter_service.dart';
-import 'package:smarterp/modules/settings/providers/settings_provider.dart';
-import 'package:smarterp/modules/settings/providers/notification_provider.dart';
-import 'package:smarterp/modules/settings/providers/preferences_provider.dart';
+import 'package:SmartERP/core/constants/storage_keys.dart';
+import 'package:SmartERP/core/routes/app_router.dart';
+import 'package:SmartERP/core/services/auth_service.dart';
+import 'package:SmartERP/core/storage/storage_service.dart';
+import 'package:SmartERP/core/storage/preferences_service.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/auth/providers/auth_provider.dart';
+import 'package:SmartERP/modules/settings/providers/theme_provider.dart';
+import 'package:SmartERP/modules/products/repositories/product_repository.dart';
+import 'package:SmartERP/modules/products/services/product_service.dart';
+import 'package:SmartERP/modules/products/services/product_seed_service.dart';
+import 'package:SmartERP/modules/dashboard/providers/dashboard_provider.dart';
+import 'package:SmartERP/modules/products/providers/product_provider.dart';
+import 'package:SmartERP/modules/finance/repositories/finance_repository.dart';
+import 'package:SmartERP/modules/finance/services/finance_service.dart';
+import 'package:SmartERP/modules/finance/providers/finance_provider.dart';
+import 'package:SmartERP/modules/expenses/repositories/expense_repository.dart';
+import 'package:SmartERP/modules/expenses/services/expense_service.dart';
+import 'package:SmartERP/modules/expenses/providers/expense_provider.dart';
+import 'package:SmartERP/modules/invoice/repositories/customer_repository.dart';
+import 'package:SmartERP/modules/invoice/repositories/invoice_repository.dart';
+import 'package:SmartERP/modules/invoice/repositories/payment_repository.dart';
+import 'package:SmartERP/modules/invoice/services/customer_service.dart';
+import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
+import 'package:SmartERP/modules/invoice/services/payment_service.dart';
+import 'package:SmartERP/modules/invoice/services/pdf_service.dart';
+import 'package:SmartERP/modules/invoice/providers/customer_provider.dart';
+import 'package:SmartERP/modules/invoice/providers/invoice_provider.dart';
+import 'package:SmartERP/modules/invoice/providers/payment_provider.dart';
+import 'package:SmartERP/modules/transport/repositories/transport_repository.dart';
+import 'package:SmartERP/modules/transport/repositories/vehicle_repository.dart';
+import 'package:SmartERP/modules/transport/services/transport_service.dart';
+import 'package:SmartERP/modules/transport/services/vehicle_service.dart';
+import 'package:SmartERP/modules/transport/services/transport_status_service.dart';
+import 'package:SmartERP/modules/transport/services/transport_search_service.dart';
+import 'package:SmartERP/modules/transport/services/allocation_engine.dart';
+import 'package:SmartERP/modules/transport/providers/transport_provider.dart';
+import 'package:SmartERP/modules/transport/providers/vehicle_provider.dart';
+import 'package:SmartERP/modules/transport/providers/transport_analytics_provider.dart';
+import 'package:SmartERP/modules/payroll/repositories/employee_repository.dart';
+import 'package:SmartERP/modules/payroll/repositories/attendance_repository.dart';
+import 'package:SmartERP/modules/payroll/repositories/salary_repository.dart';
+import 'package:SmartERP/modules/payroll/services/employee_service.dart';
+import 'package:SmartERP/modules/payroll/services/attendance_service.dart';
+import 'package:SmartERP/modules/payroll/services/salary_service.dart';
+import 'package:SmartERP/modules/payroll/services/payroll_service.dart';
+import 'package:SmartERP/modules/payroll/services/employee_search_service.dart';
+import 'package:SmartERP/modules/payroll/services/employee_filter_service.dart';
+import 'package:SmartERP/modules/payroll/services/salary_calculation_service.dart';
+import 'package:SmartERP/modules/payroll/services/salary_payment_service.dart';
+import 'package:SmartERP/modules/payroll/providers/employee_provider.dart';
+import 'package:SmartERP/modules/payroll/providers/attendance_provider.dart';
+import 'package:SmartERP/modules/payroll/providers/salary_provider.dart';
+import 'package:SmartERP/modules/payroll/providers/payroll_provider.dart';
+import 'package:SmartERP/modules/reports/repositories/report_repository.dart';
+import 'package:SmartERP/modules/reports/repositories/sales_report_repository.dart';
+import 'package:SmartERP/modules/reports/repositories/expense_report_repository.dart';
+import 'package:SmartERP/modules/reports/repositories/payroll_report_repository.dart';
+import 'package:SmartERP/modules/reports/services/report_service.dart';
+import 'package:SmartERP/modules/reports/services/analytics_service.dart';
+import 'package:SmartERP/modules/reports/services/business_intelligence_service.dart';
+import 'package:SmartERP/modules/reports/services/report_export_service.dart';
+import 'package:SmartERP/modules/reports/providers/report_provider.dart';
+import 'package:SmartERP/modules/reports/providers/analytics_provider.dart';
+import 'package:SmartERP/modules/reports/providers/business_intelligence_provider.dart';
+import 'package:SmartERP/modules/settings/repositories/settings_repository.dart';
+import 'package:SmartERP/modules/settings/repositories/notification_repository.dart';
+import 'package:SmartERP/modules/settings/repositories/backup_repository.dart';
+import 'package:SmartERP/modules/settings/services/settings_service.dart';
+import 'package:SmartERP/modules/settings/services/theme_service.dart';
+import 'package:SmartERP/modules/settings/services/notification_service.dart';
+import 'package:SmartERP/modules/settings/services/preferences_service.dart' as settings_pref;
+import 'package:SmartERP/modules/settings/services/date_format_service.dart';
+import 'package:SmartERP/modules/settings/services/low_stock_service.dart';
+import 'package:SmartERP/modules/settings/services/stock_alert_service.dart';
+import 'package:SmartERP/modules/settings/services/salary_reminder_service.dart';
+import 'package:SmartERP/modules/settings/services/backup_service.dart';
+import 'package:SmartERP/modules/settings/services/restore_service.dart';
+import 'package:SmartERP/modules/settings/services/data_export_service.dart';
+import 'package:SmartERP/modules/settings/services/data_import_service.dart';
+import 'package:SmartERP/modules/settings/services/app_intelligence_service.dart';
+import 'package:SmartERP/modules/settings/services/business_alert_service.dart';
+import 'package:SmartERP/modules/settings/services/settings_search_service.dart';
+import 'package:SmartERP/modules/settings/services/settings_filter_service.dart';
+import 'package:SmartERP/modules/settings/providers/settings_provider.dart';
+import 'package:SmartERP/modules/settings/providers/notification_provider.dart';
+import 'package:SmartERP/modules/settings/providers/preferences_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -109,33 +113,6 @@ Future<void> _initializeApp() async {
 
   final preferencesService = await PreferencesService.getInstance();
   Logger.success('Preferences service initialized');
-
-  // Pre-populate mock data if Hive boxes are empty
-  try {
-    final productStorage = StorageService<Map<dynamic, dynamic>>(StorageKeys.productsBox);
-    await productStorage.init();
-    final salesStorage = StorageService<Map<dynamic, dynamic>>(StorageKeys.salesBox);
-    await salesStorage.init();
-    final purchaseStorage = StorageService<Map<dynamic, dynamic>>(StorageKeys.purchaseBox);
-    await purchaseStorage.init();
-    final expensesStorage = StorageService<Map<dynamic, dynamic>>(StorageKeys.expensesBox);
-    await expensesStorage.init();
-
-    final productRepo = ProductRepository(productStorage);
-    final financeRepo = FinanceRepository(
-      salesStorage: salesStorage,
-      purchaseStorage: purchaseStorage,
-      expensesStorage: expensesStorage,
-    );
-
-    await MockDataService.populateIfEmpty(
-      productRepository: productRepo,
-      financeRepository: financeRepo,
-    );
-    Logger.success('Mock data initialized successfully');
-  } catch (e, stack) {
-    Logger.error('Failed to pre-populate mock data', e, stack);
-  }
 }
 
 Future<void> _initializeHiveBoxes() async {
@@ -233,8 +210,15 @@ Future<void> _initializeHiveBoxes() async {
   }
 }
 
-class SmartERPApp extends StatelessWidget {
+class SmartERPApp extends StatefulWidget {
   const SmartERPApp({super.key});
+
+  @override
+  State<SmartERPApp> createState() => _SmartERPAppState();
+}
+
+class _SmartERPAppState extends State<SmartERPApp> {
+  AppRouter? _appRouter;
 
   @override
   Widget build(BuildContext context) {
@@ -276,7 +260,7 @@ class SmartERPApp extends StatelessWidget {
                 context.read<AuthService>(),
               )..initialize(),
             ),
-            ChangeNotifierProvider<ThemeProvider>(
+              ChangeNotifierProvider<ThemeProvider>(
               create: (context) => ThemeProvider(preferencesService)
                 ..initialize(),
             ),
@@ -298,10 +282,19 @@ class SmartERPApp extends StatelessWidget {
               ),
             ),
             ChangeNotifierProvider<ProductProvider>(
-              create: (context) => ProductProvider(
-                context.read<ProductService>(),
-                context.read<ProductSeedService>(),
-              )..initializeProducts(),
+              create: (context) {
+                final provider = ProductProvider(
+                  context.read<ProductService>(),
+                  context.read<ProductSeedService>(),
+                );
+                provider.onDataChanged = () {
+                  try {
+                    context.read<DashboardProvider>().refresh();
+                  } catch (_) {}
+                };
+                provider.initializeProducts();
+                return provider;
+              },
             ),
 
             // Finance Module Services & State
@@ -317,15 +310,29 @@ class SmartERPApp extends StatelessWidget {
                 );
               },
             ),
-            Provider<FinanceService>(
-              create: (context) => FinanceService(
-                financeRepository: context.read<FinanceRepository>(),
-                productRepository: context.read<ProductRepository>(),
-              ),
+
+            // Expense Module Services & State
+            Provider<ExpenseRepository>(
+              create: (_) {
+                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.expensesBox)..init();
+                return ExpenseRepository(storage);
+              },
             ),
-            ChangeNotifierProvider<FinanceProvider>(
-              create: (context) => FinanceProvider(context.read<FinanceService>())..loadTransactions(),
+            Provider<ExpenseService>(
+              create: (context) => ExpenseService(context.read<ExpenseRepository>()),
             ),
+            ChangeNotifierProvider<ExpenseProvider>(
+              create: (context) {
+                final provider = ExpenseProvider(context.read<ExpenseService>());
+                provider.onDataChanged = () {
+                  try {
+                    context.read<DashboardProvider>().refresh();
+                  } catch (_) {}
+                };
+                return provider;
+              },
+            ),
+
 
             // Invoice Module Services & State
             Provider<CustomerRepository>(
@@ -364,7 +371,10 @@ class SmartERPApp extends StatelessWidget {
               ),
             ),
             Provider<PaymentService>(
-              create: (context) => PaymentService(context.read<PaymentRepository>()),
+              create: (context) => PaymentService(
+                context.read<PaymentRepository>(),
+                context.read<InvoiceRepository>(),
+              ),
             ),
             ChangeNotifierProvider<CustomerProvider>(
               create: (context) {
@@ -377,7 +387,15 @@ class SmartERPApp extends StatelessWidget {
               },
             ),
             ChangeNotifierProvider<InvoiceProvider>(
-              create: (context) => InvoiceProvider(service: context.read<InvoiceService>()),
+              create: (context) {
+                final provider = InvoiceProvider(service: context.read<InvoiceService>());
+                provider.onDataChanged = () {
+                  try {
+                    context.read<DashboardProvider>().refresh();
+                  } catch (_) {}
+                };
+                return provider;
+              },
             ),
             ChangeNotifierProvider<PaymentProvider>(
               create: (context) => PaymentProvider(context.read<PaymentService>()),
@@ -458,6 +476,28 @@ class SmartERPApp extends StatelessWidget {
             Provider<EmployeeService>(
               create: (context) => EmployeeService(context.read<EmployeeRepository>()),
             ),
+
+            // Finance Module Services & State
+            Provider<FinanceService>(
+              create: (context) => FinanceService(
+                financeRepository: context.read<FinanceRepository>(),
+                invoiceService: context.read<InvoiceService>(),
+                productService: context.read<ProductService>(),
+                employeeService: context.read<EmployeeService>(),
+                expenseRepository: context.read<ExpenseRepository>(),
+              ),
+            ),
+            ChangeNotifierProvider<FinanceProvider>(
+              create: (context) => FinanceProvider(context.read<FinanceService>())..loadTransactions(),
+            ),
+            ChangeNotifierProvider<DashboardProvider>(
+              create: (context) => DashboardProvider(
+                invoiceService: context.read<InvoiceService>(),
+                productService: context.read<ProductService>(),
+                financeService: context.read<FinanceService>(),
+              )..refresh(),
+            ),
+
             Provider<AttendanceService>(
               create: (context) => AttendanceService(context.read<AttendanceRepository>()),
             ),
@@ -746,14 +786,16 @@ class SmartERPApp extends StatelessWidget {
           ],
           child: Consumer<ThemeProvider>(
             builder: (context, themeProvider, _) {
-              final authService = context.read<AuthService>();
-              final appRouter = AppRouter(authService);
+              final authProvider = context.read<AuthProvider>();
+              _appRouter ??= AppRouter(authProvider);
 
-              return MaterialApp.router(
-                title: 'SmartERP',
-                debugShowCheckedModeBanner: false,
-                theme: themeProvider.themeData,
-                routerConfig: appRouter.router,
+              return ProviderScope(
+                child: MaterialApp.router(
+                  title: 'SmartERP',
+                  debugShowCheckedModeBanner: false,
+                  theme: themeProvider.themeData,
+                  routerConfig: _appRouter!.router,
+                ),
               );
             },
           ),

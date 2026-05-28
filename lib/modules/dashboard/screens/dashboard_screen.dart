@@ -1,153 +1,340 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:smarterp/core/constants/app_constants.dart';
-import 'package:smarterp/core/extensions/context_extensions.dart';
-import 'package:smarterp/core/extensions/date_extensions.dart';
-import 'package:smarterp/core/theme/theme_extensions.dart';
-import 'package:smarterp/core/widgets/app_shell.dart';
-import 'package:smarterp/core/widgets/app_card.dart';
-import 'package:smarterp/core/widgets/dashboard_card.dart';
-import 'package:smarterp/core/models/product_model.dart';
-import 'package:smarterp/core/models/transaction_model.dart';
-import 'package:smarterp/modules/products/providers/product_provider.dart';
-import 'package:smarterp/modules/finance/providers/finance_provider.dart';
+import 'package:SmartERP/core/extensions/context_extensions.dart';
+import 'package:SmartERP/core/extensions/date_extensions.dart';
+import 'package:SmartERP/core/routes/app_routes.dart';
+import 'package:SmartERP/core/theme/theme_extensions.dart';
+import 'package:SmartERP/core/models/product_model.dart';
+import 'package:SmartERP/core/models/transaction_model.dart';
+import 'package:SmartERP/modules/dashboard/providers/dashboard_provider.dart';
+import 'package:SmartERP/modules/products/providers/product_provider.dart';
+import 'package:SmartERP/modules/finance/providers/finance_provider.dart';
+
+// ── Shared brand tokens (same as LoginScreen & SidebarMenu) ──────────────────
+class _T {
+  static const gradientStart = Color(0xFF4F6EF7);
+  static const gradientEnd   = Color(0xFF7C3AED);
+  static const bg            = Color(0xFFF5F7FA);
+  static const white         = Colors.white;
+  static const textDark      = Color(0xFF111827);
+  static const textMid       = Color(0xFF374151);
+  static const textMuted     = Color(0xFF6B7280);
+  static const textLight     = Color(0xFF9CA3AF);
+  static const divider       = Color(0xFFE5E7EB);
+
+  static const Gradient brandGradient = LinearGradient(
+    colors: [gradientStart, gradientEnd],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // Card decoration used everywhere
+  static BoxDecoration card({double radius = 16}) => BoxDecoration(
+        color: white,
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E2A6E).withOpacity(0.06),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      );
+}
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.theme;
-    final colorScheme = context.colorScheme;
-    final appTheme = context.appTheme;
+    final appTheme         = context.appTheme;
+    final productProvider  = context.watch<ProductProvider>();
+    final financeProvider  = context.watch<FinanceProvider>();
+    final dashboardProvider = context.watch<DashboardProvider>();
 
-    // Listen to providers for live recalculation
-    final productProvider = context.watch<ProductProvider>();
-    final financeProvider = context.watch<FinanceProvider>();
+    final totalInventory      = productProvider.totalInventoryValue;
+    final financeSummary      = financeProvider.summary;
+    final recentTransactions  = financeProvider.transactions.take(5).toList();
+    final recentProducts      = productProvider.products.take(5).toList();
 
-    final totalInventory = productProvider.totalInventoryValue;
-    final financeSummary = financeProvider.summary;
-
-    final recentTransactions = financeProvider.transactions.take(5).toList();
-    final recentProducts = productProvider.products.take(5).toList();
-
-    return AppShell(
-      child: RefreshIndicator(
-        onRefresh: () async {
-          await productProvider.loadProducts();
-          await financeProvider.loadTransactions();
-        },
-        child: SafeArea(
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.all(context.isMobile ? 16.0 : 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildWelcomeSection(context),
-                SizedBox(height: context.isMobile ? 16 : 24),
-                _buildMetricsGrid(context, financeSummary, totalInventory, appTheme),
-                SizedBox(height: context.isMobile ? 16 : 24),
-                _buildQuickAccessSection(context),
-                SizedBox(height: context.isMobile ? 16 : 24),
-                _buildPaymentDueMonitoring(context, appTheme),
-                SizedBox(height: context.isMobile ? 16 : 24),
-                if (context.isDesktop)
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 6,
-                          child: _buildChartsSection(context, financeProvider.transactions, productProvider.products, appTheme),
-                        ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          flex: 4,
-                          child: _buildRecentActivities(context, recentTransactions, recentProducts, appTheme),
-                        ),
-                      ],
+    return RefreshIndicator(
+      color: _T.gradientStart,
+      onRefresh: () async {
+        await Future.wait([
+          productProvider.loadProducts(),
+          financeProvider.loadTransactions(),
+          dashboardProvider.refresh(),
+        ]);
+      },
+      child: SafeArea(
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.all(context.isMobile ? 16.0 : 24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildWelcomeSection(context),
+              SizedBox(height: context.isMobile ? 16 : 24),
+              _buildMetricsGrid(context, financeSummary, totalInventory, appTheme),
+              SizedBox(height: context.isMobile ? 16 : 24),
+              _buildQuickAccessSection(context),
+              SizedBox(height: context.isMobile ? 16 : 24),
+              _buildPaymentDueMonitoring(context, dashboardProvider, appTheme),
+              SizedBox(height: context.isMobile ? 16 : 24),
+              if (context.isDesktop)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 6,
+                      child: _buildChartsSection(
+                        context,
+                        financeProvider.transactions,
+                        productProvider.products,
+                        appTheme,
+                      ),
                     ),
-                  )
-                else ...[
-                  _buildChartsSection(context, financeProvider.transactions, productProvider.products, appTheme),
-                  SizedBox(height: context.isMobile ? 16 : 24),
-                  _buildRecentActivities(context, recentTransactions, recentProducts, appTheme),
-                ],
-                // Add bottom padding for safe scrolling
+                    const SizedBox(width: 24),
+                    Expanded(
+                      flex: 4,
+                      child: _buildRecentActivities(
+                        context,
+                        recentTransactions,
+                        recentProducts,
+                        appTheme,
+                      ),
+                    ),
+                  ],
+                )
+              else ...[
+                _buildChartsSection(
+                  context,
+                  financeProvider.transactions,
+                  productProvider.products,
+                  appTheme,
+                ),
                 SizedBox(height: context.isMobile ? 16 : 24),
+                _buildRecentActivities(
+                  context,
+                  recentTransactions,
+                  recentProducts,
+                  appTheme,
+                ),
               ],
-            ),
+              SizedBox(height: context.isMobile ? 16 : 24),
+            ],
           ),
         ),
       ),
     );
   }
 
+  // ── Welcome section ─────────────────────────────────────────────────────────
   Widget _buildWelcomeSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final now  = DateTime.now();
+    final hour = now.hour;
+    final greeting = hour < 12
+        ? 'Good morning'
+        : hour < 17
+            ? 'Good afternoon'
+            : 'Good evening';
+
+    return Row(
       children: [
-        Text(
-          'Welcome back, Ritesh!',
-          style: context.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$greeting, ',
+                      style: TextStyle(
+                        fontSize: context.isMobile ? 20 : 24,
+                        fontWeight: FontWeight.w400,
+                        color: _T.textMuted,
+                      ),
+                    ),
+                    const TextSpan(
+                      text: 'Siddhivinayak Enterprise',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: _T.textDark,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const TextSpan(
+                      text: ' 👋',
+                      style: TextStyle(fontSize: 22),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                "Here's the status of your business and inventory summary today.",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: _T.textMuted,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Here\'s the status of your business and inventory summary today.',
-          style: context.textTheme.bodyLarge?.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.6),
+
+        // Date badge
+        if (!context.isMobile)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: _T.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _T.divider),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1E2A6E).withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [_T.gradientStart, _T.gradientEnd],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.calendar_today_rounded,
+                      color: _T.white, size: 14),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  '${now.day} ${_monthName(now.month)}, ${now.year}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _T.textDark,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
       ],
-    ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.05, end: 0);
+    )
+        .animate()
+        .fadeIn(duration: 400.ms)
+        .slideX(begin: -0.05, end: 0);
   }
 
+  String _monthName(int m) => const [
+        '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ][m];
+
+  String _formatAmount(double amount) {
+    if (amount >= 10000000) {
+      return '${(amount / 10000000).toStringAsFixed(1)}Cr';
+    } else if (amount >= 100000) {
+      return '${(amount / 100000).toStringAsFixed(1)}L';
+    } else if (amount >= 1000) {
+      return '${(amount / 1000).toStringAsFixed(1)}K';
+    }
+    return amount.toStringAsFixed(0);
+  }
+
+  String _formatCompact(double amount) {
+    if (amount.abs() >= 10000000) {
+      return '${(amount / 10000000).toStringAsFixed(2)}Cr';
+    } else if (amount.abs() >= 100000) {
+      return '${(amount / 100000).toStringAsFixed(2)}L';
+    } else if (amount.abs() >= 1000) {
+      return '${(amount / 1000).toStringAsFixed(1)}K';
+    }
+    return amount.toStringAsFixed(0);
+  }
+
+  // ── Metrics grid ─────────────────────────────────────────────────────────────
   Widget _buildMetricsGrid(
     BuildContext context,
     dynamic financeSummary,
     double totalInventoryValue,
     AppThemeExtension appTheme,
   ) {
-    final double sales = financeSummary.totalSales;
-    final double profit = financeSummary.netProfit;
-    final double purchases = financeSummary.totalPurchases;
-    final margin = financeSummary.profitMargin;
+    final db = context.watch<DashboardProvider>();
+    final sales     = db.totalSales > 0 ? db.totalSales : (financeSummary.totalSales as double);
+    final profit    = db.netProfit;
+    final purchases = financeSummary.totalPurchases as double;
+    final margin    = sales > 0 ? (profit / sales) * 100 : 0;
 
     final metrics = [
       {
-        'title': 'Total Sales',
-        'value': '₹${sales.toStringAsFixed(0)}',
-        'icon': Icons.trending_up,
-        'color': appTheme.successColor,
-        'subtitle': 'Total sales invoices',
+        'title'   : 'Total Sales',
+        'value'   : '₹${_formatCompact(sales)}',
+        'icon'    : Icons.trending_up_rounded,
+        'gradient': const LinearGradient(
+          colors: [Color(0xFF10B981), Color(0xFF059669)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        'bg'      : const Color(0xFFECFDF5),
+        'subtitle': 'From paid invoices',
       },
       {
-        'title': 'Net Profit',
-        'value': '₹${profit.toStringAsFixed(0)}',
-        'icon': Icons.account_balance_wallet,
-        'color': profit >= 0 ? appTheme.successColor : Colors.red,
+        'title'   : 'Net Profit',
+        'value'   : '₹${_formatCompact(profit)}',
+        'icon'    : Icons.account_balance_wallet_rounded,
+        'gradient': profit >= 0
+            ? const LinearGradient(
+                colors: [Color(0xFF4F6EF7), Color(0xFF7C3AED)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : const LinearGradient(
+                colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        'bg'      : profit >= 0
+            ? const Color(0xFFEEF2FF)
+            : const Color(0xFFFEF2F2),
         'subtitle': '${profit >= 0 ? '+' : ''}${margin.toStringAsFixed(1)}% margin',
       },
       {
-        'title': 'Total Inventory Value',
-        'value': '₹${totalInventoryValue.toStringAsFixed(0)}',
-        'icon': Icons.inventory_2,
-        'color': Colors.purple,
-        'subtitle': 'Asset stock price x qty',
+        'title'   : 'Inventory Value',
+        'value'   : '₹${_formatCompact(totalInventoryValue)}',
+        'icon'    : Icons.inventory_2_rounded,
+        'gradient': const LinearGradient(
+          colors: [Color(0xFF7C3AED), Color(0xFF6D28D9)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        'bg'      : const Color(0xFFF5F3FF),
+        'subtitle': '${db.lowStockCount} low stock items',
       },
       {
-        'title': 'Total Purchases',
-        'value': '₹${purchases.toStringAsFixed(0)}',
-        'icon': Icons.shopping_cart,
-        'color': appTheme.warningColor,
+        'title'   : 'Total Purchases',
+        'value'   : '₹${purchases.toStringAsFixed(0)}',
+        'icon'    : Icons.shopping_cart_rounded,
+        'gradient': const LinearGradient(
+          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        'bg'      : const Color(0xFFFFFBEB),
         'subtitle': 'Bulk supplier purchases',
       },
     ];
@@ -155,10 +342,10 @@ class DashboardScreen extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final crossAxisCount = context.isMobile ? 2 : 4;
-        final spacing = context.isMobile ? 12.0 : 16.0;
+        final spacing        = context.isMobile ? 12.0 : 16.0;
         final availableWidth = constraints.maxWidth - (spacing * (crossAxisCount - 1));
-        final itemWidth = availableWidth / crossAxisCount;
-        
+        final itemWidth      = availableWidth / crossAxisCount;
+
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -170,64 +357,159 @@ class DashboardScreen extends StatelessWidget {
             childAspectRatio: _calculateMetricCardAspectRatio(context, itemWidth),
           ),
           itemBuilder: (context, index) {
-            final metric = metrics[index];
-            return DashboardCard(
-              title: metric['title'] as String,
-              value: metric['value'] as String,
-              icon: metric['icon'] as IconData,
-              iconColor: metric['color'] as Color,
-              backgroundColor: metric['color'] as Color,
-              subtitle: metric['subtitle'] as String,
-              onTap: () {},
-            ).animate().fadeIn(delay: (index * 80).ms, duration: 300.ms).slideY(begin: 0.1, end: 0);
+            final m = metrics[index];
+            return _buildMetricCard(
+              context: context,
+              title   : m['title']    as String,
+              value   : m['value']    as String,
+              subtitle: m['subtitle'] as String,
+              icon    : m['icon']     as IconData,
+              gradient: m['gradient'] as LinearGradient,
+              bgColor : m['bg']       as Color,
+              onTap   : () {
+                switch (index) {
+                  case 0: context.go(AppRoutes.invoices); break;
+                  case 1: context.go(AppRoutes.finance);  break;
+                  case 2: context.go(AppRoutes.products); break;
+                  case 3: context.go(AppRoutes.finance);  break;
+                }
+              },
+            )
+                .animate()
+                .fadeIn(delay: (index * 80).ms, duration: 300.ms)
+                .slideY(begin: 0.12, end: 0);
           },
         );
       },
     );
   }
 
-  double _calculateMetricCardAspectRatio(BuildContext context, double itemWidth) {
-    // Calculate aspect ratio based on content requirements
-    if (context.isMobile) {
-      return itemWidth > 150 ? 1.1 : 0.9;
-    } else if (context.isTablet) {
-      return 1.2;
-    } else {
-      return 1.3;
-    }
+  Widget _buildMetricCard({
+    required BuildContext context,
+    required String title,
+    required String value,
+    required String subtitle,
+    required IconData icon,
+    required LinearGradient gradient,
+    required Color bgColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(context.isMobile ? 14 : 18),
+        decoration: BoxDecoration(
+          color: _T.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _T.divider, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1E2A6E).withOpacity(0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: context.isMobile ? 36 : 42,
+                  height: context.isMobile ? 36 : 42,
+                  decoration: BoxDecoration(
+                    gradient: gradient,
+                    borderRadius: BorderRadius.circular(11),
+                    boxShadow: [
+                      BoxShadow(
+                        color: gradient.colors.first.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon,
+                      color: _T.white,
+                      size: context.isMobile ? 18 : 20),
+                ),
+                Icon(Icons.arrow_outward_rounded,
+                    size: 14, color: _T.textLight),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: context.isMobile ? 18 : 22,
+                fontWeight: FontWeight.w800,
+                color: _T.textDark,
+                letterSpacing: -0.5,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: context.isMobile ? 11 : 12,
+                fontWeight: FontWeight.w600,
+                color: _T.textMuted,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: const TextStyle(fontSize: 10, color: _T.textLight),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  Widget _buildQuickAccessSection(BuildContext context) {
-    final theme = context.theme;
-    final colorScheme = context.colorScheme;
+  double _calculateMetricCardAspectRatio(BuildContext context, double itemWidth) {
+    if (context.isMobile) return itemWidth > 150 ? 1.1 : 0.9;
+    if (context.isTablet) return 1.2;
+    return 1.3;
+  }
 
+  // ── Quick access ─────────────────────────────────────────────────────────────
+  Widget _buildQuickAccessSection(BuildContext context) {
     final items = [
-      {'title': 'Create Invoice', 'icon': Icons.receipt_long, 'route': '/invoices', 'color': colorScheme.primary, 'desc': 'Bill customers'},
-      {'title': 'Manage Products', 'icon': Icons.inventory_2_outlined, 'route': '/products', 'color': Colors.teal, 'desc': 'Adjust inventory'},
-      {'title': 'Purchase', 'icon': Icons.shopping_bag_outlined, 'route': '/finance', 'color': Colors.orange, 'desc': 'Log supplier stock'},
-      {'title': 'Transport', 'icon': Icons.local_shipping_outlined, 'route': '/transport', 'color': Colors.indigo, 'desc': 'Logistics & fuel'},
-      {'title': 'Reports', 'icon': Icons.assessment_outlined, 'route': '/reports', 'color': Colors.pink, 'desc': 'Business analysis'},
-      {'title': 'Payroll', 'icon': Icons.people_outline, 'route': '/payroll', 'color': Colors.blueGrey, 'desc': 'Staff salaries'},
+      {'title': 'Create Invoice',    'icon': Icons.receipt_long_rounded,       'route': '/invoices',  'color': _T.gradientStart,        'desc': 'Bill customers'},
+      {'title': 'Manage Products',   'icon': Icons.inventory_2_rounded,        'route': '/products',  'color': const Color(0xFF0D9488), 'desc': 'Adjust inventory'},
+      {'title': 'Purchase',          'icon': Icons.shopping_bag_rounded,       'route': '/finance',   'color': const Color(0xFFF59E0B), 'desc': 'Log supplier stock'},
+      {'title': 'Transport',         'icon': Icons.local_shipping_rounded,     'route': '/transport', 'color': const Color(0xFF6366F1), 'desc': 'Logistics & fuel'},
+      {'title': 'Reports',           'icon': Icons.assessment_rounded,         'route': '/reports',   'color': const Color(0xFFEC4899), 'desc': 'Business analysis'},
+      {'title': 'Payroll',           'icon': Icons.people_rounded,             'route': '/payroll',   'color': const Color(0xFF64748B), 'desc': 'Staff salaries'},
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'Quick Access Engine',
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        _buildSectionHeader(
+          context,
+          title   : 'Quick Access',
+          subtitle: 'Navigate to key modules instantly',
+          icon    : Icons.bolt_rounded,
         ),
-        SizedBox(height: context.isMobile ? 8 : 12),
+        SizedBox(height: context.isMobile ? 10 : 14),
         LayoutBuilder(
           builder: (context, constraints) {
             final crossAxisCount = _getQuickAccessCrossAxisCount(context);
-            final spacing = context.isMobile ? 12.0 : 16.0;
+            final spacing        = context.isMobile ? 12.0 : 14.0;
             final availableWidth = constraints.maxWidth - (spacing * (crossAxisCount - 1));
-            final itemWidth = availableWidth / crossAxisCount;
-            
+            final itemWidth      = availableWidth / crossAxisCount;
+
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -241,11 +523,11 @@ class DashboardScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final item = items[index];
                 return _HoverQuickActionCard(
-                  title: item['title'] as String,
-                  description: item['desc'] as String,
-                  icon: item['icon'] as IconData,
-                  color: item['color'] as Color,
-                  onTap: () => context.go(item['route'] as String),
+                  title      : item['title']       as String,
+                  description: item['desc']        as String,
+                  icon       : item['icon']        as IconData,
+                  color      : item['color']       as Color,
+                  onTap      : () => context.go(item['route'] as String),
                 );
               },
             );
@@ -255,116 +537,85 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  int _getQuickAccessCrossAxisCount(BuildContext context) {
+  int    _getQuickAccessCrossAxisCount(BuildContext context) {
     if (context.isMobile) return 2;
     if (context.isTablet) return 3;
     return 6;
   }
 
   double _calculateQuickAccessAspectRatio(BuildContext context, double itemWidth) {
-    if (context.isMobile) {
-      return itemWidth > 140 ? 1.3 : 1.1;
-    } else if (context.isTablet) {
-      return 1.4;
-    } else {
-      return 1.5;
-    }
+    if (context.isMobile) return itemWidth > 140 ? 1.1 : 0.9;
+    if (context.isTablet) return 1.2;
+    return 1.3;
   }
 
-  Widget _buildPaymentDueMonitoring(BuildContext context, AppThemeExtension appTheme) {
-    final theme = context.theme;
-    final colorScheme = context.colorScheme;
-
+  // ── Payment due monitoring ────────────────────────────────────────────────
+  Widget _buildPaymentDueMonitoring(
+      BuildContext context, DashboardProvider dp, AppThemeExtension appTheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'Payment Due Monitoring',
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        _buildSectionHeader(
+          context,
+          title   : 'Payment Due Monitoring',
+          subtitle: 'Outstanding & upcoming collections',
+          icon    : Icons.account_balance_rounded,
         ),
-        SizedBox(height: context.isMobile ? 8 : 12),
+        SizedBox(height: context.isMobile ? 10 : 14),
         LayoutBuilder(
           builder: (context, constraints) {
+            final cards = [
+              _buildDueCard(
+                context,
+                title   : 'Overdue Payments',
+                amount  : '₹${_formatAmount(dp.overdueAmount)}',
+                count   : '${dp.overdueCount} invoices',
+                icon    : Icons.error_outline_rounded,
+                color   : const Color(0xFFEF4444),
+                progress: dp.overdueProgress,
+              ),
+              
+              _buildDueCard(
+                context,
+                title   : 'Due Soon (7 Days)',
+                amount  : '₹${_formatAmount(dp.dueSoonAmount)}',
+                count   : '${dp.dueSoonCount} invoices',
+                icon    : Icons.warning_amber_rounded,
+                color   : const Color(0xFFF59E0B),
+                progress: dp.dueSoonProgress,
+              ),
+              _buildDueCard(
+                context,
+                title   : 'Paid This Month',
+                amount  : '₹${_formatAmount(dp.paidThisMonthAmount)}',
+                count   : '${dp.paidThisMonthCount} invoices',
+                icon    : Icons.check_circle_outline_rounded,
+                color   : const Color(0xFF10B981),
+                progress: dp.paidThisMonthProgress,
+              ),
+            ];
+
             if (context.isMobile) {
               return Column(
                 children: [
-                  _buildDueCard(
-                    context,
-                    title: 'Overdue Payments',
-                    amount: '₹1,23,450',
-                    count: '5 invoices',
-                    icon: Icons.error_outline,
-                    color: Colors.red,
-                    progress: 0.25,
-                  ),
+                  cards[0],
                   const SizedBox(height: 12),
-                  _buildDueCard(
-                    context,
-                    title: 'Due Soon (7 Days)',
-                    amount: '₹2,45,670',
-                    count: '12 invoices',
-                    icon: Icons.warning_amber_outlined,
-                    color: Colors.orange,
-                    progress: 0.50,
-                  ),
+                  cards[1],
                   const SizedBox(height: 12),
-                  _buildDueCard(
-                    context,
-                    title: 'Paid This Month',
-                    amount: '₹8,90,120',
-                    count: '45 invoices',
-                    icon: Icons.check_circle_outline,
-                    color: appTheme.successColor ?? Colors.green,
-                    progress: 0.78,
-                  ),
+                  cards[2],
                 ],
               );
-            } else {
-              return IntrinsicHeight(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildDueCard(
-                        context,
-                        title: 'Overdue Payments',
-                        amount: '₹1,23,450',
-                        count: '5 invoices',
-                        icon: Icons.error_outline,
-                        color: Colors.red,
-                        progress: 0.25,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildDueCard(
-                        context,
-                        title: 'Due Soon (7 Days)',
-                        amount: '₹2,45,670',
-                        count: '12 invoices',
-                        icon: Icons.warning_amber_outlined,
-                        color: Colors.orange,
-                        progress: 0.50,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildDueCard(
-                        context,
-                        title: 'Paid This Month',
-                        amount: '₹8,90,120',
-                        count: '45 invoices',
-                        icon: Icons.check_circle_outline,
-                        color: appTheme.successColor ?? Colors.green,
-                        progress: 0.78,
-                      ),
-                    ),
-                  ],
-                ),
-              );
             }
+            return Row(
+              children: [
+                Expanded(child: cards[0]),
+                const SizedBox(width: 16),
+                Expanded(child: cards[1]),
+                const SizedBox(width: 16),
+                Expanded(child: cards[2]),
+              ],
+            );
           },
         ),
       ],
@@ -380,8 +631,20 @@ class DashboardScreen extends StatelessWidget {
     required Color color,
     required double progress,
   }) {
-    final colorScheme = context.colorScheme;
-    return AppCard(
+    return Container(
+      padding: EdgeInsets.all(context.isMobile ? 14 : 18),
+      decoration: BoxDecoration(
+        color: _T.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.07),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -393,16 +656,23 @@ class DashboardScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: color, size: 20),
+                child: Icon(icon, color: color, size: 18),
               ),
-              Flexible(
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 child: Text(
                   count,
-                  style: TextStyle(fontSize: 11, color: colorScheme.onSurface.withOpacity(0.5)),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
                 ),
               ),
             ],
@@ -410,28 +680,43 @@ class DashboardScreen extends StatelessWidget {
           SizedBox(height: context.isMobile ? 12 : 16),
           Text(
             title,
-            style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withOpacity(0.6)),
-            maxLines: 2,
+            style: const TextStyle(fontSize: 12, color: _T.textMuted),
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text(
             amount,
             style: TextStyle(
-              fontSize: context.isMobile ? 16 : 18, 
-              fontWeight: FontWeight.bold
+              fontSize: context.isMobile ? 17 : 20,
+              fontWeight: FontWeight.w800,
+              color: _T.textDark,
+              letterSpacing: -0.5,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          SizedBox(height: context.isMobile ? 8 : 12),
+          SizedBox(height: context.isMobile ? 10 : 14),
+          // Progress bar
           ClipRRect(
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: progress,
-              color: color,
-              backgroundColor: color.withOpacity(0.1),
-              minHeight: 4,
+              value           : progress,
+              color           : color,
+              backgroundColor : color.withOpacity(0.1),
+              minHeight       : 5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              '${(progress * 100).toInt()}%',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
             ),
           ),
         ],
@@ -439,42 +724,46 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  // ── Recent activities ─────────────────────────────────────────────────────
   Widget _buildRecentActivities(
     BuildContext context,
     List<TransactionModel> txs,
     List<ProductModel> products,
     AppThemeExtension appTheme,
   ) {
-    final theme = context.theme;
-    final colorScheme = context.colorScheme;
-
-    // Combine recent items chronologically
     final List<Map<String, dynamic>> activities = [];
-    
+
     for (final tx in txs) {
       activities.add({
-        'title': tx.description,
+        'title'   : tx.description,
         'subtitle': 'Ref: ${tx.referenceId ?? 'N/A'} | ₹${tx.amount.toStringAsFixed(2)}',
-        'time': tx.date,
-        'icon': tx.type == TransactionType.sale ? Icons.add_shopping_cart : Icons.payments,
-        'color': tx.type == TransactionType.sale ? appTheme.successColor : colorScheme.error,
+        'time'    : tx.date,
+        'icon'    : tx.type == TransactionType.sale
+            ? Icons.add_shopping_cart_rounded
+            : Icons.payments_rounded,
+        'color'   : tx.type == TransactionType.sale
+            ? const Color(0xFF10B981)
+            : const Color(0xFFEF4444),
       });
     }
 
     for (final p in products) {
       activities.add({
-        'title': 'New product cataloged: ${p.productName}',
-        'subtitle': '${p.category} | Price: ₹${p.price.toStringAsFixed(2)}',
-        'time': p.createdAt,
-        'icon': Icons.inventory_2,
-        'color': Colors.purple,
+        'title'   : 'New product: ${p.productName}',
+        'subtitle': '${p.hsnCode ?? 'N/A'} | ₹${p.price.toStringAsFixed(2)}',
+        'time'    : p.createdAt,
+        'icon'    : Icons.inventory_2_rounded,
+        'color'   : _T.gradientEnd,
       });
     }
 
-    activities.sort((a, b) => (b['time'] as DateTime).compareTo(a['time'] as DateTime));
+    activities.sort((a, b) =>
+        (b['time'] as DateTime).compareTo(a['time'] as DateTime));
     final displayList = activities.take(6).toList();
 
-    return AppCard(
+    return Container(
+      padding: EdgeInsets.all(context.isMobile ? 16 : 20),
+      decoration: _T.card(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -482,128 +771,131 @@ class DashboardScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(
-                child: Text(
-                  'Recent Activities',
-                  style: TextStyle(
-                    fontSize: context.isMobile ? 15 : 16, 
-                    fontWeight: FontWeight.bold
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              _buildSectionHeaderInline(
+                context,
+                title : 'Recent Activities',
+                icon  : Icons.history_rounded,
               ),
-              Flexible(
-                child: Text(
-                  'Real-time logs',
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _T.gradientStart.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'Real-time',
                   style: TextStyle(
-                    fontSize: 11, 
-                    color: colorScheme.onSurface.withOpacity(0.4)
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: _T.gradientStart,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          SizedBox(height: context.isMobile ? 12 : 16),
+          SizedBox(height: context.isMobile ? 14 : 18),
           if (displayList.isEmpty)
             SizedBox(
-              height: context.isMobile ? 120 : 200,
-              child: const Center(
-                child: Text(
-                  'No activities recorded yet.',
-                  textAlign: TextAlign.center,
-                )
+              height: 120,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.inbox_rounded,
+                        size: 36, color: _T.textLight),
+                    const SizedBox(height: 8),
+                    const Text('No activities recorded yet.',
+                        style: TextStyle(
+                            color: _T.textMuted, fontSize: 13)),
+                  ],
+                ),
               ),
             )
           else
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: displayList.length,
-                separatorBuilder: (context, index) => Divider(
-                  height: context.isMobile ? 16 : 24
-                ),
-                itemBuilder: (context, index) {
-                  final act = displayList[index];
-                  final timeVal = act['time'] as DateTime;
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CircleAvatar(
-                        radius: context.isMobile ? 14 : 16,
-                        backgroundColor: (act['color'] as Color?)?.withOpacity(0.1),
-                        child: Icon(
-                          act['icon'] as IconData, 
-                          size: context.isMobile ? 14 : 16, 
-                          color: act['color'] as Color?
-                        ),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: displayList.length,
+              separatorBuilder: (_, __) => Divider(
+                  height: context.isMobile ? 16 : 20,
+                  color: _T.divider),
+              itemBuilder: (context, index) {
+                final act    = displayList[index];
+                final color  = act['color'] as Color;
+                final timeVal = act['time'] as DateTime;
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width : context.isMobile ? 34 : 38,
+                      height: context.isMobile ? 34 : 38,
+                      decoration: BoxDecoration(
+                        color        : color.withOpacity(0.1),
+                        borderRadius : BorderRadius.circular(10),
                       ),
-                      SizedBox(width: context.isMobile ? 8 : 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              act['title'] as String,
-                              style: TextStyle(
-                                fontSize: context.isMobile ? 12 : 13, 
-                                fontWeight: FontWeight.w600
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                      child: Icon(act['icon'] as IconData,
+                          size: context.isMobile ? 16 : 18,
+                          color: color),
+                    ),
+                    SizedBox(width: context.isMobile ? 10 : 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            act['title'] as String,
+                            style: TextStyle(
+                              fontSize    : context.isMobile ? 12 : 13,
+                              fontWeight  : FontWeight.w600,
+                              color       : _T.textDark,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              act['subtitle'] as String,
-                              style: TextStyle(
-                                fontSize: context.isMobile ? 10 : 11, 
-                                color: colorScheme.onSurface.withOpacity(0.5)
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            act['subtitle'] as String,
+                            style: const TextStyle(
+                                fontSize: 11, color: _T.textLight),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        timeVal.toRelativeTime(),
-                        style: TextStyle(
-                          fontSize: 10, 
-                          color: colorScheme.onSurface.withOpacity(0.4)
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  );
-                },
-              ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      timeVal.toRelativeTime(),
+                      style: const TextStyle(
+                          fontSize: 10, color: _T.textLight),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                );
+              },
             ),
         ],
       ),
     );
   }
 
+  // ── Charts section ────────────────────────────────────────────────────────
   Widget _buildChartsSection(
     BuildContext context,
     List<TransactionModel> txs,
     List<ProductModel> products,
     AppThemeExtension appTheme,
   ) {
-    final isMobile = context.isMobile;
-
     return Column(
       children: [
-        if (isMobile) ...[
+        if (context.isMobile) ...[
           _buildSalesTrendLineChart(context, txs, appTheme),
           const SizedBox(height: 16),
           _buildInventoryPieChart(context, products, appTheme),
-        ] else ...[
+        ] else
           Row(
             children: [
               Expanded(child: _buildSalesTrendLineChart(context, txs, appTheme)),
@@ -611,7 +903,6 @@ class DashboardScreen extends StatelessWidget {
               Expanded(child: _buildInventoryPieChart(context, products, appTheme)),
             ],
           ),
-        ]
       ],
     );
   }
@@ -621,14 +912,8 @@ class DashboardScreen extends StatelessWidget {
     List<TransactionModel> txs,
     AppThemeExtension appTheme,
   ) {
-    final colorScheme = context.colorScheme;
-
-    // Sales over last 7 days
     final now = DateTime.now();
-    final Map<int, double> dailySales = {};
-    for (int i = 0; i < 7; i++) {
-      dailySales[i] = 0.0;
-    }
+    final Map<int, double> dailySales = {for (int i = 0; i < 7; i++) i: 0.0};
 
     for (final tx in txs) {
       if (tx.type == TransactionType.sale) {
@@ -639,80 +924,106 @@ class DashboardScreen extends StatelessWidget {
       }
     }
 
-    final spots = dailySales.entries.map((e) {
-      return FlSpot(e.key.toDouble(), e.value / 1000); // in thousands
-    }).toList();
+    final spots = dailySales.entries
+        .map((e) => FlSpot(e.key.toDouble(), e.value / 1000))
+        .toList();
 
-    return AppCard(
+    return Container(
+      padding: EdgeInsets.all(context.isMobile ? 16 : 20),
+      decoration: _T.card(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Sales Trend (Last 7 Days)',
-            style: TextStyle(
-              fontSize: context.isMobile ? 14 : 15, 
-              fontWeight: FontWeight.bold
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          _buildSectionHeaderInline(context,
+              title: 'Sales Trend (7 Days)',
+              icon: Icons.show_chart_rounded),
           const SizedBox(height: 4),
-          Text(
+          const Text(
             'Figures in thousands (₹)',
-            style: TextStyle(
-              fontSize: 11, 
-              color: colorScheme.onSurface.withOpacity(0.4)
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 11, color: _T.textLight),
           ),
           SizedBox(height: context.isMobile ? 16 : 24),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final chartHeight = context.isMobile ? 150.0 : 200.0;
-              return SizedBox(
-                height: chartHeight,
-                child: LineChart(
-                  LineChartData(
-                    gridData: const FlGridData(show: false),
-                    titlesData: FlTitlesData(
-                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          getTitlesWidget: (value, meta) {
-                            final date = now.subtract(Duration(days: 6 - value.toInt()));
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                '${date.day}/${date.month}',
-                                style: const TextStyle(fontSize: 10),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    borderData: FlBorderData(show: false),
-                    lineBarsData: [
-                      LineChartBarData(
-                        spots: spots,
-                        isCurved: true,
-                        color: colorScheme.primary,
-                        barWidth: 3,
-                        dotData: const FlDotData(show: true),
-                        belowBarData: BarAreaData(
-                          show: true,
-                          color: colorScheme.primary.withOpacity(0.1),
-                        ),
-                      ),
-                    ],
+          SizedBox(
+            height: context.isMobile ? 150 : 200,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show             : true,
+                  drawVerticalLine : false,
+                  getDrawingHorizontalLine: (_) => FlLine(
+                    color    : _T.divider,
+                    strokeWidth: 1,
                   ),
                 ),
-              );
-            },
+                titlesData: FlTitlesData(
+                  topTitles  : const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  leftTitles : AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles : true,
+                      reservedSize: 32,
+                      getTitlesWidget: (val, _) => Text(
+                        '₹${val.toInt()}k',
+                        style: const TextStyle(
+                            fontSize: 9, color: _T.textLight),
+                      ),
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, _) {
+                        final date = now.subtract(
+                            Duration(days: 6 - value.toInt()));
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            '${date.day}/${date.month}',
+                            style: const TextStyle(
+                                fontSize: 9, color: _T.textMuted),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots     : spots,
+                    isCurved  : true,
+                    gradient  : const LinearGradient(
+                      colors: [_T.gradientStart, _T.gradientEnd],
+                    ),
+                    barWidth  : 3,
+                    dotData   : FlDotData(
+                      show           : true,
+                      getDotPainter  : (_, __, ___, ____) =>
+                          FlDotCirclePainter(
+                            radius     : 4,
+                            color      : _T.white,
+                            strokeWidth: 2,
+                            strokeColor: _T.gradientStart,
+                          ),
+                    ),
+                    belowBarData: BarAreaData(
+                      show    : true,
+                      gradient: LinearGradient(
+                        colors : [
+                          _T.gradientStart.withOpacity(0.15),
+                          _T.gradientStart.withOpacity(0.0),
+                        ],
+                        begin  : Alignment.topCenter,
+                        end    : Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -724,139 +1035,186 @@ class DashboardScreen extends StatelessWidget {
     List<ProductModel> products,
     AppThemeExtension appTheme,
   ) {
-    final colorScheme = context.colorScheme;
+    final inStock = products.where((p) => p.isInStock).length;
+    final lowStock = products.where((p) => p.isLowStock).length;
+    final outOfStock = products.where((p) => p.isOutOfStock).length;
+    final total = products.length;
 
-    final Map<String, double> categoryValues = {};
-    double totalVal = 0.0;
-    for (final p in products) {
-      final val = p.price * p.stockQuantity;
-      categoryValues[p.category] = (categoryValues[p.category] ?? 0.0) + val;
-      totalVal += val;
-    }
+    const pieColors = [
+      Color(0xFF10B981),
+      Color(0xFFF59E0B),
+      Color(0xFFEF4444),
+    ];
 
-    final pieSections = categoryValues.entries.map((entry) {
-      final idx = categoryValues.keys.toList().indexOf(entry.key);
-      final colors = [
-        colorScheme.primary,
-        colorScheme.secondary,
-        colorScheme.tertiary,
-        appTheme.warningColor ?? Colors.orange,
-        Colors.purple,
-        Colors.teal,
-      ];
-      final color = colors[idx % colors.length];
-      final percent = totalVal > 0 ? (entry.value / totalVal) * 100 : 0.0;
+    final stockData = <String, double>{
+      'In Stock': inStock.toDouble(),
+      'Low Stock': lowStock.toDouble(),
+      'Out of Stock': outOfStock.toDouble(),
+    };
 
+    final pieSections = stockData.entries.toList().asMap().entries.map((entry) {
+      final idx = entry.key;
+      final e = entry.value;
+      final percent = total > 0 ? (e.value / total) * 100 : 0.0;
       return PieChartSectionData(
-        color: color,
-        value: entry.value,
+        color: pieColors[idx],
+        value: e.value,
         title: '${percent.toStringAsFixed(0)}%',
-        radius: context.isMobile ? 30 : 40,
-        titleStyle: TextStyle(
-          fontSize: context.isMobile ? 9 : 10, 
-          fontWeight: FontWeight.bold, 
-          color: Colors.white
-        ),
+        radius: context.isMobile ? 32 : 42,
+        titleStyle: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: _T.white),
       );
     }).toList();
 
-    return AppCard(
+    return Container(
+      padding: EdgeInsets.all(context.isMobile ? 16 : 20),
+      decoration: _T.card(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Inventory Distribution (Asset Value)',
-            style: TextStyle(
-              fontSize: context.isMobile ? 14 : 15, 
-              fontWeight: FontWeight.bold
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+          _buildSectionHeaderInline(context,
+              title: 'Stock Distribution',
+              icon: Icons.pie_chart_rounded),
           const SizedBox(height: 4),
-          Text(
-            'Asset share percentage per material type',
-            style: TextStyle(
-              fontSize: 11, 
-              color: colorScheme.onSurface.withOpacity(0.4)
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          const Text(
+            'Product breakdown by stock status',
+            style: TextStyle(fontSize: 11, color: _T.textLight),
           ),
           SizedBox(height: context.isMobile ? 16 : 24),
-          if (categoryValues.isEmpty)
+          if (total == 0)
             SizedBox(
-              height: context.isMobile ? 120 : 150,
-              child: const Center(
-                child: Text(
-                  'No product assets in inventory.',
-                  textAlign: TextAlign.center,
-                )
+              height: 120,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.inventory_2_outlined,
+                        size: 36, color: _T.textLight),
+                    const SizedBox(height: 8),
+                    const Text('No products in inventory.',
+                        style: TextStyle(
+                            color: _T.textMuted, fontSize: 13)),
+                  ],
+                ),
               ),
             )
           else ...[
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final chartHeight = context.isMobile ? 120.0 : 150.0;
-                return SizedBox(
-                  height: chartHeight,
-                  child: PieChart(
-                    PieChartData(
-                      sections: pieSections,
-                      centerSpaceRadius: context.isMobile ? 20 : 30,
-                      sectionsSpace: 2,
-                    ),
-                  ),
-                );
-              },
-            ),
-            SizedBox(height: context.isMobile ? 8 : 12),
-            Flexible(
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: categoryValues.keys.map((cat) {
-                  final idx = categoryValues.keys.toList().indexOf(cat);
-                  final colors = [
-                    colorScheme.primary,
-                    colorScheme.secondary,
-                    colorScheme.tertiary,
-                    appTheme.warningColor ?? Colors.orange,
-                    Colors.purple,
-                    Colors.teal,
-                  ];
-                  final color = colors[idx % colors.length];
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(width: 8, height: 8, color: color),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          cat, 
-                          style: const TextStyle(fontSize: 10),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
+            SizedBox(
+              height: context.isMobile ? 130 : 160,
+              child: PieChart(
+                PieChartData(
+                  sections: pieSections,
+                  centerSpaceRadius: context.isMobile ? 24 : 32,
+                  sectionsSpace: 3,
+                ),
               ),
             ),
-          ]
+            SizedBox(height: context.isMobile ? 10 : 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 6,
+              children: stockData.keys.toList().asMap().entries.map((entry) {
+                final idx = entry.key;
+                final label = entry.value;
+                final color = pieColors[idx];
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(label,
+                        style: const TextStyle(
+                            fontSize: 10, color: _T.textMid)),
+                  ],
+                );
+              }).toList(),
+            ),
+          ],
         ],
       ),
     );
   }
+
+  // ── Shared helpers ────────────────────────────────────────────────────────
+  Widget _buildSectionHeader(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width : 32,
+          height: 32,
+          decoration: BoxDecoration(
+            gradient     : const LinearGradient(
+              colors: [_T.gradientStart, _T.gradientEnd],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius : BorderRadius.circular(9),
+          ),
+          child: Icon(icon, color: _T.white, size: 16),
+        ),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: const TextStyle(
+                  fontSize  : 15,
+                  fontWeight: FontWeight.w700,
+                  color     : _T.textDark,
+                )),
+            Text(subtitle,
+                style: const TextStyle(
+                    fontSize: 11, color: _T.textMuted)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeaderInline(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: _T.gradientStart),
+        const SizedBox(width: 6),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize  : context.isMobile ? 13 : 14,
+            fontWeight: FontWeight.w700,
+            color     : _T.textDark,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
+// ── Hover quick action card ──────────────────────────────────────────────────
 class _HoverQuickActionCard extends StatefulWidget {
-  final String title;
-  final String description;
-  final IconData icon;
-  final Color color;
+  final String      title;
+  final String      description;
+  final IconData    icon;
+  final Color       color;
   final VoidCallback onTap;
 
   const _HoverQuickActionCard({
@@ -876,82 +1234,106 @@ class _HoverQuickActionCardState extends State<_HoverQuickActionCard> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final theme = context.theme;
-
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        transform: Matrix4.identity()..scale(_isHovered ? 1.03 : 1.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
-          boxShadow: _isHovered
-              ? [
-                  BoxShadow(
-                    color: widget.color.withOpacity(0.15),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  )
-                ]
-              : [],
-        ),
-        child: AppCard(
-          padding: EdgeInsets.zero,
-          child: InkWell(
-            onTap: widget.onTap,
-            borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
-            child: Padding(
-              padding: EdgeInsets.all(context.isMobile ? 8.0 : 12.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
+      cursor  : SystemMouseCursors.click,
+      onEnter : (_) => setState(() => _isHovered = true),
+      onExit  : (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration : const Duration(milliseconds: 180),
+          transform: Matrix4.identity()..scale(_isHovered ? 1.03 : 1.0),
+          padding  : EdgeInsets.all(context.isMobile ? 12 : 14),
+          decoration: BoxDecoration(
+            color       : _T.white,
+            borderRadius: BorderRadius.circular(14),
+            border      : Border.all(
+              color: _isHovered
+                  ? widget.color.withOpacity(0.3)
+                  : _T.divider,
+            ),
+            boxShadow: _isHovered
+                ? [
+                    BoxShadow(
+                      color : widget.color.withOpacity(0.18),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color : const Color(0xFF1E2A6E).withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Column(
+            mainAxisAlignment : MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize      : MainAxisSize.min,
+            children: [
+              // Icon
+              Container(
+                padding   : const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color        : widget.color.withOpacity(0.1),
+                  borderRadius : BorderRadius.circular(10),
+                ),
+                child: Icon(widget.icon,
+                    color: widget.color,
+                    size: context.isMobile ? 18 : 20),
+              ),
+
+              const Spacer(),
+
+              // Title
+              Text(
+                widget.title,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize  : context.isMobile ? 11 : 12,
+                  color     : _T.textDark,
+                ),
+                maxLines : 2,
+                overflow : TextOverflow.ellipsis,
+              ),
+
+              const SizedBox(height: 2),
+
+              // Description
+              Text(
+                widget.description,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color   : _T.textLight,
+                ),
+                maxLines : 1,
+                overflow : TextOverflow.ellipsis,
+              ),
+
+              // Hover arrow
+              if (_isHovered)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        padding: EdgeInsets.all(context.isMobile ? 6 : 8),
-                        decoration: BoxDecoration(
-                          color: widget.color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
-                        ),
-                        child: Icon(
-                          widget.icon, 
-                          color: widget.color, 
-                          size: context.isMobile ? 18 : 22
+                      Text(
+                        'Open',
+                        style: TextStyle(
+                          fontSize  : 10,
+                          fontWeight: FontWeight.w600,
+                          color     : widget.color,
                         ),
                       ),
+                      const SizedBox(width: 2),
+                      Icon(Icons.arrow_forward_rounded,
+                          size: 10, color: widget.color),
                     ],
                   ),
-                  SizedBox(height: context.isMobile ? 8 : 12),
-                  Flexible(
-                    child: Text(
-                      widget.title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold, 
-                        fontSize: context.isMobile ? 11 : 13
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  SizedBox(height: context.isMobile ? 2 : 4),
-                  Flexible(
-                    child: Text(
-                      widget.description,
-                      style: TextStyle(
-                        fontSize: context.isMobile ? 9 : 10,
-                        color: colorScheme.onSurface.withOpacity(0.5),
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
+            ],
           ),
         ),
       ),

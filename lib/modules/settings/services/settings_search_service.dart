@@ -1,7 +1,7 @@
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/settings/repositories/backup_repository.dart';
-import 'package:smarterp/modules/settings/repositories/notification_repository.dart';
-import 'package:smarterp/modules/settings/services/preferences_service.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/settings/repositories/backup_repository.dart';
+import 'package:SmartERP/modules/settings/repositories/notification_repository.dart';
+import 'package:SmartERP/modules/settings/services/preferences_service.dart';
 
 class SearchResult {
   final String id;

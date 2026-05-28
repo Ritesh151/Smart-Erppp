@@ -1,7 +1,7 @@
-import 'package:smarterp/core/models/product_model.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/products/services/product_service.dart';
-import 'package:smarterp/modules/settings/services/settings_service.dart';
+import 'package:SmartERP/core/models/product_model.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/products/services/product_service.dart';
+import 'package:SmartERP/modules/settings/services/settings_service.dart';
 
 class LowStockItem {
   final ProductModel product;

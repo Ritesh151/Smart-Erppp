@@ -1,17 +1,15 @@
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/invoice_model.dart';
-import 'package:smarterp/core/models/invoice_item_model.dart';
-import 'package:smarterp/core/storage/storage_service.dart';
-import 'package:smarterp/core/utils/logger.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/models/invoice_item_model.dart';
+import 'package:SmartERP/core/models/invoice_model.dart';
+import 'package:SmartERP/core/storage/storage_service.dart';
+import 'package:SmartERP/core/utils/logger.dart';
 
 class InvoiceRepository {
   final StorageService<Map<dynamic, dynamic>> _invoiceStorage;
   final StorageService<Map<dynamic, dynamic>> _itemStorage;
 
-  InvoiceRepository({
-    required StorageService<Map<dynamic, dynamic>> invoiceStorage,
-    required StorageService<Map<dynamic, dynamic>> itemStorage,
-  })  : _invoiceStorage = invoiceStorage,
+  InvoiceRepository({required StorageService<Map<dynamic, dynamic>> invoiceStorage, required StorageService<Map<dynamic, dynamic>> itemStorage})
+      : _invoiceStorage = invoiceStorage,
         _itemStorage = itemStorage;
 
   Future<List<InvoiceModel>> getAll() async {
@@ -59,12 +57,6 @@ class InvoiceRepository {
 
   Future<void> delete(String id) async {
     try {
-      final invoice = await getById(id);
-      if (invoice != null) {
-        for (final itemId in invoice.itemIds) {
-          await _deleteItem(itemId);
-        }
-      }
       await _invoiceStorage.delete(id);
       Logger.success('Invoice deleted: $id');
     } catch (e, stackTrace) {
@@ -93,41 +85,28 @@ class InvoiceRepository {
     }
   }
 
-  Future<List<InvoiceItemModel>> getItemsByIds(List<String> ids) async {
-    try {
-      final items = <InvoiceItemModel>[];
-      for (final id in ids) {
-        final item = await getItemById(id);
-        if (item != null) items.add(item);
-      }
-      return items;
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get invoice items by ids', e, stackTrace);
-      return [];
-    }
-  }
-
-  Future<void> _deleteItem(String id) async {
+  Future<void> deleteItem(String id) async {
     try {
       await _itemStorage.delete(id);
     } catch (e, stackTrace) {
-      Logger.warning('Failed to delete invoice item: $id', e);
+      Logger.error('Failed to delete invoice item', e, stackTrace);
+      throw StorageException('Failed to delete invoice item');
     }
   }
 
-  Future<String> getNextInvoiceNumber() async {
+  Future<List<InvoiceModel>> search(String query) async {
     try {
       final invoices = await getAll();
-      final numbers = invoices
-          .map((inv) => int.tryParse(
-              inv.invoiceNumber.replaceAll(RegExp(r'[^0-9]'), '')))
-          .whereType<int>()
-          .toList();
-      final max = numbers.isEmpty ? 0 : numbers.reduce((a, b) => a > b ? a : b);
-      return 'INV-${(max + 1).toString().padLeft(4, '0')}';
+      final lowerQuery = query.toLowerCase();
+
+      return invoices.where((invoice) {
+        return invoice.invoiceNumber.toLowerCase().contains(lowerQuery) ||
+            invoice.customerName.toLowerCase().contains(lowerQuery) ||
+            (invoice.customerEmail?.toLowerCase().contains(lowerQuery) ?? false);
+      }).toList();
     } catch (e, stackTrace) {
-      Logger.error('Failed to generate next invoice number', e, stackTrace);
-      return 'INV-0001';
+      Logger.error('Failed to search invoices', e, stackTrace);
+      return [];
     }
   }
 
@@ -149,32 +128,44 @@ class InvoiceRepository {
     }
   }
 
+  Future<List<InvoiceModel>> getByCustomerId(String customerId) async {
+    try {
+      final invoices = await getAll();
+      return invoices.where((i) => i.customerId == customerId).toList();
+    } catch (e, stackTrace) {
+      Logger.error('Failed to get invoices by customer id', e, stackTrace);
+      return [];
+    }
+  }
+
   Future<List<InvoiceModel>> getByStatus(InvoiceStatus status) async {
     try {
       final invoices = await getAll();
-      return invoices.where((inv) => inv.status == status).toList();
+      return invoices.where((i) => i.status == status).toList();
     } catch (e, stackTrace) {
       Logger.error('Failed to get invoices by status', e, stackTrace);
       return [];
     }
   }
 
-  Future<List<InvoiceModel>> getByCustomerId(String customerId) async {
+  Future<List<InvoiceModel>> getOverdue() async {
     try {
       final invoices = await getAll();
-      return invoices.where((inv) => inv.customerId == customerId).toList();
+      return invoices.where((i) => i.isOverdue).toList();
     } catch (e, stackTrace) {
-      Logger.error('Failed to get invoices by customer', e, stackTrace);
+      Logger.error('Failed to get overdue invoices', e, stackTrace);
       return [];
     }
   }
 
-  Future<List<InvoiceModel>> getOverdueInvoices() async {
+  Future<List<InvoiceModel>> getByDateRange(DateTime start, DateTime end) async {
     try {
       final invoices = await getAll();
-      return invoices.where((inv) => inv.isOverdue).toList();
+      return invoices
+          .where((i) => i.invoiceDate.isAfter(start.subtract(const Duration(days: 1))) && i.invoiceDate.isBefore(end.add(const Duration(days: 1))))
+          .toList();
     } catch (e, stackTrace) {
-      Logger.error('Failed to get overdue invoices', e, stackTrace);
+      Logger.error('Failed to get invoices by date range', e, stackTrace);
       return [];
     }
   }

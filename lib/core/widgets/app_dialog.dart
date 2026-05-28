@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smarterp/core/widgets/app_button.dart';
+import 'package:SmartERP/core/widgets/app_button.dart';
 
 class AppDialog extends StatelessWidget {
   final String title;
@@ -35,7 +35,7 @@ class AppDialog extends StatelessWidget {
         if (cancelText != null || onCancel != null)
           AppButton(
             text: cancelText ?? 'Cancel',
-            type: AppButtonType.text,
+            variant: AppButtonVariant.outline,
             onPressed: () {
               Navigator.of(context).pop(false);
               onCancel?.call();
@@ -44,7 +44,7 @@ class AppDialog extends StatelessWidget {
         if (confirmText != null || onConfirm != null)
           AppButton(
             text: confirmText ?? 'Confirm',
-            type: isDanger ? AppButtonType.danger : AppButtonType.primary,
+            variant: isDanger ? AppButtonVariant.danger : AppButtonVariant.primary,
             onPressed: () {
               Navigator.of(context).pop(true);
               onConfirm?.call();

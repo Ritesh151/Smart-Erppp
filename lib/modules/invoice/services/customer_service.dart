@@ -1,7 +1,8 @@
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/customer_model.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/invoice/repositories/customer_repository.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/models/customer_model.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/invoice/repositories/customer_repository.dart';
+import 'package:uuid/uuid.dart';
 
 class CustomerService {
   final CustomerRepository _repository;
@@ -37,11 +38,14 @@ class CustomerService {
     String? pincode,
   }) async {
     try {
-      _validateCustomerData(
-        name: name,
-        email: email,
-        gstNumber: gstNumber,
-      );
+      if (name.trim().isEmpty) {
+        throw ValidationException('Customer name is required');
+      }
+
+      final nameExists = await _repository.customerNameExists(name);
+      if (nameExists) {
+        throw ValidationException('Customer with this name already exists');
+      }
 
       final customer = CustomerModel.create(
         name: name.trim(),
@@ -76,18 +80,24 @@ class CustomerService {
     required bool isActive,
   }) async {
     try {
-      _validateCustomerData(
-        name: name,
-        email: email,
-        gstNumber: gstNumber,
-      );
+      if (name.trim().isEmpty) {
+        throw ValidationException('Customer name is required');
+      }
 
-      final existing = await _repository.getById(id);
-      if (existing == null) {
+      final existingCustomer = await _repository.getById(id);
+      if (existingCustomer == null) {
         throw NotFoundException('Customer not found');
       }
 
-      final updated = existing.copyWith(
+      final nameExists = await _repository.customerNameExists(
+        name,
+        excludeId: id,
+      );
+      if (nameExists) {
+        throw ValidationException('Customer with this name already exists');
+      }
+
+      final updatedCustomer = existingCustomer.copyWith(
         name: name.trim(),
         email: email?.trim(),
         phone: phone?.trim(),
@@ -100,9 +110,9 @@ class CustomerService {
         updatedAt: DateTime.now(),
       );
 
-      await _repository.update(updated);
-      Logger.success('Customer updated: ${updated.name}');
-      return updated;
+      await _repository.update(updatedCustomer);
+      Logger.success('Customer updated: ${updatedCustomer.name}');
+      return updatedCustomer;
     } catch (e, stackTrace) {
       Logger.error('Failed to update customer', e, stackTrace);
       rethrow;
@@ -136,27 +146,21 @@ class CustomerService {
     }
   }
 
-  void _validateCustomerData({
-    required String name,
-    String? email,
-    String? gstNumber,
-  }) {
-    if (name.trim().isEmpty) {
-      throw ValidationException('Customer name is required');
+  Future<bool> exists(String id) async {
+    try {
+      return await _repository.exists(id);
+    } catch (e, stackTrace) {
+      Logger.error('Failed to check customer existence', e, stackTrace);
+      return false;
     }
+  }
 
-    if (email != null && email.isNotEmpty) {
-      final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-      if (!emailRegex.hasMatch(email)) {
-        throw ValidationException('Invalid email format');
-      }
-    }
-
-    if (gstNumber != null && gstNumber.isNotEmpty) {
-      final gstRegex = RegExp(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$');
-      if (!gstRegex.hasMatch(gstNumber)) {
-        throw ValidationException('Invalid GST number format');
-      }
+  Future<bool> customerNameExists(String name, {String? excludeId}) async {
+    try {
+      return await _repository.customerNameExists(name, excludeId: excludeId);
+    } catch (e, stackTrace) {
+      Logger.error('Failed to check customer name existence', e, stackTrace);
+      return false;
     }
   }
 }

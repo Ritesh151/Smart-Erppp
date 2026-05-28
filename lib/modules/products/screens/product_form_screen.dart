@@ -1,18 +1,61 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:smarterp/core/constants/app_constants.dart';
-import 'package:smarterp/core/extensions/context_extensions.dart';
-import 'package:smarterp/core/theme/theme_extensions.dart';
-import 'package:smarterp/core/widgets/app_shell.dart';
-import 'package:smarterp/core/widgets/app_card.dart';
-import 'package:smarterp/core/widgets/app_text_field.dart';
-import 'package:smarterp/core/widgets/app_button.dart';
-import 'package:smarterp/core/models/product_model.dart';
-import 'package:smarterp/core/services/image_service.dart';
-import 'package:smarterp/modules/products/providers/product_provider.dart';
+
+import 'package:SmartERP/core/constants/app_constants.dart';
+import 'package:SmartERP/core/extensions/context_extensions.dart';
+import 'package:SmartERP/core/models/product_model.dart';
+import 'package:SmartERP/core/services/image_service.dart';
+import 'package:SmartERP/core/theme/theme_extensions.dart';
+import 'package:SmartERP/core/utils/platform_image_provider.dart';
+import 'package:SmartERP/core/widgets/app_button.dart';
+import 'package:SmartERP/core/widgets/app_text_field.dart';
+import 'package:SmartERP/modules/products/providers/product_provider.dart';
+
+class _T {
+  static const gradientStart = Color(0xFF4F6EF7);
+  static const gradientEnd = Color(0xFF7C3AED);
+
+  static const bg = Color(0xFFF5F7FA);
+  static const white = Colors.white;
+
+  static const textDark = Color(0xFF111827);
+  static const textMuted = Color(0xFF6B7280);
+  static const textLight = Color(0xFF9CA3AF);
+
+  static const divider = Color(0xFFE5E7EB);
+
+  static const success = Color(0xFF10B981);
+  static const warning = Color(0xFFF59E0B);
+  static const danger = Color(0xFFEF4444);
+
+  static const Gradient brandGradient = LinearGradient(
+    colors: [gradientStart, gradientEnd],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static BoxDecoration card({
+    double radius = 18,
+  }) {
+    return BoxDecoration(
+      color: white,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(
+        color: divider.withOpacity(0.8),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF1E2A6E).withOpacity(0.06),
+          blurRadius: 18,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    );
+  }
+}
 
 class ProductFormScreen extends StatefulWidget {
   final String? productId;
@@ -23,60 +66,56 @@ class ProductFormScreen extends StatefulWidget {
   });
 
   @override
-  State<ProductFormScreen> createState() => _ProductFormScreenState();
+  State<ProductFormScreen> createState() =>
+      _ProductFormScreenState();
 }
 
-class _ProductFormScreenState extends State<ProductFormScreen> {
+class _ProductFormScreenState
+    extends State<ProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
+
   final _imageService = ImageService();
 
-  // Controllers
   late TextEditingController _nameController;
   late TextEditingController _hsnController;
   late TextEditingController _priceController;
-  late TextEditingController _costPriceController;
   late TextEditingController _stockController;
   late TextEditingController _minStockController;
-  late TextEditingController _skuController;
-  late TextEditingController _barcodeController;
   late TextEditingController _descriptionController;
 
-  // Selected values
-  String? _selectedCategory;
-  double _selectedGstRate = 18.0;
   String _selectedUnit = 'Piece';
+
   String? _imagePath;
+
   bool _isActive = true;
+
   bool _isEditMode = false;
+
   ProductModel? _existingProduct;
 
-  final List<String> _categories = [
-    'Building Materials',
-    'Steel',
-    'Tiles',
-    'Electrical',
-    'Paints',
-    'Plumbing',
-    'Hardware',
-    'Other'
-  ];
+  bool _imageLoading = false;
 
-  final List<double> _gstRates = [0.0, 5.0, 12.0, 18.0, 28.0];
-  final List<String> _units = ['Piece', 'Bag', 'Kg', 'Ton', 'Box', 'Liter', 'Meter', 'Box'];
+  final List<String> _units = [
+    'Piece',
+    'Bag',
+    'Kg',
+    'Ton',
+    'Box',
+    'Liter',
+    'Meter',
+  ];
 
   @override
   void initState() {
     super.initState();
+
     _isEditMode = widget.productId != null;
 
     _nameController = TextEditingController();
     _hsnController = TextEditingController();
     _priceController = TextEditingController();
-    _costPriceController = TextEditingController();
     _stockController = TextEditingController();
     _minStockController = TextEditingController();
-    _skuController = TextEditingController();
-    _barcodeController = TextEditingController();
     _descriptionController = TextEditingController();
 
     if (_isEditMode) {
@@ -88,6 +127,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   void _loadExistingProduct() {
     final provider = context.read<ProductProvider>();
+
     final product = provider.products.firstWhere(
       (p) => p.id == widget.productId,
       orElse: () => ProductModel(
@@ -95,9 +135,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         productName: '',
         price: 0,
         stockQuantity: 0,
-        gstRate: 0,
-        category: '',
-        costPrice: 0,
         minStockLevel: 0,
         unit: '',
         isActive: false,
@@ -109,20 +146,25 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     if (product.id.isNotEmpty) {
       setState(() {
         _existingProduct = product;
+
         _nameController.text = product.productName;
         _hsnController.text = product.hsnCode ?? '';
         _priceController.text = product.price.toString();
-        _costPriceController.text = product.costPrice.toString();
-        _stockController.text = product.stockQuantity.toString();
-        _minStockController.text = product.minStockLevel.toString();
-        _skuController.text = product.sku ?? '';
-        _barcodeController.text = product.barcode ?? '';
-        _descriptionController.text = product.description ?? '';
-        
-        _selectedCategory = _categories.contains(product.category) ? product.category : 'Other';
-        _selectedGstRate = _gstRates.contains(product.gstRate) ? product.gstRate : 18.0;
-        _selectedUnit = _units.contains(product.unit) ? product.unit : 'Piece';
+        _stockController.text =
+            product.stockQuantity.toString();
+
+        _minStockController.text =
+            product.minStockLevel.toString();
+
+        _descriptionController.text =
+            product.description ?? '';
+
+        _selectedUnit = _units.contains(product.unit)
+            ? product.unit
+            : 'Piece';
+
         _imagePath = product.imagePath;
+
         _isActive = product.isActive;
       });
     }
@@ -133,76 +175,103 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _nameController.dispose();
     _hsnController.dispose();
     _priceController.dispose();
-    _costPriceController.dispose();
     _stockController.dispose();
     _minStockController.dispose();
-    _skuController.dispose();
-    _barcodeController.dispose();
     _descriptionController.dispose();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final theme = context.theme;
+    return Container(
+      color: _T.bg,
+      child: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(
+              context.isMobile ? 16 : 24,
+            ),
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                _buildFormHeader(context)
+                    .animate()
+                    .fadeIn(duration: 260.ms)
+                    .slideX(begin: -0.05, end: 0),
 
-    return AppShell(
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildFormHeader(context),
-              const SizedBox(height: 24),
-              if (context.isDesktop)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 4,
-                      child: Column(
-                        children: [
-                          _buildImagePickerCard(),
-                          const SizedBox(height: 16),
-                          _buildStatusCard(),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      flex: 6,
-                      child: Column(
-                        children: [
-                          _buildGeneralInfoCard(),
-                          const SizedBox(height: 16),
-                          _buildPricingCard(),
-                          const SizedBox(height: 16),
-                          _buildInventoryCard(),
-                        ],
-                      ),
-                    ),
-                  ],
-                )
-              else
-                Column(
-                  children: [
-                    _buildImagePickerCard(),
-                    const SizedBox(height: 16),
-                    _buildGeneralInfoCard(),
-                    const SizedBox(height: 16),
-                    _buildPricingCard(),
-                    const SizedBox(height: 16),
-                    _buildInventoryCard(),
-                    const SizedBox(height: 16),
-                    _buildStatusCard(),
-                  ],
+                SizedBox(
+                  height: context.isMobile ? 18 : 24,
                 ),
-              const SizedBox(height: 32),
-              _buildActionButtons(context),
-            ],
+
+                if (context.isDesktop)
+                  Row(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 4,
+                        child: Column(
+                          children: [
+                            _buildImagePickerCard(),
+
+                            const SizedBox(height: 18),
+
+                            _buildStatusCard(),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(width: 24),
+
+                      Expanded(
+                        flex: 6,
+                        child: Column(
+                          children: [
+                            _buildGeneralInfoCard(),
+
+                            const SizedBox(height: 18),
+
+                            _buildPricingCard(),
+
+                            const SizedBox(height: 18),
+
+                            _buildInventoryCard(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  Column(
+                    children: [
+                      _buildImagePickerCard(),
+
+                      const SizedBox(height: 18),
+
+                      _buildGeneralInfoCard(),
+
+                      const SizedBox(height: 18),
+
+                      _buildPricingCard(),
+
+                      const SizedBox(height: 18),
+
+                      _buildInventoryCard(),
+
+                      const SizedBox(height: 18),
+
+                      _buildStatusCard(),
+                    ],
+                  ),
+
+                const SizedBox(height: 30),
+
+                _buildActionButtons(context),
+              ],
+            ),
           ),
         ),
       ),
@@ -210,205 +279,567 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   }
 
   Widget _buildFormHeader(BuildContext context) {
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          _isEditMode ? 'Modify Product Specifications' : 'Enter Product Information',
-          style: context.textTheme.titleMedium?.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.6),
-          ),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final vertical = constraints.maxWidth < 620;
+
+        if (vertical) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  InkWell(
+                    borderRadius:
+                        BorderRadius.circular(14),
+                    onTap: () => context.pop(),
+                    child: Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius:
+                            BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _T.divider,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: _T.textDark,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isEditMode
+                              ? 'Update Product'
+                              : 'Create Product',
+                          style: TextStyle(
+                            fontSize: context.isMobile
+                                ? 24
+                                : 28,
+                            fontWeight:
+                                FontWeight.w800,
+                            color: _T.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _isEditMode
+                              ? 'Modify product specifications and inventory details.'
+                              : 'Enter product information and inventory specifications.',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: _T.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius:
+                      BorderRadius.circular(14),
+                  border: Border.all(
+                    color: _T.divider,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: _T.success,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _isEditMode
+                          ? 'Editing Mode'
+                          : 'New Product',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: _T.textDark,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  InkWell(
+                    borderRadius:
+                        BorderRadius.circular(14),
+                    onTap: () => context.pop(),
+                    child: Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius:
+                            BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _T.divider,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: _T.textDark,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isEditMode
+                              ? 'Update Product'
+                              : 'Create Product',
+                          style: TextStyle(
+                            fontSize: context.isMobile
+                                ? 24
+                                : 28,
+                            fontWeight:
+                                FontWeight.w800,
+                            color: _T.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _isEditMode
+                              ? 'Modify product specifications and inventory details.'
+                              : 'Enter product information and inventory specifications.',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: _T.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 18),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius:
+                    BorderRadius.circular(14),
+                border: Border.all(
+                  color: _T.divider,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: const BoxDecoration(
+                      color: _T.success,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isEditMode
+                        ? 'Editing Mode'
+                        : 'New Product',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: _T.textDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildImagePickerCard() {
-    final colorScheme = context.colorScheme;
-    final hasImage = _imagePath != null && _imagePath!.isNotEmpty;
+    final hasImage =
+        _imagePath != null &&
+            _imagePath!.trim().isNotEmpty;
 
-    return AppCard(
+    final imageProvider = hasImage
+        ? platformImageProvider(_imagePath!)
+        : null;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _T.card(),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Product Image',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+          _buildSectionHeader(
+            title: 'Product Image',
+            subtitle:
+                'Upload high quality product visuals',
+            icon: Icons.image_rounded,
           ),
-          const SizedBox(height: 16),
-          Container(
-            height: 200,
+
+          const SizedBox(height: 20),
+
+          AnimatedContainer(
+            duration:
+                const Duration(milliseconds: 220),
+            height: context.isMobile ? 240 : 320,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: colorScheme.surfaceVariant.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
-              border: Border.all(color: colorScheme.outlineVariant),
+              gradient: LinearGradient(
+                colors: [
+                  _T.gradientStart.withOpacity(0.06),
+                  _T.gradientEnd.withOpacity(0.03),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius:
+                  BorderRadius.circular(22),
+              border: Border.all(
+                color: _T.divider,
+              ),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
-              child: hasImage
-                  ? File(_imagePath!).existsSync()
-                      ? Image.file(
-                          File(_imagePath!),
+              borderRadius:
+                  BorderRadius.circular(22),
+              child: hasImage &&
+                      imageProvider != null
+                  ? Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image(
+                          image: imageProvider,
                           fit: BoxFit.cover,
-                          width: double.infinity,
-                        )
-                      : _buildImagePlaceholder()
+                          errorBuilder:
+                              (_, __, ___) =>
+                                  _buildImagePlaceholder(),
+                          loadingBuilder: (
+                            context,
+                            child,
+                            loadingProgress,
+                          ) {
+                            if (loadingProgress ==
+                                null) {
+                              return child;
+                            }
+
+                            return Container(
+                              color: Colors.white,
+                              child: const Center(
+                                child:
+                                    CircularProgressIndicator(
+                                  color:
+                                      _T.gradientStart,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: Container(
+                            padding:
+                                const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black
+                                  .withOpacity(0.55),
+                              borderRadius:
+                                  BorderRadius.circular(
+                                      20),
+                            ),
+                            child: const Row(
+                              mainAxisSize:
+                                  MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 5),
+                                Text(
+                                  'Image Ready',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight:
+                                        FontWeight
+                                            .w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
                   : _buildImagePlaceholder(),
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
+
+          const SizedBox(height: 18),
+
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _pickImage(ImageSource.camera),
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('Camera'),
-                ),
+              _imageButton(
+                label: 'Camera',
+                icon: Icons.camera_alt_rounded,
+                color: _T.gradientStart,
+                onTap: () {
+                  _pickImage(ImageSource.camera);
+                },
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _pickImage(ImageSource.gallery),
-                  icon: const Icon(Icons.photo_library),
-                  label: const Text('Gallery'),
-                ),
+
+              _imageButton(
+                label: 'Gallery',
+                icon: Icons.photo_library_rounded,
+                color: _T.gradientEnd,
+                onTap: () {
+                  _pickImage(ImageSource.gallery);
+                },
               ),
+
+              if (hasImage)
+                _imageButton(
+                  label: 'Remove',
+                  icon: Icons.delete_outline,
+                  color: _T.danger,
+                  onTap: () {
+                    setState(() {
+                      _imagePath = null;
+                    });
+                  },
+                ),
             ],
           ),
-          if (hasImage) ...[
-            const SizedBox(height: 12),
-            TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _imagePath = null;
-                });
-              },
-              icon: Icon(Icons.delete_outline, color: colorScheme.error, size: 18),
-              label: Text('Remove Image', style: TextStyle(color: colorScheme.error)),
-              style: TextButton.styleFrom(
-                minimumSize: const Size(double.infinity, 36),
+        ],
+      ),
+    );
+  }
+
+  Widget _imageButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 14,
+        ),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: color.withOpacity(0.15),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: color,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildImagePlaceholder() {
-    final colorScheme = context.colorScheme;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.add_photo_alternate_outlined,
-            size: 48,
-            color: colorScheme.onSurfaceVariant.withOpacity(0.5),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Upload a product image',
-            style: TextStyle(
-              fontSize: 13,
-              color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+    return Container(
+      color: Colors.white,
+      child: Center(
+        child: Column(
+          mainAxisAlignment:
+              MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    _T.gradientStart.withOpacity(0.12),
+                    _T.gradientEnd.withOpacity(0.08),
+                  ],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.add_photo_alternate_outlined,
+                size: 42,
+                color: _T.gradientStart,
+              ),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 18),
+
+            const Text(
+              'Upload Product Image',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: _T.textDark,
+              ),
+            ),
+
+            const SizedBox(height: 6),
+
+            const Text(
+              'Supports camera & gallery uploads',
+              style: TextStyle(
+                fontSize: 12,
+                color: _T.textMuted,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildGeneralInfoCard() {
-    final colorScheme = context.colorScheme;
-
-    return AppCard(
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _T.card(),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
-          const Text(
-            'General Information',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+          _buildSectionHeader(
+            title: 'General Information',
+            subtitle:
+                'Basic product identity and classification',
+            icon: Icons.inventory_2_rounded,
           ),
-          const SizedBox(height: 16),
+
+          const SizedBox(height: 22),
+
           AppTextField(
             controller: _nameController,
             label: 'Product Name *',
-            hintText: 'e.g. Portland Cement Grade 53',
-            prefixIcon: const Icon(Icons.shopping_bag_outlined),
+            hintText:
+                'e.g. Portland Cement Grade 53',
+            prefixIcon: const Icon(
+              Icons.shopping_bag_outlined,
+            ),
             validator: (value) {
-              if (value == null || value.trim().isEmpty) {
+              if (value == null ||
+                  value.trim().isEmpty) {
                 return 'Product name is required';
               }
+
               if (value.trim().length < 2) {
                 return 'Name must be at least 2 characters';
               }
+
               return null;
             },
           ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              labelText: 'Category *',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
-              ),
-              prefixIcon: const Icon(Icons.category_outlined),
-            ),
-            value: _selectedCategory,
-            hint: const Text('Select Category'),
-            validator: (value) => value == null ? 'Category is required' : null,
-            onChanged: (value) {
-              setState(() {
-                _selectedCategory = value;
-              });
-            },
-            items: _categories.map((cat) {
-              return DropdownMenuItem(
-                value: cat,
-                child: Text(cat),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
+
+          const SizedBox(height: 18),
+
           AppTextField(
             controller: _hsnController,
             label: 'HSN Code',
             hintText: 'e.g. 25232910',
             prefixIcon: const Icon(Icons.tag),
-            keyboardType: TextInputType.number,
+            keyboardType:
+                TextInputType.number,
             validator: (value) {
-              if (value != null && value.isNotEmpty) {
-                final digits = RegExp(r'^\d+$');
+              if (value != null &&
+                  value.isNotEmpty) {
+                final digits =
+                    RegExp(r'^\d+$');
+
                 if (!digits.hasMatch(value)) {
                   return 'HSN must contain digits only';
                 }
-                if (value.length < 4 || value.length > 8) {
+
+                if (value.length < 4 ||
+                    value.length > 8) {
                   return 'HSN must be 4 to 8 digits long';
                 }
               }
+
               return null;
             },
           ),
-          const SizedBox(height: 16),
+
+          const SizedBox(height: 18),
+
           AppTextField(
-            controller: _descriptionController,
-            label: 'Product Description',
-            hintText: 'Describe physical properties, grades, packaging...',
-            prefixIcon: const Icon(Icons.description_outlined),
-            maxLines: 3,
+            controller:
+                _descriptionController,
+            label: 'Description',
+            hintText:
+                'Describe material properties, packaging, usage...',
+            prefixIcon: const Icon(
+              Icons.description_outlined,
+            ),
+            maxLines: 4,
           ),
         ],
       ),
@@ -416,84 +847,237 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   }
 
   Widget _buildPricingCard() {
-    final colorScheme = context.colorScheme;
-
-    return AppCard(
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _T.card(),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Pricing details',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+          _buildSectionHeader(
+            title: 'Pricing Details',
+            subtitle:
+                'Commercial pricing configuration',
+            icon: Icons.currency_rupee_rounded,
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: AppTextField(
-                  controller: _costPriceController,
-                  label: 'Cost Price *',
-                  hintText: '0.00',
-                  prefixIcon: const Icon(Icons.payments_outlined),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Cost Price is required';
-                    }
-                    final val = double.tryParse(value);
-                    if (val == null || val < 0) {
-                      return 'Must be >= 0';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: AppTextField(
-                  controller: _priceController,
-                  label: 'Selling Price (Excl. GST) *',
-                  hintText: '0.00',
-                  prefixIcon: const Icon(Icons.sell_outlined),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Selling Price is required';
-                    }
-                    final val = double.tryParse(value);
-                    if (val == null || val <= 0) {
-                      return 'Must be > 0';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<double>(
-            decoration: InputDecoration(
-              labelText: 'GST Rate *',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
-              ),
-              prefixIcon: const Icon(Icons.percent),
+
+          const SizedBox(height: 22),
+
+          AppTextField(
+            controller: _priceController,
+            label: 'Selling Price *',
+            hintText: '0.00',
+            prefixIcon: const Icon(
+              Icons.sell_outlined,
             ),
-            value: _selectedGstRate,
+            keyboardType:
+                const TextInputType.numberWithOptions(
+              decimal: true,
+            ),
+            validator: (value) {
+              if (value == null ||
+                  value.isEmpty) {
+                return 'Selling Price is required';
+              }
+
+              final val =
+                  double.tryParse(value);
+
+              if (val == null || val <= 0) {
+                return 'Must be > 0';
+              }
+
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInventoryCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _T.card(),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(
+            title: 'Inventory & Packaging',
+            subtitle:
+                'Stock levels and packaging configuration',
+            icon: Icons.inventory_outlined,
+          ),
+
+          const SizedBox(height: 22),
+
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final vertical =
+                  constraints.maxWidth < 700;
+
+              if (vertical) {
+                return Column(
+                  children: [
+                    AppTextField(
+                      controller:
+                          _stockController,
+                      label:
+                          'Current Stock *',
+                      hintText: '0',
+                      prefixIcon: const Icon(
+                        Icons.inventory_2_outlined,
+                      ),
+                      keyboardType:
+                          TextInputType.number,
+                      validator: (value) {
+                        if (value == null ||
+                            value.isEmpty) {
+                          return 'Required';
+                        }
+
+                        final val =
+                            int.tryParse(
+                                value);
+
+                        if (val == null ||
+                            val < 0) {
+                          return 'Must be >= 0';
+                        }
+
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 18),
+                    AppTextField(
+                      controller:
+                          _minStockController,
+                      label:
+                          'Min Reorder Threshold *',
+                      hintText: '0',
+                      prefixIcon: const Icon(
+                        Icons
+                            .notifications_active_outlined,
+                      ),
+                      keyboardType:
+                          TextInputType.number,
+                      validator: (value) {
+                        if (value == null ||
+                            value.isEmpty) {
+                          return 'Required';
+                        }
+
+                        final val =
+                            int.tryParse(
+                                value);
+
+                        if (val == null ||
+                            val < 0) {
+                          return 'Must be >= 0';
+                        }
+
+                        return null;
+                      },
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: AppTextField(
+                      controller:
+                          _stockController,
+                      label:
+                          'Current Stock *',
+                      hintText: '0',
+                      prefixIcon: const Icon(
+                        Icons.inventory_2_outlined,
+                      ),
+                      keyboardType:
+                          TextInputType.number,
+                      validator: (value) {
+                        if (value == null ||
+                            value.isEmpty) {
+                          return 'Required';
+                        }
+
+                        final val =
+                            int.tryParse(
+                                value);
+
+                        if (val == null ||
+                            val < 0) {
+                          return 'Must be >= 0';
+                        }
+
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  Expanded(
+                    child: AppTextField(
+                      controller:
+                          _minStockController,
+                      label:
+                          'Min Reorder Threshold *',
+                      hintText: '0',
+                      prefixIcon: const Icon(
+                        Icons
+                            .notifications_active_outlined,
+                      ),
+                      keyboardType:
+                          TextInputType.number,
+                      validator: (value) {
+                        if (value == null ||
+                            value.isEmpty) {
+                          return 'Required';
+                        }
+
+                        final val =
+                            int.tryParse(
+                                value);
+
+                        if (val == null ||
+                            val < 0) {
+                          return 'Must be >= 0';
+                        }
+
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+
+          const SizedBox(height: 18),
+
+          DropdownButtonFormField<String>(
+            value: _selectedUnit,
+            borderRadius:
+                BorderRadius.circular(16),
+            decoration: _inputDecoration(
+              'Stock Unit *',
+              Icons.scale_outlined,
+            ),
             onChanged: (value) {
               if (value != null) {
                 setState(() {
-                  _selectedGstRate = value;
+                  _selectedUnit = value;
                 });
               }
             },
-            items: _gstRates.map((rate) {
+            items: _units.map((unit) {
               return DropdownMenuItem(
-                value: rate,
-                child: Text('${rate.toStringAsFixed(0)}%'),
+                value: unit,
+                child: Text(unit),
               );
             }).toList(),
           ),
@@ -502,197 +1086,357 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     );
   }
 
-  Widget _buildInventoryCard() {
-    final colorScheme = context.colorScheme;
-
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Inventory & Packaging',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: AppTextField(
-                  controller: _stockController,
-                  label: 'Current Stock *',
-                  hintText: '0',
-                  prefixIcon: const Icon(Icons.inventory_outlined),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Required';
-                    }
-                    final val = int.tryParse(value);
-                    if (val == null || val < 0) {
-                      return 'Must be >= 0';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: AppTextField(
-                  controller: _minStockController,
-                  label: 'Min Reorder Threshold *',
-                  hintText: '0',
-                  prefixIcon: const Icon(Icons.notifications_active_outlined),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Required';
-                    }
-                    final val = int.tryParse(value);
-                    if (val == null || val < 0) {
-                      return 'Must be >= 0';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  decoration: InputDecoration(
-                    labelText: 'Stock Unit *',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
-                    ),
-                    prefixIcon: const Icon(Icons.scale_outlined),
-                  ),
-                  value: _selectedUnit,
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedUnit = value;
-                      });
-                    }
-                  },
-                  items: _units.map((unit) {
-                    return DropdownMenuItem(
-                      value: unit,
-                      child: Text(unit),
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: AppTextField(
-                  controller: _skuController,
-                  label: 'SKU Code',
-                  hintText: 'e.g. CEM-OPC-53',
-                  prefixIcon: const Icon(Icons.qr_code_outlined),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          AppTextField(
-            controller: _barcodeController,
-            label: 'Barcode',
-            hintText: 'e.g. 890123456001',
-            prefixIcon: const Icon(Icons.qr_code_scanner),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildStatusCard() {
-    final colorScheme = context.colorScheme;
-
-    return AppCard(
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _T.card(),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Product Status',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+          _buildSectionHeader(
+            title: 'Product Status',
+            subtitle:
+                'Visibility and operational state',
+            icon: Icons.toggle_on_rounded,
           ),
-          const SizedBox(height: 16),
-          SwitchListTile(
-            title: const Text('Is Active'),
-            subtitle: const Text('Inactive products are hidden from lists'),
-            value: _isActive,
-            onChanged: (value) {
-              setState(() {
-                _isActive = value;
-              });
-            },
-            activeColor: colorScheme.primary,
+
+          const SizedBox(height: 20),
+
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _isActive
+                  ? _T.success.withOpacity(0.06)
+                  : _T.warning.withOpacity(0.06),
+              borderRadius:
+                  BorderRadius.circular(16),
+              border: Border.all(
+                color: (_isActive
+                        ? _T.success
+                        : _T.warning)
+                    .withOpacity(0.15),
+              ),
+            ),
+            child: SwitchListTile(
+              contentPadding:
+                  EdgeInsets.zero,
+              title: Text(
+                _isActive
+                    ? 'Product Active'
+                    : 'Product Inactive',
+                style: const TextStyle(
+                  fontWeight:
+                      FontWeight.w700,
+                ),
+              ),
+              subtitle: Text(
+                _isActive
+                    ? 'Visible in product listings'
+                    : 'Hidden from listings',
+              ),
+              value: _isActive,
+              onChanged: (value) {
+                setState(() {
+                  _isActive = value;
+                });
+              },
+              activeColor:
+                  _T.gradientStart,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionButtons(BuildContext context) {
-    final provider = context.read<ProductProvider>();
+  Widget _buildActionButtons(
+      BuildContext context) {
+    final provider =
+        context.read<ProductProvider>();
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final vertical =
+            constraints.maxWidth < 520;
+
+        if (vertical) {
+          return Column(
+            children: [
+              SizedBox(
+                height: 54,
+                child: AppButton(
+                  text: 'Cancel',
+                  variant:
+                      AppButtonVariant.outline,
+                  onPressed: () {
+                    context.pop();
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  gradient:
+                      _T.brandGradient,
+                  borderRadius:
+                      BorderRadius.circular(
+                    AppConstants
+                        .defaultBorderRadius,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _T.gradientStart
+                          .withOpacity(0.22),
+                      blurRadius: 16,
+                      offset:
+                          const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: SizedBox(
+                  height: 54,
+                  child: AppButton(
+                    text: _isEditMode
+                        ? 'Update Product'
+                        : 'Create Product',
+                    variant:
+                        AppButtonVariant.primary,
+                    onPressed: () {
+                      _submitForm(provider);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 54,
+                child: AppButton(
+                  text: 'Cancel',
+                  variant:
+                      AppButtonVariant.outline,
+                  onPressed: () {
+                    context.pop();
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient:
+                      _T.brandGradient,
+                  borderRadius:
+                      BorderRadius.circular(
+                    AppConstants
+                        .defaultBorderRadius,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _T.gradientStart
+                          .withOpacity(0.22),
+                      blurRadius: 16,
+                      offset:
+                          const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: SizedBox(
+                  height: 54,
+                  child: AppButton(
+                    text: _isEditMode
+                        ? 'Update Product'
+                        : 'Create Product',
+                    variant:
+                        AppButtonVariant.primary,
+                    onPressed: () {
+                      _submitForm(provider);
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
     return Row(
       children: [
-        Expanded(
-          child: AppButton(
-            text: 'Cancel',
-            variant: AppButtonVariant.outline,
-            onPressed: () => context.pop(),
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            gradient: _T.brandGradient,
+            borderRadius:
+                BorderRadius.circular(14),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 20,
           ),
         ),
-        const SizedBox(width: 16),
+
+        const SizedBox(width: 12),
+
         Expanded(
-          child: AppButton(
-            text: _isEditMode ? 'Update Product' : 'Create Product',
-            variant: AppButtonVariant.primary,
-            onPressed: () => _submitForm(provider),
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight:
+                      FontWeight.w800,
+                  color: _T.textDark,
+                ),
+              ),
+
+              const SizedBox(height: 2),
+
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: _T.textMuted,
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  Future<void> _pickImage(ImageSource source) async {
-    final String? path = source == ImageSource.camera
-        ? await _imageService.pickFromCamera()
-        : await _imageService.pickFromGallery();
+  InputDecoration _inputDecoration(
+    String label,
+    IconData icon,
+  ) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: Colors.white,
+      prefixIcon: Icon(icon),
+      border: OutlineInputBorder(
+        borderRadius:
+            BorderRadius.circular(16),
+        borderSide: BorderSide(
+          color: _T.divider,
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius:
+            BorderRadius.circular(16),
+        borderSide: BorderSide(
+          color: _T.divider,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius:
+            BorderRadius.circular(16),
+        borderSide: const BorderSide(
+          color: _T.gradientStart,
+          width: 1.4,
+        ),
+      ),
+    );
+  }
 
-    if (path != null) {
+  Future<void> _pickImage(
+      ImageSource source) async {
+    try {
       setState(() {
-        _imagePath = path;
+        _imageLoading = true;
       });
+
+      final String? path =
+          source == ImageSource.camera
+              ? await _imageService
+                  .pickFromCamera()
+              : await _imageService
+                  .pickFromGallery();
+
+      if (path != null &&
+          path.trim().isNotEmpty) {
+        setState(() {
+          _imagePath = path;
+        });
+
+        if (mounted) {
+          context.showSnackBar(
+            'Product image uploaded successfully',
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        context.showSnackBar(
+          'Failed to upload image: $e',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _imageLoading = false;
+        });
+      }
     }
   }
 
-  Future<void> _submitForm(ProductProvider provider) async {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> _submitForm(
+    ProductProvider provider,
+  ) async {
+    if (!_formKey.currentState!
+        .validate()) {
       return;
     }
 
     try {
-      final name = _nameController.text.trim();
-      final hsn = _hsnController.text.trim().isEmpty ? null : _hsnController.text.trim();
-      final price = double.parse(_priceController.text);
-      final costPrice = double.parse(_costPriceController.text);
-      final stock = int.parse(_stockController.text);
-      final minStock = int.parse(_minStockController.text);
-      final sku = _skuController.text.trim().isEmpty ? null : _skuController.text.trim();
-      final barcode = _barcodeController.text.trim().isEmpty ? null : _barcodeController.text.trim();
-      final desc = _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim();
+      final name =
+          _nameController.text.trim();
+
+      final hsn =
+          _hsnController.text.trim().isEmpty
+              ? null
+              : _hsnController.text.trim();
+
+      final price = double.parse(
+        _priceController.text,
+      );
+
+      final stock = int.parse(
+        _stockController.text,
+      );
+
+      final minStock = int.parse(
+        _minStockController.text,
+      );
+
+      final desc =
+          _descriptionController.text
+                  .trim()
+                  .isEmpty
+              ? null
+              : _descriptionController.text
+                  .trim();
 
       if (_isEditMode) {
         await provider.updateProduct(
@@ -701,44 +1445,41 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           hsnCode: hsn,
           price: price,
           stockQuantity: stock,
-          gstRate: _selectedGstRate,
           description: desc,
           imagePath: _imagePath,
-          category: _selectedCategory!,
-          costPrice: costPrice,
           minStockLevel: minStock,
           unit: _selectedUnit,
-          sku: sku,
-          barcode: barcode,
           isActive: _isActive,
         );
-        if (mounted) {
-          context.showSnackBar('Product updated successfully');
-          context.pop();
-        }
       } else {
         await provider.createProduct(
           productName: name,
           hsnCode: hsn,
           price: price,
           stockQuantity: stock,
-          gstRate: _selectedGstRate,
           description: desc,
           imagePath: _imagePath,
-          category: _selectedCategory!,
-          costPrice: costPrice,
           minStockLevel: minStock,
           unit: _selectedUnit,
-          sku: sku,
-          barcode: barcode,
         );
-        if (mounted) {
-          context.showSnackBar('Product created successfully');
-          context.pop();
-        }
+      }
+
+      if (mounted) {
+        context.showSnackBar(
+          _isEditMode
+              ? 'Product updated successfully'
+              : 'Product added successfully',
+        );
+
+        context.pop();
       }
     } catch (e) {
-      context.showSnackBar('Failed to save product: $e', isError: true);
+      if (mounted) {
+        context.showSnackBar(
+          'Failed to save product: $e',
+          isError: true,
+        );
+      }
     }
   }
 }

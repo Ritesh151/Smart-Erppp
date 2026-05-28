@@ -1,7 +1,7 @@
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/payment_model.dart';
-import 'package:smarterp/core/storage/storage_service.dart';
-import 'package:smarterp/core/utils/logger.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/models/payment_model.dart';
+import 'package:SmartERP/core/storage/storage_service.dart';
+import 'package:SmartERP/core/utils/logger.dart';
 
 class PaymentRepository {
   final StorageService<Map<dynamic, dynamic>> _storage;
@@ -17,17 +17,6 @@ class PaymentRepository {
     } catch (e, stackTrace) {
       Logger.error('Failed to get all payments', e, stackTrace);
       throw StorageException('Failed to retrieve payments');
-    }
-  }
-
-  Future<List<PaymentModel>> getByInvoiceId(String invoiceId) async {
-    try {
-      final payments = await getAll();
-      return payments.where((p) => p.invoiceId == invoiceId).toList()
-        ..sort((a, b) => b.paymentDate.compareTo(a.paymentDate));
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get payments for invoice: $invoiceId', e, stackTrace);
-      return [];
     }
   }
 
@@ -52,6 +41,16 @@ class PaymentRepository {
     }
   }
 
+  Future<void> update(PaymentModel payment) async {
+    try {
+      await _storage.update(payment.id, payment.toJson());
+      Logger.success('Payment updated: ${payment.id}');
+    } catch (e, stackTrace) {
+      Logger.error('Failed to update payment', e, stackTrace);
+      throw StorageException('Failed to update payment');
+    }
+  }
+
   Future<void> delete(String id) async {
     try {
       await _storage.delete(id);
@@ -62,23 +61,23 @@ class PaymentRepository {
     }
   }
 
-  Future<double> getTotalPaidByInvoiceId(String invoiceId) async {
+  Future<List<PaymentModel>> getByInvoiceId(String invoiceId) async {
+    try {
+      final payments = await getAll();
+      return payments.where((p) => p.invoiceId == invoiceId).toList();
+    } catch (e, stackTrace) {
+      Logger.error('Failed to get payments by invoice id', e, stackTrace);
+      return [];
+    }
+  }
+
+  Future<double> getTotalPaidForInvoice(String invoiceId) async {
     try {
       final payments = await getByInvoiceId(invoiceId);
       return payments.fold<double>(0.0, (sum, p) => sum + p.amount);
     } catch (e, stackTrace) {
-      Logger.error('Failed to calculate total paid for invoice: $invoiceId', e, stackTrace);
+      Logger.error('Failed to get total paid for invoice', e, stackTrace);
       return 0.0;
-    }
-  }
-
-  Future<int> getCountByInvoiceId(String invoiceId) async {
-    try {
-      final payments = await getByInvoiceId(invoiceId);
-      return payments.length;
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get payment count for invoice: $invoiceId', e, stackTrace);
-      return 0;
     }
   }
 

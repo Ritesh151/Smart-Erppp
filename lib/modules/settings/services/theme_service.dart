@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:smarterp/core/constants/storage_keys.dart';
-import 'package:smarterp/core/models/theme_model.dart';
-import 'package:smarterp/core/storage/preferences_service.dart';
-import 'package:smarterp/core/theme/app_theme.dart';
-import 'package:smarterp/core/utils/logger.dart';
+import 'package:SmartERP/core/constants/storage_keys.dart';
+import 'package:SmartERP/core/models/theme_model.dart';
+import 'package:SmartERP/core/storage/preferences_service.dart';
+import 'package:SmartERP/core/theme/app_theme.dart';
+import 'package:SmartERP/core/utils/logger.dart';
 
 class ThemeService {
   final PreferencesService _preferencesService;

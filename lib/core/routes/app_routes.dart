@@ -1,6 +1,7 @@
 class AppRoutes {
   AppRoutes._();
 
+  static const String root = '/';
   static const String login = '/login';
   static const String dashboard = '/dashboard';
   static const String products = '/products';
@@ -8,6 +9,8 @@ class AppRoutes {
   static const String transport = '/transport';
   static const String invoices = '/invoices';
   static const String expenses = '/expenses';
+  static const String expenseAdd = '/expenses/add';
+  static const String expenseSummary = '/expenses/summary';
   static const String payroll = '/payroll';
   static const String reports = '/reports';
   static const String settings = '/settings';

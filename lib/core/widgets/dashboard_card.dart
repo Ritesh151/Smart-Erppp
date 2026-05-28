@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:smarterp/core/constants/app_constants.dart';
-import 'package:smarterp/core/extensions/context_extensions.dart';
+import 'package:SmartERP/core/constants/app_constants.dart';
+import 'package:SmartERP/core/extensions/context_extensions.dart';
 
 class DashboardCard extends StatelessWidget {
   final String title;
@@ -66,42 +66,36 @@ class DashboardCard extends StatelessWidget {
                 ],
               ),
               SizedBox(height: context.isMobile ? 12 : 16),
-              Flexible(
-                child: Text(
-                  title,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.7),
-                    fontSize: context.isMobile ? 12 : null,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+              Text(
+                title,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.7),
+                  fontSize: context.isMobile ? 12 : null,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: context.isMobile ? 4 : 8),
-              Flexible(
-                child: Text(
-                  value,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                    fontSize: context.isMobile ? 18 : null,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Text(
+                value,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                  fontSize: context.isMobile ? 18 : null,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               if (subtitle != null) ...[
                 SizedBox(height: context.isMobile ? 4 : 8),
-                Flexible(
-                  child: Text(
-                    subtitle!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.6),
-                      fontSize: context.isMobile ? 10 : null,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                Text(
+                  subtitle!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.6),
+                    fontSize: context.isMobile ? 10 : null,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ],

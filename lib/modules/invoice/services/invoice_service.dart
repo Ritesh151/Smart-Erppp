@@ -1,19 +1,17 @@
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/invoice_model.dart';
-import 'package:smarterp/core/models/invoice_item_model.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/invoice/repositories/invoice_repository.dart';
-import 'package:smarterp/modules/products/repositories/product_repository.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/models/invoice_item_model.dart';
+import 'package:SmartERP/core/models/invoice_model.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/invoice/repositories/invoice_repository.dart';
+import 'package:SmartERP/modules/products/repositories/product_repository.dart';
 import 'package:uuid/uuid.dart';
 
 class InvoiceService {
   final InvoiceRepository _invoiceRepository;
   final ProductRepository _productRepository;
 
-  InvoiceService({
-    required InvoiceRepository invoiceRepository,
-    required ProductRepository productRepository,
-  })  : _invoiceRepository = invoiceRepository,
+  InvoiceService({required InvoiceRepository invoiceRepository, required ProductRepository productRepository})
+      : _invoiceRepository = invoiceRepository,
         _productRepository = productRepository;
 
   Future<List<InvoiceModel>> getAllInvoices() async {
@@ -34,15 +32,6 @@ class InvoiceService {
     }
   }
 
-  Future<List<InvoiceItemModel>> getInvoiceItems(InvoiceModel invoice) async {
-    try {
-      return await _invoiceRepository.getItemsByIds(invoice.itemIds);
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get items for invoice: ${invoice.id}', e, stackTrace);
-      return [];
-    }
-  }
-
   Future<InvoiceModel> createInvoice({
     required String customerId,
     required String customerName,
@@ -53,39 +42,57 @@ class InvoiceService {
     required DateTime invoiceDate,
     required DateTime dueDate,
     required List<InvoiceItemModel> items,
+    double subtotal = 0,
+    double taxAmount = 0,
     double discountAmount = 0,
+    double totalAmount = 0,
     String? notes,
     String? termsAndConditions,
   }) async {
     try {
+      if (customerName.trim().isEmpty) {
+        throw ValidationException('Customer name is required');
+      }
       if (items.isEmpty) {
         throw ValidationException('Invoice must have at least one item');
       }
 
-      _validateInvoiceItems(items);
-
+      final invoiceNumber = await getNextInvoiceNumber();
+      final id = const Uuid().v4();
       final itemIds = <String>[];
+
       for (final item in items) {
-        await _invoiceRepository.saveItem(item);
-        itemIds.add(item.id);
-        await _updateProductStock(item);
+        final itemId = const Uuid().v4();
+        itemIds.add(itemId);
+        final savedItem = item.copyWith(id: itemId);
+        await _invoiceRepository.saveItem(savedItem);
       }
 
-      final subtotal = items.fold(0.0, (sum, item) => sum + item.subtotal);
-      final taxAmount = items.fold(0.0, (sum, item) => sum + item.taxAmount);
-      final totalAmount = subtotal + taxAmount - discountAmount;
-
-      final invoiceNumber = await _invoiceRepository.getNextInvoiceNumber();
+      for (final item in items) {
+        final product = await _productRepository.getById(item.productId);
+        if (product != null) {
+          final newQuantity = product.stockQuantity - item.quantity.toInt();
+          if (newQuantity < 0) {
+            throw ValidationException(
+                'Insufficient stock for ${item.productName}');
+          }
+          final updatedProduct = product.copyWith(
+            stockQuantity: newQuantity,
+            updatedAt: DateTime.now(),
+          );
+          await _productRepository.update(updatedProduct);
+        }
+      }
 
       final invoice = InvoiceModel(
-        id: const Uuid().v4(),
+        id: id,
         invoiceNumber: invoiceNumber,
         customerId: customerId,
-        customerName: customerName,
-        customerEmail: customerEmail,
-        customerPhone: customerPhone,
-        customerAddress: customerAddress,
-        customerGst: customerGst,
+        customerName: customerName.trim(),
+        customerEmail: customerEmail?.trim(),
+        customerPhone: customerPhone?.trim(),
+        customerAddress: customerAddress?.trim(),
+        customerGst: customerGst?.trim(),
         invoiceDate: invoiceDate,
         dueDate: dueDate,
         itemIds: itemIds,
@@ -95,14 +102,14 @@ class InvoiceService {
         totalAmount: totalAmount,
         paidAmount: 0,
         status: InvoiceStatus.draft,
-        notes: notes,
-        termsAndConditions: termsAndConditions,
+        notes: notes?.trim(),
+        termsAndConditions: termsAndConditions?.trim(),
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
       await _invoiceRepository.save(invoice);
-      Logger.success('Invoice created: ${invoice.invoiceNumber}');
+      Logger.success('Invoice created: $invoiceNumber');
       return invoice;
     } catch (e, stackTrace) {
       Logger.error('Failed to create invoice', e, stackTrace);
@@ -110,23 +117,102 @@ class InvoiceService {
     }
   }
 
-  Future<InvoiceModel> updateInvoiceStatus(String id, InvoiceStatus status) async {
+  Future<InvoiceModel> updateInvoice({
+    required String id,
+    required String customerId,
+    required String customerName,
+    String? customerEmail,
+    String? customerPhone,
+    String? customerAddress,
+    String? customerGst,
+    required DateTime invoiceDate,
+    required DateTime dueDate,
+    required List<InvoiceItemModel> items,
+    double subtotal = 0,
+    double taxAmount = 0,
+    double discountAmount = 0,
+    double totalAmount = 0,
+    String? notes,
+    String? termsAndConditions,
+  }) async {
     try {
-      final invoice = await _invoiceRepository.getById(id);
-      if (invoice == null) {
+      final existingInvoice = await _invoiceRepository.getById(id);
+      if (existingInvoice == null) {
         throw NotFoundException('Invoice not found');
       }
+      if (customerName.trim().isEmpty) {
+        throw ValidationException('Customer name is required');
+      }
+      if (items.isEmpty) {
+        throw ValidationException('Invoice must have at least one item');
+      }
 
-      final updated = invoice.copyWith(
-        status: status,
+      for (final oldItemId in existingInvoice.itemIds) {
+        final oldItem = await _invoiceRepository.getItemById(oldItemId);
+        if (oldItem != null) {
+          final product =
+              await _productRepository.getById(oldItem.productId);
+          if (product != null) {
+            final restoredQuantity =
+                product.stockQuantity + oldItem.quantity.toInt();
+            final updatedProduct = product.copyWith(
+              stockQuantity: restoredQuantity,
+              updatedAt: DateTime.now(),
+            );
+            await _productRepository.update(updatedProduct);
+          }
+          await _invoiceRepository.deleteItem(oldItemId);
+        }
+      }
+
+      final itemIds = <String>[];
+      for (final item in items) {
+        final itemId = const Uuid().v4();
+        itemIds.add(itemId);
+        final savedItem = item.copyWith(id: itemId);
+        await _invoiceRepository.saveItem(savedItem);
+      }
+
+      for (final item in items) {
+        final product = await _productRepository.getById(item.productId);
+        if (product != null) {
+          final newQuantity = product.stockQuantity - item.quantity.toInt();
+          if (newQuantity < 0) {
+            throw ValidationException(
+                'Insufficient stock for ${item.productName}');
+          }
+          final updatedProduct = product.copyWith(
+            stockQuantity: newQuantity,
+            updatedAt: DateTime.now(),
+          );
+          await _productRepository.update(updatedProduct);
+        }
+      }
+
+      final updatedInvoice = existingInvoice.copyWith(
+        customerId: customerId,
+        customerName: customerName.trim(),
+        customerEmail: customerEmail?.trim(),
+        customerPhone: customerPhone?.trim(),
+        customerAddress: customerAddress?.trim(),
+        customerGst: customerGst?.trim(),
+        invoiceDate: invoiceDate,
+        dueDate: dueDate,
+        itemIds: itemIds,
+        subtotal: subtotal,
+        taxAmount: taxAmount,
+        discountAmount: discountAmount,
+        totalAmount: totalAmount,
+        notes: notes?.trim(),
+        termsAndConditions: termsAndConditions?.trim(),
         updatedAt: DateTime.now(),
       );
 
-      await _invoiceRepository.update(updated);
-      Logger.success('Invoice status updated: ${invoice.invoiceNumber} -> $status');
-      return updated;
+      await _invoiceRepository.update(updatedInvoice);
+      Logger.success('Invoice updated: ${updatedInvoice.invoiceNumber}');
+      return updatedInvoice;
     } catch (e, stackTrace) {
-      Logger.error('Failed to update invoice status', e, stackTrace);
+      Logger.error('Failed to update invoice', e, stackTrace);
       rethrow;
     }
   }
@@ -138,9 +224,21 @@ class InvoiceService {
         throw NotFoundException('Invoice not found');
       }
 
-      final items = await _invoiceRepository.getItemsByIds(invoice.itemIds);
-      for (final item in items) {
-        await _restoreProductStock(item);
+      for (final itemId in invoice.itemIds) {
+        final item = await _invoiceRepository.getItemById(itemId);
+        if (item != null) {
+          final product = await _productRepository.getById(item.productId);
+          if (product != null) {
+            final restoredQuantity =
+                product.stockQuantity + item.quantity.toInt();
+            final updatedProduct = product.copyWith(
+              stockQuantity: restoredQuantity,
+              updatedAt: DateTime.now(),
+            );
+            await _productRepository.update(updatedProduct);
+          }
+          await _invoiceRepository.deleteItem(itemId);
+        }
       }
 
       await _invoiceRepository.delete(id);
@@ -152,80 +250,173 @@ class InvoiceService {
   }
 
   Future<void> markAsSent(String id) async {
-    await updateInvoiceStatus(id, InvoiceStatus.sent);
-  }
-
-  Future<void> markAsPaid(String id, double paidAmount) async {
     try {
       final invoice = await _invoiceRepository.getById(id);
       if (invoice == null) {
         throw NotFoundException('Invoice not found');
       }
 
-      final totalPaid = invoice.paidAmount + paidAmount;
-      final newStatus = totalPaid >= invoice.totalAmount
+      final updatedInvoice = invoice.copyWith(
+        status: InvoiceStatus.sent,
+        updatedAt: DateTime.now(),
+      );
+
+      await _invoiceRepository.update(updatedInvoice);
+      Logger.success('Invoice marked as sent: ${invoice.invoiceNumber}');
+    } catch (e, stackTrace) {
+      Logger.error('Failed to mark invoice as sent', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> markAsPaid(String id, double amount) async {
+    try {
+      if (amount < 0) {
+        throw ValidationException('Payment amount cannot be negative');
+      }
+
+      final invoice = await _invoiceRepository.getById(id);
+      if (invoice == null) {
+        throw NotFoundException('Invoice not found');
+      }
+
+      final newPaidAmount = invoice.paidAmount + amount;
+      final newStatus = newPaidAmount >= invoice.totalAmount
           ? InvoiceStatus.paid
           : InvoiceStatus.partiallyPaid;
 
-      final updated = invoice.copyWith(
-        paidAmount: totalPaid,
+      final updatedInvoice = invoice.copyWith(
+        paidAmount: newPaidAmount,
         status: newStatus,
         updatedAt: DateTime.now(),
       );
 
-      await _invoiceRepository.update(updated);
-      Logger.success('Invoice payment recorded: ${invoice.invoiceNumber}');
+      await _invoiceRepository.update(updatedInvoice);
+      Logger.success('Payment recorded for invoice: ${invoice.invoiceNumber}');
     } catch (e, stackTrace) {
       Logger.error('Failed to mark invoice as paid', e, stackTrace);
       rethrow;
     }
   }
 
-  Future<void> _updateProductStock(InvoiceItemModel item) async {
+  Future<InvoiceItemModel?> getInvoiceItemById(String id) async {
     try {
-      final product = await _productRepository.getById(item.productId);
-      if (product != null) {
-        final newStock = product.stockQuantity - item.quantity.toInt();
-        if (newStock < 0) {
-          throw ValidationException(
-            'Insufficient stock for ${item.productName}. Available: ${product.stockQuantity}, Required: ${item.quantity.toInt()}',
-          );
+      return await _invoiceRepository.getItemById(id);
+    } catch (e, stackTrace) {
+      Logger.error('Failed to get invoice item by id', e, stackTrace);
+      return null;
+    }
+  }
+
+  Future<List<InvoiceItemModel>> getInvoiceItems(String invoiceId) async {
+    try {
+      final invoice = await _invoiceRepository.getById(invoiceId);
+      if (invoice == null) return [];
+      final items = <InvoiceItemModel>[];
+      for (final itemId in invoice.itemIds) {
+        final item = await _invoiceRepository.getItemById(itemId);
+        if (item != null) items.add(item);
+      }
+      return items;
+    } catch (e, stackTrace) {
+      Logger.error('Failed to get invoice items for invoice: $invoiceId', e, stackTrace);
+      return [];
+    }
+  }
+
+  Future<void> cancelInvoice(String id) async {
+    try {
+      final invoice = await _invoiceRepository.getById(id);
+      if (invoice == null) {
+        throw NotFoundException('Invoice not found');
+      }
+
+      for (final itemId in invoice.itemIds) {
+        final item = await _invoiceRepository.getItemById(itemId);
+        if (item != null) {
+          final product = await _productRepository.getById(item.productId);
+          if (product != null) {
+            final restoredQuantity =
+                product.stockQuantity + item.quantity.toInt();
+            final updatedProduct = product.copyWith(
+              stockQuantity: restoredQuantity,
+              updatedAt: DateTime.now(),
+            );
+            await _productRepository.update(updatedProduct);
+          }
         }
-        final updated = product.copyWith(
-          stockQuantity: newStock,
-          updatedAt: DateTime.now(),
-        );
-        await _productRepository.update(updated);
       }
-    } catch (e) {
-      if (e is ValidationException) rethrow;
-      Logger.warning('Failed to update stock for product: ${item.productId}', e);
+
+      final updatedInvoice = invoice.copyWith(
+        status: InvoiceStatus.cancelled,
+        updatedAt: DateTime.now(),
+      );
+
+      await _invoiceRepository.update(updatedInvoice);
+      Logger.success('Invoice cancelled: ${invoice.invoiceNumber}');
+    } catch (e, stackTrace) {
+      Logger.error('Failed to cancel invoice', e, stackTrace);
+      rethrow;
     }
   }
 
-  Future<void> _restoreProductStock(InvoiceItemModel item) async {
+  Future<String> getNextInvoiceNumber() async {
     try {
-      final product = await _productRepository.getById(item.productId);
-      if (product != null) {
-        final updated = product.copyWith(
-          stockQuantity: product.stockQuantity + item.quantity.toInt(),
-          updatedAt: DateTime.now(),
-        );
-        await _productRepository.update(updated);
-      }
-    } catch (e) {
-      Logger.warning('Failed to restore stock for product: ${item.productId}', e);
+      final count = await _invoiceRepository.getTotalCount();
+      final year = DateTime.now().year;
+      return 'INV-$year-${(count + 1).toString().padLeft(4, '0')}';
+    } catch (e, stackTrace) {
+      Logger.error('Failed to generate next invoice number', e, stackTrace);
+      rethrow;
     }
   }
 
-  void _validateInvoiceItems(List<InvoiceItemModel> items) {
-    for (final item in items) {
-      if (item.quantity <= 0) {
-        throw ValidationException('Quantity must be greater than 0 for ${item.productName}');
+  Future<List<InvoiceModel>> getInvoicesByCustomer(String customerId) async {
+    try {
+      return await _invoiceRepository.getByCustomerId(customerId);
+    } catch (e, stackTrace) {
+      Logger.error('Failed to get invoices by customer', e, stackTrace);
+      return [];
+    }
+  }
+
+  Future<List<InvoiceModel>> getInvoicesByStatus(InvoiceStatus status) async {
+    try {
+      return await _invoiceRepository.getByStatus(status);
+    } catch (e, stackTrace) {
+      Logger.error('Failed to get invoices by status', e, stackTrace);
+      return [];
+    }
+  }
+
+  Future<List<InvoiceModel>> getOverdueInvoices() async {
+    try {
+      return await _invoiceRepository.getOverdue();
+    } catch (e, stackTrace) {
+      Logger.error('Failed to get overdue invoices', e, stackTrace);
+      return [];
+    }
+  }
+
+  Future<List<InvoiceModel>> getInvoicesByDateRange(
+      DateTime start, DateTime end) async {
+    try {
+      return await _invoiceRepository.getByDateRange(start, end);
+    } catch (e, stackTrace) {
+      Logger.error('Failed to get invoices by date range', e, stackTrace);
+      return [];
+    }
+  }
+
+  Future<List<InvoiceModel>> searchInvoices(String query) async {
+    try {
+      if (query.trim().isEmpty) {
+        return await getAllInvoices();
       }
-      if (item.unitPrice < 0) {
-        throw ValidationException('Unit price cannot be negative for ${item.productName}');
-      }
+      return await _invoiceRepository.search(query);
+    } catch (e, stackTrace) {
+      Logger.error('Failed to search invoices', e, stackTrace);
+      return [];
     }
   }
 }

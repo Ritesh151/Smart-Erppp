@@ -1,7 +1,7 @@
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/product_model.dart';
-import 'package:smarterp/core/storage/storage_service.dart';
-import 'package:smarterp/core/utils/logger.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/models/product_model.dart';
+import 'package:SmartERP/core/storage/storage_service.dart';
+import 'package:SmartERP/core/utils/logger.dart';
 
 class ProductRepository {
   final StorageService<Map<dynamic, dynamic>> _storage;
@@ -68,23 +68,10 @@ class ProductRepository {
       
       return products.where((product) {
         return product.productName.toLowerCase().contains(lowerQuery) ||
-            (product.hsnCode?.toLowerCase().contains(lowerQuery) ?? false) ||
-            (product.sku?.toLowerCase().contains(lowerQuery) ?? false) ||
-            (product.barcode?.toLowerCase().contains(lowerQuery) ?? false) ||
-            product.category.toLowerCase().contains(lowerQuery);
+            (product.hsnCode?.toLowerCase().contains(lowerQuery) ?? false);
       }).toList();
     } catch (e, stackTrace) {
       Logger.error('Failed to search products', e, stackTrace);
-      return [];
-    }
-  }
-
-  Future<List<ProductModel>> filterByCategory(String category) async {
-    try {
-      final products = await getAll();
-      return products.where((p) => p.category == category).toList();
-    } catch (e, stackTrace) {
-      Logger.error('Failed to filter products by category', e, stackTrace);
       return [];
     }
   }
@@ -174,13 +161,4 @@ class ProductRepository {
     }
   }
 
-  Future<List<String>> getAllCategories() async {
-    try {
-      final products = await getAll();
-      return products.map((p) => p.category).toSet().toList()..sort();
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get all categories', e, stackTrace);
-      return [];
-    }
-  }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:smarterp/core/models/notification_model.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/settings/services/notification_service.dart';
+import 'package:SmartERP/core/models/notification_model.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/settings/services/notification_service.dart';
 
 class NotificationProvider extends ChangeNotifier {
   final NotificationService _service;

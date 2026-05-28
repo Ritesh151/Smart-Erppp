@@ -1,7 +1,7 @@
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/product_model.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/products/repositories/product_repository.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/models/product_model.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/products/repositories/product_repository.dart';
 import 'package:uuid/uuid.dart';
 
 class ProductService {
@@ -32,23 +32,16 @@ class ProductService {
     String? hsnCode,
     required double price,
     required int stockQuantity,
-    required double gstRate,
     String? description,
     String? imagePath,
-    required String category,
-    required double costPrice,
     required int minStockLevel,
     required String unit,
-    String? sku,
-    String? barcode,
   }) async {
     try {
       _validateProductData(
         productName: productName,
         price: price,
         stockQuantity: stockQuantity,
-        gstRate: gstRate,
-        costPrice: costPrice,
         minStockLevel: minStockLevel,
       );
 
@@ -63,15 +56,10 @@ class ProductService {
         hsnCode: hsnCode?.trim(),
         price: price,
         stockQuantity: stockQuantity,
-        gstRate: gstRate,
         description: description?.trim(),
         imagePath: imagePath,
-        category: category.trim(),
-        costPrice: costPrice,
         minStockLevel: minStockLevel,
         unit: unit.trim(),
-        sku: sku?.trim(),
-        barcode: barcode?.trim(),
         isActive: true,
         isFixed: false,
         createdAt: DateTime.now(),
@@ -93,15 +81,10 @@ class ProductService {
     String? hsnCode,
     required double price,
     required int stockQuantity,
-    required double gstRate,
     String? description,
     String? imagePath,
-    required String category,
-    required double costPrice,
     required int minStockLevel,
     required String unit,
-    String? sku,
-    String? barcode,
     required bool isActive,
   }) async {
     try {
@@ -109,8 +92,6 @@ class ProductService {
         productName: productName,
         price: price,
         stockQuantity: stockQuantity,
-        gstRate: gstRate,
-        costPrice: costPrice,
         minStockLevel: minStockLevel,
       );
 
@@ -132,15 +113,10 @@ class ProductService {
         hsnCode: hsnCode?.trim(),
         price: price,
         stockQuantity: stockQuantity,
-        gstRate: gstRate,
         description: description?.trim(),
         imagePath: imagePath,
-        category: category.trim(),
-        costPrice: costPrice,
         minStockLevel: minStockLevel,
         unit: unit.trim(),
-        sku: sku?.trim(),
-        barcode: barcode?.trim(),
         isActive: isActive,
         updatedAt: DateTime.now(),
       );
@@ -201,15 +177,6 @@ class ProductService {
       return await _repository.search(query);
     } catch (e, stackTrace) {
       Logger.error('Failed to search products', e, stackTrace);
-      return [];
-    }
-  }
-
-  Future<List<ProductModel>> filterByCategory(String category) async {
-    try {
-      return await _repository.filterByCategory(category);
-    } catch (e, stackTrace) {
-      Logger.error('Failed to filter by category', e, stackTrace);
       return [];
     }
   }
@@ -292,15 +259,6 @@ class ProductService {
     }
   }
 
-  Future<List<String>> getAllCategories() async {
-    try {
-      return await _repository.getAllCategories();
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get all categories', e, stackTrace);
-      return [];
-    }
-  }
-
   List<ProductModel> sortProducts(
     List<ProductModel> products,
     ProductSortOption sortOption,
@@ -318,9 +276,6 @@ class ProductService {
       case ProductSortOption.stock:
         sorted.sort((a, b) => a.stockQuantity.compareTo(b.stockQuantity));
         break;
-      case ProductSortOption.category:
-        sorted.sort((a, b) => a.category.compareTo(b.category));
-        break;
       case ProductSortOption.createdDate:
         sorted.sort((a, b) => a.createdAt.compareTo(b.createdAt));
         break;
@@ -336,8 +291,6 @@ class ProductService {
     required String productName,
     required double price,
     required int stockQuantity,
-    required double gstRate,
-    required double costPrice,
     required int minStockLevel,
   }) {
     if (productName.trim().isEmpty) {
@@ -352,20 +305,8 @@ class ProductService {
       throw ValidationException('Stock quantity cannot be negative');
     }
 
-    if (gstRate < 0 || gstRate > 100) {
-      throw ValidationException('GST rate must be between 0 and 100');
-    }
-
-    if (costPrice < 0) {
-      throw ValidationException('Cost price cannot be negative');
-    }
-
     if (minStockLevel < 0) {
       throw ValidationException('Minimum stock level cannot be negative');
-    }
-
-    if (costPrice > price) {
-      Logger.warning('Cost price is greater than selling price');
     }
   }
 }
@@ -374,7 +315,6 @@ enum ProductSortOption {
   name,
   price,
   stock,
-  category,
   createdDate,
   updatedDate,
 }

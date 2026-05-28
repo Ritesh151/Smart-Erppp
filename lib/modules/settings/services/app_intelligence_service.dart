@@ -1,13 +1,14 @@
-import 'package:smarterp/core/models/invoice_model.dart';
-import 'package:smarterp/core/models/transaction_model.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/finance/services/finance_service.dart';
-import 'package:smarterp/modules/invoice/services/invoice_service.dart';
-import 'package:smarterp/modules/payroll/services/attendance_service.dart';
-import 'package:smarterp/modules/payroll/services/employee_service.dart';
-import 'package:smarterp/modules/products/services/product_service.dart';
-import 'package:smarterp/modules/transport/services/transport_service.dart';
-import 'package:smarterp/modules/transport/services/vehicle_service.dart';
+import 'package:SmartERP/core/models/invoice_model.dart';
+import 'package:SmartERP/core/models/transaction_model.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/finance/services/finance_service.dart';
+import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
+import 'package:SmartERP/modules/payroll/services/attendance_service.dart';
+import 'package:SmartERP/modules/payroll/services/employee_service.dart';
+import 'package:SmartERP/modules/products/services/product_service.dart';
+import 'package:SmartERP/modules/transport/services/transport_service.dart';
+import 'package:SmartERP/modules/transport/models/transport_screen_model.dart';
+import 'package:SmartERP/modules/transport/services/vehicle_service.dart';
 
 enum InsightCategory {
   revenue,
@@ -128,7 +129,7 @@ class AppIntelligenceService {
       }
 
       final totalValue = products.fold<double>(
-        0, (sum, p) => sum + (p.stockQuantity * p.costPrice));
+        0, (sum, p) => sum + (p.stockQuantity * p.price));
       if (totalValue > 0) {
         insights.add(BusinessInsight(
           id: 'inv-value-${DateTime.now().millisecondsSinceEpoch}',
@@ -239,7 +240,7 @@ class AppIntelligenceService {
     try {
       final transports = await _transportService.getAllTransports();
       final vehicles = await _vehicleService.getAllVehicles();
-      final active = transports.where((t) => t.status == 'in_transit' || t.status == 'loading').toList();
+      final active = transports.where((t) => t.status == ExportStatus.inTransit || t.status == ExportStatus.planned).toList();
 
       if (active.isNotEmpty) {
         insights.add(BusinessInsight(

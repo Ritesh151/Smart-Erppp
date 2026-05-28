@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/user_model.dart';
-import 'package:smarterp/core/services/auth_service.dart';
-import 'package:smarterp/core/utils/logger.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/models/user_model.dart';
+import 'package:SmartERP/core/services/auth_service.dart';
+import 'package:SmartERP/core/utils/logger.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService;
@@ -13,6 +13,9 @@ class AuthProvider extends ChangeNotifier {
 
   bool get isAuthenticated => _authService.isAuthenticated;
 
+  bool _isInitialized = false;
+  bool get isInitialized => _isInitialized;
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
@@ -22,9 +25,11 @@ class AuthProvider extends ChangeNotifier {
   Future<void> initialize() async {
     try {
       await _authService.initialize();
+      _isInitialized = true;
       notifyListeners();
     } catch (e, stackTrace) {
       Logger.error('Failed to initialize auth provider', e, stackTrace);
+      _isInitialized = true;
     }
   }
 

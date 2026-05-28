@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:smarterp/core/models/preferences_model.dart';
-import 'package:smarterp/core/utils/logger.dart';
-import 'package:smarterp/modules/settings/services/preferences_service.dart';
+import 'package:SmartERP/core/models/preferences_model.dart';
+import 'package:SmartERP/core/utils/logger.dart';
+import 'package:SmartERP/modules/settings/services/preferences_service.dart';
 
 class PreferencesProvider extends ChangeNotifier {
   final PreferencesService _service;

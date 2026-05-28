@@ -22,26 +22,22 @@ class ProductModelAdapter extends TypeAdapter<ProductModel> {
       hsnCode: fields[2] as String?,
       price: fields[3] as double,
       stockQuantity: fields[4] as int,
-      gstRate: fields[5] as double,
-      description: fields[6] as String?,
-      imagePath: fields[7] as String?,
-      category: fields[8] as String,
-      costPrice: fields[9] as double,
-      minStockLevel: fields[10] as int,
-      unit: fields[11] as String,
-      sku: fields[12] as String?,
-      barcode: fields[13] as String?,
-      isActive: fields[14] as bool,
-      createdAt: fields[15] as DateTime,
-      updatedAt: fields[16] as DateTime,
-      isFixed: fields[17] as bool,
+      description: fields[5] as String?,
+      imagePath: fields[6] as String?,
+      category: fields[7] as String?,
+      minStockLevel: fields[8] as int,
+      unit: fields[9] as String,
+      isActive: fields[10] as bool,
+      createdAt: fields[11] as DateTime,
+      updatedAt: fields[12] as DateTime,
+      isFixed: fields[13] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, ProductModel obj) {
     writer
-      ..writeByte(18)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -53,30 +49,22 @@ class ProductModelAdapter extends TypeAdapter<ProductModel> {
       ..writeByte(4)
       ..write(obj.stockQuantity)
       ..writeByte(5)
-      ..write(obj.gstRate)
-      ..writeByte(6)
       ..write(obj.description)
-      ..writeByte(7)
+      ..writeByte(6)
       ..write(obj.imagePath)
-      ..writeByte(8)
+      ..writeByte(7)
       ..write(obj.category)
-      ..writeByte(9)
-      ..write(obj.costPrice)
-      ..writeByte(10)
+      ..writeByte(8)
       ..write(obj.minStockLevel)
-      ..writeByte(11)
+      ..writeByte(9)
       ..write(obj.unit)
-      ..writeByte(12)
-      ..write(obj.sku)
-      ..writeByte(13)
-      ..write(obj.barcode)
-      ..writeByte(14)
+      ..writeByte(10)
       ..write(obj.isActive)
-      ..writeByte(15)
+      ..writeByte(11)
       ..write(obj.createdAt)
-      ..writeByte(16)
+      ..writeByte(12)
       ..write(obj.updatedAt)
-      ..writeByte(17)
+      ..writeByte(13)
       ..write(obj.isFixed);
   }
 

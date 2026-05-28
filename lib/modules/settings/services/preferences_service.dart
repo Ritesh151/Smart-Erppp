@@ -1,7 +1,7 @@
-import 'package:smarterp/core/constants/storage_keys.dart';
-import 'package:smarterp/core/models/preferences_model.dart';
-import 'package:smarterp/core/storage/preferences_service.dart' as pref;
-import 'package:smarterp/core/utils/logger.dart';
+import 'package:SmartERP/core/constants/storage_keys.dart';
+import 'package:SmartERP/core/models/preferences_model.dart';
+import 'package:SmartERP/core/storage/preferences_service.dart' as pref;
+import 'package:SmartERP/core/utils/logger.dart';
 
 class PreferencesService {
   final pref.PreferencesService _preferences;

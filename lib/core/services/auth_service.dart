@@ -1,9 +1,9 @@
-import 'package:smarterp/core/constants/app_constants.dart';
-import 'package:smarterp/core/constants/storage_keys.dart';
-import 'package:smarterp/core/exceptions/app_exception.dart';
-import 'package:smarterp/core/models/user_model.dart';
-import 'package:smarterp/core/storage/preferences_service.dart';
-import 'package:smarterp/core/utils/logger.dart';
+import 'package:SmartERP/core/constants/app_constants.dart';
+import 'package:SmartERP/core/constants/storage_keys.dart';
+import 'package:SmartERP/core/exceptions/app_exception.dart';
+import 'package:SmartERP/core/models/user_model.dart';
+import 'package:SmartERP/core/storage/preferences_service.dart';
+import 'package:SmartERP/core/utils/logger.dart';
 import 'package:uuid/uuid.dart';
 
 class AuthService {
@@ -24,6 +24,19 @@ class AuthService {
       );
 
       if (isLoggedIn == true) {
+        final expiryTimeStr = _preferencesService.getString(StorageKeys.expiryTime);
+        if (expiryTimeStr == null) {
+          // Backward-compat / corrupted session: force logout to recover a stable state.
+          await logout();
+          return;
+        }
+
+        final expiryTime = DateTime.tryParse(expiryTimeStr);
+        if (expiryTime == null || DateTime.now().isAfter(expiryTime)) {
+          await logout();
+          return;
+        }
+
         final email = _preferencesService.getString(StorageKeys.userEmail);
         if (email != null) {
           _currentUser = UserModel(
@@ -73,12 +86,17 @@ class AuthService {
         lastLoginAt: DateTime.now(),
       );
 
+      final now = DateTime.now();
+      final expiry = now.add(const Duration(days: 4));
+
       await _preferencesService.setBool(StorageKeys.isLoggedIn, true);
       await _preferencesService.setString(StorageKeys.userEmail, email.trim());
       await _preferencesService.setString(
         StorageKeys.lastLoginTime,
-        DateTime.now().toIso8601String(),
+        now.toIso8601String(),
       );
+      await _preferencesService.setString(StorageKeys.loginTime, now.toIso8601String());
+      await _preferencesService.setString(StorageKeys.expiryTime, expiry.toIso8601String());
       await _preferencesService.setString(
         StorageKeys.sessionToken,
         const Uuid().v4(),
@@ -100,6 +118,8 @@ class AuthService {
       await _preferencesService.remove(StorageKeys.userEmail);
       await _preferencesService.remove(StorageKeys.sessionToken);
       await _preferencesService.remove(StorageKeys.lastLoginTime);
+      await _preferencesService.remove(StorageKeys.loginTime);
+      await _preferencesService.remove(StorageKeys.expiryTime);
 
       _currentUser = null;
 
@@ -121,24 +141,18 @@ class AuthService {
         return false;
       }
 
-      final lastLoginTimeStr = _preferencesService.getString(
-        StorageKeys.lastLoginTime,
-      );
+      final expiryTimeStr = _preferencesService.getString(StorageKeys.expiryTime);
+      if (expiryTimeStr == null) return false;
 
-      if (lastLoginTimeStr == null) {
-        return false;
-      }
+      final expiryTime = DateTime.tryParse(expiryTimeStr);
+      if (expiryTime == null) return false;
 
-      final lastLoginTime = DateTime.parse(lastLoginTimeStr);
-      final now = DateTime.now();
-      final difference = now.difference(lastLoginTime);
-
-      if (difference.inMinutes > AppConstants.sessionTimeoutMinutes) {
+      if (DateTime.now().isAfter(expiryTime)) {
         await logout();
         return false;
       }
 
-      return true;
+      return _currentUser != null;
     } catch (e, stackTrace) {
       Logger.error('Session validation failed', e, stackTrace);
       return false;

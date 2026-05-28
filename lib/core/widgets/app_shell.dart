@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:smarterp/core/constants/storage_keys.dart';
-import 'package:smarterp/core/extensions/context_extensions.dart';
-import 'package:smarterp/core/routes/app_routes.dart';
-import 'package:smarterp/core/storage/preferences_service.dart';
-import 'package:smarterp/core/widgets/sidebar_menu.dart';
-import 'package:smarterp/modules/auth/providers/auth_provider.dart';
+import 'package:SmartERP/core/constants/storage_keys.dart';
+import 'package:SmartERP/core/extensions/context_extensions.dart';
+import 'package:SmartERP/core/routes/app_routes.dart';
+import 'package:SmartERP/core/storage/preferences_service.dart';
+import 'package:SmartERP/core/widgets/sidebar_menu.dart';
+import 'package:SmartERP/modules/auth/providers/auth_provider.dart';
 
 class AppShell extends StatefulWidget {
   final Widget child;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
-import 'package:smarterp/modules/settings/services/app_intelligence_service.dart';
+import 'package:SmartERP/modules/settings/services/app_intelligence_service.dart';
 
 class SmartSuggestionWidget extends StatefulWidget {
   final int maxSuggestions;
