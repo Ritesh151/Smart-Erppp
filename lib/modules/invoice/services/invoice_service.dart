@@ -3,16 +3,22 @@ import 'package:SmartERP/core/models/invoice_item_model.dart';
 import 'package:SmartERP/core/models/invoice_model.dart';
 import 'package:SmartERP/core/utils/logger.dart';
 import 'package:SmartERP/modules/invoice/repositories/invoice_repository.dart';
+import 'package:SmartERP/modules/finance/repositories/finance_repository.dart';
 import 'package:SmartERP/modules/products/repositories/product_repository.dart';
 import 'package:uuid/uuid.dart';
 
 class InvoiceService {
   final InvoiceRepository _invoiceRepository;
   final ProductRepository _productRepository;
+  final FinanceRepository? _financeRepository;
 
-  InvoiceService({required InvoiceRepository invoiceRepository, required ProductRepository productRepository})
-      : _invoiceRepository = invoiceRepository,
-        _productRepository = productRepository;
+  InvoiceService({
+    required InvoiceRepository invoiceRepository,
+    required ProductRepository productRepository,
+    FinanceRepository? financeRepository,
+  })  : _invoiceRepository = invoiceRepository,
+        _productRepository = productRepository,
+        _financeRepository = financeRepository;
 
   Future<List<InvoiceModel>> getAllInvoices() async {
     try {
@@ -109,6 +115,7 @@ class InvoiceService {
       );
 
       await _invoiceRepository.save(invoice);
+      await _syncSaleFromInvoice(invoice, items);
       Logger.success('Invoice created: $invoiceNumber');
       return invoice;
     } catch (e, stackTrace) {
@@ -209,6 +216,7 @@ class InvoiceService {
       );
 
       await _invoiceRepository.update(updatedInvoice);
+      await _syncSaleFromInvoice(updatedInvoice, items);
       Logger.success('Invoice updated: ${updatedInvoice.invoiceNumber}');
       return updatedInvoice;
     } catch (e, stackTrace) {
@@ -242,6 +250,7 @@ class InvoiceService {
       }
 
       await _invoiceRepository.delete(id);
+      await _removeSaleForInvoice(id);
       Logger.success('Invoice deleted: ${invoice.invoiceNumber}');
     } catch (e, stackTrace) {
       Logger.error('Failed to delete invoice', e, stackTrace);
@@ -353,6 +362,7 @@ class InvoiceService {
       );
 
       await _invoiceRepository.update(updatedInvoice);
+      await _removeSaleForInvoice(id);
       Logger.success('Invoice cancelled: ${invoice.invoiceNumber}');
     } catch (e, stackTrace) {
       Logger.error('Failed to cancel invoice', e, stackTrace);
@@ -417,6 +427,46 @@ class InvoiceService {
     } catch (e, stackTrace) {
       Logger.error('Failed to search invoices', e, stackTrace);
       return [];
+    }
+  }
+
+  Future<void> _syncSaleFromInvoice(InvoiceModel invoice, List<InvoiceItemModel> items) async {
+    if (_financeRepository == null) return;
+    try {
+      final saleMap = {
+        'id': invoice.id,
+        'saleId': invoice.id,
+        'invoiceNumber': invoice.invoiceNumber,
+        'customerName': invoice.customerName,
+        'customerPhone': invoice.customerPhone ?? '',
+        'customerAddress': invoice.customerAddress ?? '',
+        'total': invoice.totalAmount,
+        'paidAmount': invoice.paidAmount,
+        'status': invoice.status.name,
+        'items': items.map((e) => {
+          'productId': e.productId,
+          'productName': e.productName,
+          'quantity': e.quantity,
+          'unitPrice': e.unitPrice,
+          'totalAmount': e.amount,
+          'hsnCode': e.hsnCode,
+          'taxRate': e.taxRate,
+        }).toList(),
+        'createdAt': invoice.createdAt.toIso8601String(),
+        'source': 'invoice',
+      };
+      await _financeRepository!.saveSale(saleMap);
+    } catch (e) {
+      Logger.error('Failed to sync sale from invoice', e);
+    }
+  }
+
+  Future<void> _removeSaleForInvoice(String invoiceId) async {
+    if (_financeRepository == null) return;
+    try {
+      await _financeRepository!.deleteSale(invoiceId);
+    } catch (e) {
+      Logger.error('Failed to remove sale for invoice', e);
     }
   }
 }

@@ -6,15 +6,12 @@ import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
 import 'package:SmartERP/modules/payroll/services/attendance_service.dart';
 import 'package:SmartERP/modules/payroll/services/employee_service.dart';
 import 'package:SmartERP/modules/products/services/product_service.dart';
-import 'package:SmartERP/modules/transport/services/transport_service.dart';
-import 'package:SmartERP/modules/transport/models/transport_screen_model.dart';
-import 'package:SmartERP/modules/transport/services/vehicle_service.dart';
+
 
 enum InsightCategory {
   revenue,
   inventory,
   customers,
-  transport,
   employees,
   general,
 }
@@ -45,8 +42,6 @@ class AppIntelligenceService {
   final ProductService _productService;
   final FinanceService _financeService;
   final InvoiceService _invoiceService;
-  final TransportService _transportService;
-  final VehicleService _vehicleService;
   final EmployeeService _employeeService;
   final AttendanceService _attendanceService;
 
@@ -54,15 +49,11 @@ class AppIntelligenceService {
     required ProductService productService,
     required FinanceService financeService,
     required InvoiceService invoiceService,
-    required TransportService transportService,
-    required VehicleService vehicleService,
     required EmployeeService employeeService,
     required AttendanceService attendanceService,
   })  : _productService = productService,
         _financeService = financeService,
         _invoiceService = invoiceService,
-        _transportService = transportService,
-        _vehicleService = vehicleService,
         _employeeService = employeeService,
         _attendanceService = attendanceService;
 
@@ -80,7 +71,6 @@ class AppIntelligenceService {
         _analyzeInventory(),
         _analyzeRevenue(),
         _analyzeCustomers(),
-        _analyzeTransport(),
         _analyzeEmployees(),
       ]);
 
@@ -229,31 +219,6 @@ class AppIntelligenceService {
       }
     } catch (e) {
       Logger.error('Customer analysis failed', e);
-    }
-
-    return insights;
-  }
-
-  Future<List<BusinessInsight>> _analyzeTransport() async {
-    final insights = <BusinessInsight>[];
-
-    try {
-      final transports = await _transportService.getAllTransports();
-      final vehicles = await _vehicleService.getAllVehicles();
-      final active = transports.where((t) => t.status == ExportStatus.inTransit || t.status == ExportStatus.planned).toList();
-
-      if (active.isNotEmpty) {
-        insights.add(BusinessInsight(
-          id: 'tr-${DateTime.now().millisecondsSinceEpoch}',
-          title: '$active Active Transports',
-          description: '${vehicles.length} vehicles available, ${active.length} in transit',
-          category: InsightCategory.transport,
-          value: active.length.toDouble(),
-          isPositive: true,
-        ));
-      }
-    } catch (e) {
-      Logger.error('Transport analysis failed', e);
     }
 
     return insights;

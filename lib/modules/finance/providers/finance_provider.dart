@@ -15,7 +15,6 @@ class FinanceProvider extends ChangeNotifier {
   double netProfit = 0;
   double totalExpenses = 0;
   double totalPayroll = 0;
-  double transportCost = 0;
   double outstandingPayments = 0;
   double pendingPayments = 0;
   int salesCount = 0;
@@ -56,7 +55,6 @@ class FinanceProvider extends ChangeNotifier {
       netProfit = summary['netProfit'] as double;
       totalExpenses = summary['totalExpenses'] as double;
       totalPayroll = summary['totalPayroll'] as double;
-      transportCost = summary['transportCost'] as double;
       outstandingPayments = summary['outstandingPayments'] as double;
       pendingPayments = summary['pendingPayments'] as double;
       salesCount = summary['salesCount'] as int;

@@ -31,16 +31,6 @@ import 'package:SmartERP/modules/invoice/services/pdf_service.dart';
 import 'package:SmartERP/modules/invoice/providers/customer_provider.dart';
 import 'package:SmartERP/modules/invoice/providers/invoice_provider.dart';
 import 'package:SmartERP/modules/invoice/providers/payment_provider.dart';
-import 'package:SmartERP/modules/transport/repositories/transport_repository.dart';
-import 'package:SmartERP/modules/transport/repositories/vehicle_repository.dart';
-import 'package:SmartERP/modules/transport/services/transport_service.dart';
-import 'package:SmartERP/modules/transport/services/vehicle_service.dart';
-import 'package:SmartERP/modules/transport/services/transport_status_service.dart';
-import 'package:SmartERP/modules/transport/services/transport_search_service.dart';
-import 'package:SmartERP/modules/transport/services/allocation_engine.dart';
-import 'package:SmartERP/modules/transport/providers/transport_provider.dart';
-import 'package:SmartERP/modules/transport/providers/vehicle_provider.dart';
-import 'package:SmartERP/modules/transport/providers/transport_analytics_provider.dart';
 import 'package:SmartERP/modules/payroll/repositories/employee_repository.dart';
 import 'package:SmartERP/modules/payroll/repositories/attendance_repository.dart';
 import 'package:SmartERP/modules/payroll/repositories/salary_repository.dart';
@@ -121,7 +111,6 @@ Future<void> _initializeHiveBoxes() async {
     StorageKeys.invoicesBox,
     StorageKeys.employeesBox,
     StorageKeys.expensesBox,
-    StorageKeys.transportBox,
     StorageKeys.settingsBox,
     StorageKeys.salesBox,
     StorageKeys.purchaseBox,
@@ -145,9 +134,6 @@ Future<void> _initializeHiveBoxes() async {
   }
 
   final extraBoxes = [
-    StorageKeys.transportItemBox,
-    StorageKeys.vehicleBox,
-    StorageKeys.transportStatusBox,
     StorageKeys.attendanceBox,
     StorageKeys.salaryBox,
     StorageKeys.salaryHistoryBox,
@@ -368,6 +354,7 @@ class _SmartERPAppState extends State<SmartERPApp> {
               create: (context) => InvoiceService(
                 invoiceRepository: context.read<InvoiceRepository>(),
                 productRepository: context.read<ProductRepository>(),
+                financeRepository: context.read<FinanceRepository>(),
               ),
             ),
             Provider<PaymentService>(
@@ -408,58 +395,6 @@ class _SmartERPAppState extends State<SmartERPApp> {
                 };
                 return provider;
               },
-            ),
-
-            // Transport Module Services & State
-            Provider<TransportRepository>(
-              create: (_) {
-                final transportStorage = StorageService<Map<dynamic, dynamic>>(StorageKeys.transportBox)..init();
-                final itemStorage = StorageService<Map<dynamic, dynamic>>(StorageKeys.transportItemBox)..init();
-                return TransportRepository(transportStorage: transportStorage, itemStorage: itemStorage);
-              },
-            ),
-            Provider<VehicleRepository>(
-              create: (_) {
-                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.vehicleBox)..init();
-                return VehicleRepository(storage);
-              },
-            ),
-            Provider<TransportService>(
-              create: (context) => TransportService(
-                transportRepository: context.read<TransportRepository>(),
-                productRepository: context.read<ProductRepository>(),
-              ),
-            ),
-            Provider<VehicleService>(
-              create: (context) => VehicleService(context.read<VehicleRepository>()),
-            ),
-            Provider<TransportStatusService>(
-              create: (context) => TransportStatusService(
-                transportRepository: context.read<TransportRepository>(),
-                productRepository: context.read<ProductRepository>(),
-                financeRepository: context.read<FinanceRepository>(),
-              ),
-            ),
-            Provider<TransportSearchService>(
-              create: (context) => TransportSearchService(context.read<TransportRepository>()),
-            ),
-            Provider<AllocationEngine>(
-              create: (context) => AllocationEngine(
-                productRepository: context.read<ProductRepository>(),
-                transportRepository: context.read<TransportRepository>(),
-              ),
-            ),
-            ChangeNotifierProvider<TransportProvider>(
-              create: (context) => TransportProvider(
-                service: context.read<TransportService>(),
-                statusService: context.read<TransportStatusService>(),
-              ),
-            ),
-            ChangeNotifierProvider<VehicleProvider>(
-              create: (context) => VehicleProvider(context.read<VehicleService>())..loadVehicles(),
-            ),
-            ChangeNotifierProvider<TransportAnalyticsProvider>(
-              create: (context) => TransportAnalyticsProvider(context.read<TransportService>()),
             ),
 
             // Payroll Module Services & State
@@ -694,8 +629,6 @@ class _SmartERPAppState extends State<SmartERPApp> {
                 financeService: context.read<FinanceService>(),
                 invoiceService: context.read<InvoiceService>(),
                 customerService: context.read<CustomerService>(),
-                transportService: context.read<TransportService>(),
-                vehicleService: context.read<VehicleService>(),
                 employeeService: context.read<EmployeeService>(),
                 attendanceService: context.read<AttendanceService>(),
                 salaryService: context.read<SalaryService>(),
@@ -712,8 +645,6 @@ class _SmartERPAppState extends State<SmartERPApp> {
                 transactionsStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salesBox)..init(),
                 invoicesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.invoicesBox)..init(),
                 customersStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.customersBox)..init(),
-                transportsStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.transportBox)..init(),
-                vehiclesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.vehicleBox)..init(),
                 employeesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.employeesBox)..init(),
                 attendanceStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.attendanceBox)..init(),
                 salariesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryBox)..init(),
@@ -725,8 +656,6 @@ class _SmartERPAppState extends State<SmartERPApp> {
                 financeService: context.read<FinanceService>(),
                 invoiceService: context.read<InvoiceService>(),
                 customerService: context.read<CustomerService>(),
-                transportService: context.read<TransportService>(),
-                vehicleService: context.read<VehicleService>(),
                 employeeService: context.read<EmployeeService>(),
                 attendanceService: context.read<AttendanceService>(),
                 salaryService: context.read<SalaryService>(),
@@ -738,8 +667,6 @@ class _SmartERPAppState extends State<SmartERPApp> {
                 transactionsStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salesBox)..init(),
                 invoicesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.invoicesBox)..init(),
                 customersStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.customersBox)..init(),
-                transportsStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.transportBox)..init(),
-                vehiclesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.vehicleBox)..init(),
                 employeesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.employeesBox)..init(),
                 attendanceStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.attendanceBox)..init(),
                 salariesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryBox)..init(),
@@ -750,8 +677,6 @@ class _SmartERPAppState extends State<SmartERPApp> {
                 productService: context.read<ProductService>(),
                 financeService: context.read<FinanceService>(),
                 invoiceService: context.read<InvoiceService>(),
-                transportService: context.read<TransportService>(),
-                vehicleService: context.read<VehicleService>(),
                 employeeService: context.read<EmployeeService>(),
                 attendanceService: context.read<AttendanceService>(),
               ),

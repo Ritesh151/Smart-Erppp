@@ -88,12 +88,25 @@ class PayrollController {
   Future<void> updateEmployee(String id, Map<String, dynamic> data) async {
     final employee = await _employeeService.getEmployee(id);
     if (employee == null) return;
+
+    String firstName = data['firstName'] as String? ?? employee.firstName;
+    String lastName = data['lastName'] as String? ?? employee.lastName;
+
+    if (data.containsKey('fullName') && data['fullName'] != null) {
+      final fullName = (data['fullName'] as String).trim();
+      final parts = fullName.split(' ');
+      firstName = parts.isNotEmpty ? parts.first : fullName;
+      lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+    }
+
     final updated = employee.copyWith(
-      firstName: data['firstName'] as String? ?? employee.firstName,
-      lastName: data['lastName'] as String? ?? employee.lastName,
+      firstName: firstName,
+      lastName: lastName,
       designation: data['designation'] as String? ?? employee.designation,
       department: data['department'] as String? ?? employee.department,
-      salary: (data['salary'] as num?)?.toDouble() ?? employee.salary,
+      salary: (data['salary'] as num?)?.toDouble() ??
+          (data['monthlySalary'] as num?)?.toDouble() ??
+          employee.salary,
       phone: data['phone'] as String? ?? employee.phone,
       updatedAt: DateTime.now(),
     );

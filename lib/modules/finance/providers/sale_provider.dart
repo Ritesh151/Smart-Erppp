@@ -16,6 +16,7 @@ class SaleRecord {
   final double total;
   final List<SaleItemModel> items;
   final DateTime createdAt;
+  final String? invoiceNumber;
 
   SaleRecord({
     required this.saleId,
@@ -25,11 +26,12 @@ class SaleRecord {
     required this.total,
     required this.items,
     required this.createdAt,
+    this.invoiceNumber,
   });
 
   factory SaleRecord.fromMap(Map<String, dynamic> map) {
     final itemsList = (map['items'] as List<dynamic>?)
-            ?.map((e) => SaleItemModel.fromJson(Map<String, dynamic>.from(e)))
+            ?.map((e) => SaleItemModel.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList() ??
         [];
     return SaleRecord(
@@ -43,6 +45,7 @@ class SaleRecord {
       createdAt: map['createdAt'] != null
           ? DateTime.parse(map['createdAt'] as String)
           : DateTime.now(),
+      invoiceNumber: map['invoiceNumber'] as String?,
     );
   }
 
@@ -55,6 +58,7 @@ class SaleRecord {
       'total': total,
       'items': items.map((e) => e.toJson()).toList(),
       'createdAt': createdAt.toIso8601String(),
+      'invoiceNumber': invoiceNumber,
     };
   }
 }

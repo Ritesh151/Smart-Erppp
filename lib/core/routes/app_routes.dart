@@ -6,7 +6,6 @@ class AppRoutes {
   static const String dashboard = '/dashboard';
   static const String products = '/products';
   static const String finance = '/finance';
-  static const String transport = '/transport';
   static const String invoices = '/invoices';
   static const String expenses = '/expenses';
   static const String expenseAdd = '/expenses/add';
@@ -27,12 +26,14 @@ class AppRoutes {
   static const String customerCreate = '/customers/create';
   static const String customerEdit = '/customers/:id/edit';
   static const String employeeDetails = '/payroll/:id';
+  static const String employeeEdit = '/payroll/:id/edit';
+  static const String employeeAdd = '/payroll/add';
+  static const String employeeHistory = '/payroll/:id/history';
   
   static List<String> get protectedRoutes => [
     dashboard,
     products,
     finance,
-    transport,
     invoices,
     expenses,
     payroll,

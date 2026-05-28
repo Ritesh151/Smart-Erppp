@@ -70,7 +70,6 @@ class VehicleModel extends HiveObject {
     );
   }
 
-
   static String _generateId() {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final random = (timestamp % 10000).toString().padLeft(4, '0');

@@ -466,7 +466,6 @@
 // }
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:SmartERP/core/constants/app_constants.dart';
@@ -499,8 +498,7 @@ class SidebarMenu extends StatefulWidget {
   State<SidebarMenu> createState() => _SidebarMenuState();
 }
 
-class _SidebarMenuState extends State<SidebarMenu>
-    with SingleTickerProviderStateMixin {
+class _SidebarMenuState extends State<SidebarMenu> {
 
   // ── Palette ─────────────────────────────────────────────────
   static const Color _indigo500   = Color(0xFF4F46E5);
@@ -541,12 +539,6 @@ class _SidebarMenuState extends State<SidebarMenu>
           icon: Icons.account_balance_rounded,
           label: 'Finance',
           route: AppRoutes.finance,
-          badge: null,
-        ),
-        _SidebarItem(
-          icon: Icons.local_shipping_rounded,
-          label: 'Transport',
-          route: AppRoutes.transport,
           badge: null,
         ),
         _SidebarItem(
@@ -774,14 +766,7 @@ class _Header extends StatelessWidget {
                 ),
               ],
             ),
-          )
-              .animate()
-              .fadeIn(duration: 400.ms)
-              .scale(
-                begin: const Offset(0.6, 0.6),
-                duration: 420.ms,
-                curve: Curves.easeOutBack,
-              ),
+          ),
 
           // ── App name & subtitle (expanded) ────────────────
           if (!isCollapsed) ...[
@@ -816,10 +801,7 @@ class _Header extends StatelessWidget {
                     ),
                   ),
                 ],
-              )
-                  .animate()
-                  .fadeIn(delay: 140.ms, duration: 320.ms)
-                  .slideX(begin: -0.1, end: 0, curve: Curves.easeOut),
+              ),
             ),
           ],
 
@@ -963,10 +945,7 @@ class _SearchBarState extends State<_SearchBar> {
           ),
         ),
       ),
-    )
-        .animate()
-        .fadeIn(delay: 180.ms, duration: 300.ms)
-        .slideY(begin: -0.12, end: 0, curve: Curves.easeOut);
+    );
   }
 }
 
@@ -1201,19 +1180,7 @@ class _NavItem extends StatelessWidget {
       );
     }
 
-    return tile
-        .animate()
-        .fadeIn(
-          delay: Duration(milliseconds: delay),
-          duration: 340.ms,
-        )
-        .slideX(
-          begin: -0.08,
-          end: 0,
-          delay: Duration(milliseconds: delay),
-          duration: 340.ms,
-          curve: Curves.easeOut,
-        );
+    return tile;
   }
 }
 
@@ -1331,9 +1298,7 @@ class _FooterState extends State<_Footer> {
                 ],
               ),
       ),
-    )
-        .animate()
-        .fadeIn(delay: 480.ms, duration: 400.ms);
+    );
   }
 }
 

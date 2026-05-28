@@ -10,16 +10,13 @@ import 'package:SmartERP/modules/payroll/services/attendance_service.dart';
 import 'package:SmartERP/modules/payroll/services/employee_service.dart';
 import 'package:SmartERP/modules/payroll/services/salary_service.dart';
 import 'package:SmartERP/modules/products/services/product_service.dart';
-import 'package:SmartERP/modules/transport/services/transport_service.dart';
-import 'package:SmartERP/modules/transport/services/vehicle_service.dart';
+
 
 class DataExportService {
   final ProductService _productService;
   final FinanceService _financeService;
   final InvoiceService _invoiceService;
   final CustomerService _customerService;
-  final TransportService _transportService;
-  final VehicleService _vehicleService;
   final EmployeeService _employeeService;
   final AttendanceService _attendanceService;
   final SalaryService _salaryService;
@@ -29,8 +26,6 @@ class DataExportService {
     required FinanceService financeService,
     required InvoiceService invoiceService,
     required CustomerService customerService,
-    required TransportService transportService,
-    required VehicleService vehicleService,
     required EmployeeService employeeService,
     required AttendanceService attendanceService,
     required SalaryService salaryService,
@@ -38,8 +33,6 @@ class DataExportService {
         _financeService = financeService,
         _invoiceService = invoiceService,
         _customerService = customerService,
-        _transportService = transportService,
-        _vehicleService = vehicleService,
         _employeeService = employeeService,
         _attendanceService = attendanceService,
         _salaryService = salaryService;
@@ -86,12 +79,6 @@ class DataExportService {
       case 'customers':
         final items = await _customerService.getAllCustomers();
         return items.map((c) => c.toJson()).toList();
-      case 'transports':
-        final items = await _transportService.getAllTransports();
-        return items;
-      case 'vehicles':
-        final items = await _vehicleService.getAllVehicles();
-        return items;
       case 'employees':
         final items = await _employeeService.getAllEmployees();
         return items.map((e) => e.toJson()).toList();
@@ -111,8 +98,6 @@ class DataExportService {
         'transactions',
         'invoices',
         'customers',
-        'transports',
-        'vehicles',
         'employees',
         'attendance',
         'salaries',

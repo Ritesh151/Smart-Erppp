@@ -141,8 +141,6 @@ class _SuggestionTile extends StatelessWidget {
         return Icons.trending_up;
       case InsightCategory.customers:
         return Icons.people;
-      case InsightCategory.transport:
-        return Icons.local_shipping;
       case InsightCategory.employees:
         return Icons.badge;
       case InsightCategory.general:

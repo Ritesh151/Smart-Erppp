@@ -14,16 +14,13 @@ import 'package:SmartERP/modules/products/services/product_service.dart';
 import 'package:SmartERP/modules/settings/repositories/backup_repository.dart';
 import 'package:SmartERP/modules/settings/services/notification_service.dart';
 import 'package:SmartERP/modules/settings/services/settings_service.dart';
-import 'package:SmartERP/modules/transport/services/transport_service.dart';
-import 'package:SmartERP/modules/transport/services/vehicle_service.dart';
+
 
 class BackupService {
   final ProductService _productService;
   final FinanceService _financeService;
   final InvoiceService _invoiceService;
   final CustomerService _customerService;
-  final TransportService _transportService;
-  final VehicleService _vehicleService;
   final EmployeeService _employeeService;
   final AttendanceService _attendanceService;
   final SalaryService _salaryService;
@@ -36,8 +33,6 @@ class BackupService {
     required FinanceService financeService,
     required InvoiceService invoiceService,
     required CustomerService customerService,
-    required TransportService transportService,
-    required VehicleService vehicleService,
     required EmployeeService employeeService,
     required AttendanceService attendanceService,
     required SalaryService salaryService,
@@ -48,8 +43,6 @@ class BackupService {
         _financeService = financeService,
         _invoiceService = invoiceService,
         _customerService = customerService,
-        _transportService = transportService,
-        _vehicleService = vehicleService,
         _employeeService = employeeService,
         _attendanceService = attendanceService,
         _salaryService = salaryService,
@@ -123,16 +116,6 @@ class BackupService {
       data['customers'] = customers.map((c) => c.toJson()).toList();
     }
 
-    if (modules.contains('transports')) {
-      final transports = await _transportService.getAllTransports();
-      data['transports'] = transports;
-    }
-
-    if (modules.contains('vehicles')) {
-      final vehicles = await _vehicleService.getAllVehicles();
-      data['vehicles'] = vehicles;
-    }
-
     if (modules.contains('employees')) {
       final employees = await _employeeService.getAllEmployees();
       data['employees'] = employees.map((e) => e.toJson()).toList();
@@ -203,8 +186,6 @@ class BackupService {
         'finance',
         'invoices',
         'customers',
-        'transports',
-        'vehicles',
         'employees',
         'attendance',
         'salaries',

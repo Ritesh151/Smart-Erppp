@@ -46,10 +46,6 @@ class FinanceService {
         0, (sum, e) => sum + e.salary,
       );
 
-      final transportCost = allExpenses
-          .where((e) => e.category.toLowerCase().contains('transport'))
-          .fold<double>(0, (sum, e) => sum + e.amount);
-
       final outstandingInvoices = invoices
           .where((inv) => inv.status.name == 'sent' || inv.status.name == 'partiallyPaid')
           .fold<double>(0, (sum, inv) => sum + inv.balanceAmount);
@@ -59,7 +55,7 @@ class FinanceService {
           .fold<double>(0, (sum, p) => sum + ((p['totalAmount'] as num?)?.toDouble() ?? 0));
 
       final netRevenue = totalSales - totalPurchases;
-      final netProfit = totalSales - totalExpenses - totalPayroll - transportCost;
+      final netProfit = totalSales - totalExpenses - totalPayroll;
 
       final monthlyRevenue = <String, double>{};
       for (final s in sales) {
@@ -77,7 +73,6 @@ class FinanceService {
         'netProfit': netProfit,
         'totalExpenses': totalExpenses,
         'totalPayroll': totalPayroll,
-        'transportCost': transportCost,
         'outstandingPayments': outstandingInvoices,
         'pendingPayments': pendingPayments,
         'monthlyRevenue': monthlyRevenue.entries

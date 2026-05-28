@@ -10,7 +10,6 @@ import 'package:SmartERP/modules/products/screens/product_form_screen.dart';
 import 'package:SmartERP/modules/products/screens/product_detail_screen.dart';
 import 'package:SmartERP/modules/finance/finance_screen.dart';
 import 'package:SmartERP/modules/finance/create_sale_screen.dart';
-import 'package:SmartERP/modules/transport/screens/transport_screen.dart';
 import 'package:SmartERP/modules/invoice/screens/invoices_screen.dart';
 import 'package:SmartERP/modules/invoice/screens/invoice_form_screen.dart';
 import 'package:SmartERP/modules/invoice/screens/invoice_detail_screen.dart';
@@ -22,6 +21,11 @@ import 'package:SmartERP/modules/expenses/screens/expenses_screen.dart';
 import 'package:SmartERP/modules/expenses/screens/add_expense_screen.dart';
 import 'package:SmartERP/modules/expenses/screens/expense_summary_screen.dart';
 import 'package:SmartERP/modules/payroll/screens/payroll_screen.dart';
+import 'package:SmartERP/modules/payroll/payroll_dashboard_screen.dart';
+import 'package:SmartERP/modules/payroll/add_employee_screen.dart';
+import 'package:SmartERP/modules/payroll/edit_employee_screen.dart';
+import 'package:SmartERP/modules/payroll/salary_history_screen.dart';
+import 'package:SmartERP/modules/payroll/attendance_screen.dart';
 import 'package:SmartERP/modules/reports/reports_home_screen.dart';
 import 'package:SmartERP/modules/reports/sales_register_screen.dart';
 import 'package:SmartERP/modules/reports/purchase_register_screen.dart';
@@ -132,15 +136,6 @@ class AppRouter {
             ),
           ),
         ],
-      ),
-      GoRoute(
-        path: AppRoutes.transport,
-        name: 'transport',
-        pageBuilder: (context, state) => _buildShellPage(
-          context: context,
-          state: state,
-          child: TransportScreen(),
-        ),
       ),
       GoRoute(
         path: AppRoutes.invoices,
@@ -272,6 +267,41 @@ class AppRouter {
           state: state,
           child: const PayrollScreen(),
         ),
+        routes: [
+          GoRoute(
+            path: 'add',
+            name: 'payroll-add',
+            pageBuilder: (context, state) => _buildShellPage(
+              context: context,
+              state: state,
+              child: const AddEmployeeScreen(),
+            ),
+          ),
+          GoRoute(
+            path: ':id/edit',
+            name: 'payroll-edit',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return _buildShellPage(
+                context: context,
+                state: state,
+                child: EditEmployeeScreen(employeeId: id),
+              );
+            },
+          ),
+          GoRoute(
+            path: ':id/history',
+            name: 'payroll-history',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return _buildShellPage(
+                context: context,
+                state: state,
+                child: SalaryHistoryScreen(employeeId: id),
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.reports,

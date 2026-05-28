@@ -31,8 +31,7 @@ class RestoreService {
   final StorageService<Map<dynamic, dynamic>> _transactionsStorage;
   final StorageService<Map<dynamic, dynamic>> _invoicesStorage;
   final StorageService<Map<dynamic, dynamic>> _customersStorage;
-  final StorageService<Map<dynamic, dynamic>> _transportsStorage;
-  final StorageService<Map<dynamic, dynamic>> _vehiclesStorage;
+
   final StorageService<Map<dynamic, dynamic>> _employeesStorage;
   final StorageService<Map<dynamic, dynamic>> _attendanceStorage;
   final StorageService<Map<dynamic, dynamic>> _salariesStorage;
@@ -44,8 +43,6 @@ class RestoreService {
     required StorageService<Map<dynamic, dynamic>> transactionsStorage,
     required StorageService<Map<dynamic, dynamic>> invoicesStorage,
     required StorageService<Map<dynamic, dynamic>> customersStorage,
-    required StorageService<Map<dynamic, dynamic>> transportsStorage,
-    required StorageService<Map<dynamic, dynamic>> vehiclesStorage,
     required StorageService<Map<dynamic, dynamic>> employeesStorage,
     required StorageService<Map<dynamic, dynamic>> attendanceStorage,
     required StorageService<Map<dynamic, dynamic>> salariesStorage,
@@ -55,8 +52,6 @@ class RestoreService {
         _transactionsStorage = transactionsStorage,
         _invoicesStorage = invoicesStorage,
         _customersStorage = customersStorage,
-        _transportsStorage = transportsStorage,
-        _vehiclesStorage = vehiclesStorage,
         _employeesStorage = employeesStorage,
         _attendanceStorage = attendanceStorage,
         _salariesStorage = salariesStorage;
@@ -105,8 +100,6 @@ class RestoreService {
       'transactions': _transactionsStorage,
       'invoices': _invoicesStorage,
       'customers': _customersStorage,
-      'transports': _transportsStorage,
-      'vehicles': _vehiclesStorage,
       'employees': _employeesStorage,
       'attendance': _attendanceStorage,
       'salaries': _salariesStorage,

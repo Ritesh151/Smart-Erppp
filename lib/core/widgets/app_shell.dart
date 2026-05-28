@@ -287,7 +287,6 @@ class _AppShellState extends State<AppShell> {
     if (location == AppRoutes.dashboard) return 'Dashboard';
     if (location.startsWith('/products')) return 'Products';
     if (location == AppRoutes.finance) return 'Finance';
-    if (location == AppRoutes.transport) return 'Transport';
     if (location.startsWith('/invoices')) return 'Bills & Invoices';
     if (location.startsWith('/customers')) return 'Customers';
     if (location == AppRoutes.expenses) return 'Expenses';

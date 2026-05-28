@@ -483,11 +483,10 @@ class DashboardScreen extends StatelessWidget {
 
   // ── Quick access ─────────────────────────────────────────────────────────────
   Widget _buildQuickAccessSection(BuildContext context) {
-    final items = [
+    const items = [
       {'title': 'Create Invoice',    'icon': Icons.receipt_long_rounded,       'route': '/invoices',  'color': _T.gradientStart,        'desc': 'Bill customers'},
       {'title': 'Manage Products',   'icon': Icons.inventory_2_rounded,        'route': '/products',  'color': const Color(0xFF0D9488), 'desc': 'Adjust inventory'},
       {'title': 'Purchase',          'icon': Icons.shopping_bag_rounded,       'route': '/finance',   'color': const Color(0xFFF59E0B), 'desc': 'Log supplier stock'},
-      {'title': 'Transport',         'icon': Icons.local_shipping_rounded,     'route': '/transport', 'color': const Color(0xFF6366F1), 'desc': 'Logistics & fuel'},
       {'title': 'Reports',           'icon': Icons.assessment_rounded,         'route': '/reports',   'color': const Color(0xFFEC4899), 'desc': 'Business analysis'},
       {'title': 'Payroll',           'icon': Icons.people_rounded,             'route': '/payroll',   'color': const Color(0xFF64748B), 'desc': 'Staff salaries'},
     ];

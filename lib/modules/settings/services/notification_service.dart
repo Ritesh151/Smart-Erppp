@@ -132,16 +132,7 @@ class NotificationService {
     );
   }
 
-  Future<void> notifyTransportAlert(String transportId, String message) async {
-    await createNotification(
-      title: 'Transport Alert',
-      message: message,
-      category: NotificationCategory.transportAlert,
-      priority: NotificationPriority.high,
-      referenceId: transportId,
-      referenceType: 'transport',
-    );
-  }
+
 
   Future<void> notifySystem(String title, String message) async {
     await createNotification(

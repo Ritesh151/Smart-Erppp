@@ -18,7 +18,7 @@ class EmployeeListScreen extends ConsumerWidget {
     return AppScaffold(
       title: 'Labour',
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go('/labour/add'),
+        onPressed: () => context.go('/payroll/add'),
         child: const Icon(Icons.person_add_outlined),
       ),
       body: employeesAsync.when(
@@ -31,7 +31,7 @@ class EmployeeListScreen extends ConsumerWidget {
               title: 'No Employees',
               message: 'Add your factory workers to manage payroll.',
               actionLabel: 'Add Employee',
-              onAction: () => context.go('/labour/add'),
+              onAction: () => context.go('/payroll/add'),
             );
           }
           return ListView.separated(
@@ -143,7 +143,7 @@ class EmployeeListScreen extends ConsumerWidget {
         context.go('/payroll/$employeeId/edit');
         break;
       case 'salary':
-        context.go('/labour/$employeeId/salary');
+        context.go('/payroll/$employeeId/edit');
         break;
       case 'delete':
         final confirmed = await showDialog<bool>(

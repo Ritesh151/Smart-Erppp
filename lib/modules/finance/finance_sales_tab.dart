@@ -61,7 +61,8 @@ class FinanceSalesTab extends ConsumerWidget {
                         child: Icon(Icons.receipt_outlined,
                             color: Colors.green.shade700),
                       ),
-                      title: Text('Sale ${sale.saleId}',
+                      title: Text(
+                          sale.invoiceNumber ?? 'Sale ${sale.saleId}',
                           style: const TextStyle(fontWeight: FontWeight.w500)),
                       subtitle: Text(
                           '${sale.customerName} · ${sale.items.length} item(s) · ${DateHelper.display(sale.createdAt)}'),
