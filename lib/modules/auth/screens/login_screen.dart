@@ -27,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isSubmitting = false;
   String? _emailError;
   String? _passwordError;
+  bool _sessionMessageShown = false;
 
   @override
   void dispose() {
@@ -108,6 +109,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_sessionMessageShown && mounted) {
+        final authProvider = context.read<AuthProvider>();
+        final msg = authProvider.sessionExpiredMessage;
+        if (msg != null) {
+          _sessionMessageShown = true;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(msg),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+          authProvider.clearSessionExpiredMessage();
+        }
+      }
+    });
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Stack(

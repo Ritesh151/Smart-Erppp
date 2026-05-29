@@ -23,7 +23,7 @@ class InvoicePdfPreviewScreen extends StatelessWidget {
           );
         }
 
-        final invoice = LocalInvoice.fromMap(raw);
+        final invoice = LocalInvoice.fromMap(Map<String, dynamic>.from(raw));
         final b64 = invoice.pdfBytesBase64;
         if (b64 == null || b64.isEmpty) {
           return AppScaffold(

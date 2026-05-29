@@ -66,8 +66,10 @@ class _EditEmployeeScreenState extends ConsumerState<EditEmployeeScreen> {
         },
       );
 
+      ref.invalidate(employeesStreamProvider);
+
       if (!mounted) return;
-      showDialog(
+      await showDialog(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
@@ -76,15 +78,15 @@ class _EditEmployeeScreenState extends ConsumerState<EditEmployeeScreen> {
           content: const Text('Employee details have been updated successfully.'),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                context.pop();
-              },
+              onPressed: () => Navigator.of(ctx).pop(),
               child: const Text('OK'),
             ),
           ],
         ),
       );
+
+      if (!mounted) return;
+      context.go('/payroll');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -341,7 +341,7 @@ final salesReportSummaryProvider = Provider<SalesReportSummary>((ref) {
 // ---- Purchase Report Providers ----
 
 final filteredPurchasesReportProvider = Provider<List<PurchaseReportEntry>>((ref) {
-  final range = _getRange(ref, ReportType.purchases);
+  final range = _getRange(ref, ReportType.purchase);
 
   try {
     final box = Hive.box(StorageKeys.purchaseBox);
@@ -391,7 +391,7 @@ final purchaseReportSummaryProvider = Provider<PurchaseReportSummary>((ref) {
 // ---- Profit/Loss Report Provider ----
 
 final profitLossReportProvider = Provider<ProfitLossReportData>((ref) {
-  final range = _getRange(ref, ReportType.profit);
+  final range = _getRange(ref, ReportType.profitLoss);
 
   double totalSales = 0;
   double totalPurchases = 0;
@@ -461,7 +461,7 @@ final profitLossReportProvider = Provider<ProfitLossReportData>((ref) {
 // ---- GST Report Provider ----
 
 final gstReportSummaryProvider = Provider<GstReportSummary>((ref) {
-  final range = _getRange(ref, ReportType.gst);
+  final range = _getRange(ref, ReportType.expense);
 
   double outputCgst = 0;
   double outputSgst = 0;

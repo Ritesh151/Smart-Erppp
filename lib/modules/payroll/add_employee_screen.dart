@@ -61,8 +61,10 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
 
       await ref.read(payrollControllerProvider).saveEmployee(employee);
 
+      ref.invalidate(employeesStreamProvider);
+
       if (!mounted) return;
-      showDialog(
+      await showDialog(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
@@ -71,15 +73,15 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
           content: Text('$name has been added successfully.'),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                context.pop();
-              },
+              onPressed: () => Navigator.of(ctx).pop(),
               child: const Text('OK'),
             ),
           ],
         ),
       );
+
+      if (!mounted) return;
+      context.go('/payroll');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

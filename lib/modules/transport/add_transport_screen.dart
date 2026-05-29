@@ -77,7 +77,7 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
     final raw = box.get(invoiceId);
     if (raw == null || raw is! Map) return;
 
-    final invoice = LocalInvoice.fromMap(raw);
+    final invoice = LocalInvoice.fromMap(Map<String, dynamic>.from(raw));
     if (!mounted) return;
 
     setState(() {

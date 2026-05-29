@@ -26,7 +26,7 @@ class InvoiceListScreen extends ConsumerWidget {
         builder: (context, box, _) {
           final invoices = box.values
               .whereType<Map>()
-              .map((m) => LocalInvoice.fromMap(m))
+              .map((m) => LocalInvoice.fromMap(Map<String, dynamic>.from(m)))
               .where((inv) => inv.id.isNotEmpty)
               .toList()
             ..sort((a, b) => b.createdAt.compareTo(a.createdAt));

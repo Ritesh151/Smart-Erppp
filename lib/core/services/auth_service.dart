@@ -87,7 +87,7 @@ class AuthService {
       );
 
       final now = DateTime.now();
-      final expiry = now.add(const Duration(days: 4));
+      final expiry = now.add(const Duration(hours: 72));
 
       await _preferencesService.setBool(StorageKeys.isLoggedIn, true);
       await _preferencesService.setString(StorageKeys.userEmail, email.trim());
@@ -155,6 +155,26 @@ class AuthService {
       return _currentUser != null;
     } catch (e, stackTrace) {
       Logger.error('Session validation failed', e, stackTrace);
+      return false;
+    }
+  }
+
+  bool validateSessionSync() {
+    try {
+      final isLoggedIn = _preferencesService.getBool(
+        StorageKeys.isLoggedIn,
+        defaultValue: false,
+      );
+      if (isLoggedIn != true) return false;
+
+      final expiryTimeStr = _preferencesService.getString(StorageKeys.expiryTime);
+      if (expiryTimeStr == null) return false;
+
+      final expiryTime = DateTime.tryParse(expiryTimeStr);
+      if (expiryTime == null) return false;
+
+      return DateTime.now().isBefore(expiryTime);
+    } catch (e) {
       return false;
     }
   }

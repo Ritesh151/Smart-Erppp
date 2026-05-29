@@ -56,7 +56,7 @@ class PurchaseRecord {
       id: map['id'] as String? ?? '',
       purchaseNumber: map['purchaseNumber'] as String? ?? '',
       supplier: map['supplier'] != null
-          ? SupplierInfo.fromMap(Map<String, dynamic>.from(map['supplier']))
+          ? SupplierInfo.fromMap(Map<String, dynamic>.from(map['supplier'] as Map))
           : SupplierInfo(name: 'Unknown'),
       totalAmount: (map['totalAmount'] as num?)?.toDouble() ?? 0,
       purchaseDate: map['purchaseDate'] != null

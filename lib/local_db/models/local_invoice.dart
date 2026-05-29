@@ -59,7 +59,7 @@ class LocalInvoice {
   factory LocalInvoice.fromMap(Map<String, dynamic> map) {
     final itemsList = (map['items'] as List<dynamic>?)
             ?.map((e) => LocalInvoiceItem.fromMap(
-                e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
+                e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
             .toList() ??
         [];
 

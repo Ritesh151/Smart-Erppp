@@ -191,7 +191,7 @@ class TransportModel {
       transportName: map['transportName'] as String? ?? '',
       driverName: map['driverName'] as String? ?? '',
       products: (map['products'] as List<dynamic>?)
-              ?.map((p) => ProductLineItem.fromMap(Map<String, dynamic>.from(p)))
+              ?.map((p) => ProductLineItem.fromMap(Map<String, dynamic>.from(p as Map)))
               .toList() ??
           [],
       sourceLocation: map['sourceLocation'] as String? ?? '',

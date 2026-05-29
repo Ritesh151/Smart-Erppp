@@ -1,4 +1,3 @@
-// lib/Pages/Bill_Invoice/invoice_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:SmartERP/modules/invoice/providers/invoice_screen_provider.dart';
@@ -7,11 +6,10 @@ import 'package:SmartERP/core/utils/date_helper.dart';
 import 'package:SmartERP/core/widgets/app_scaffold.dart';
 import 'package:SmartERP/core/widgets/gst_breakdown_tile.dart';
 import 'package:SmartERP/core/widgets/loading_widget.dart';
-import 'package:SmartERP/core/widgets/product_image_thumbnail.dart';
 
 class InvoiceDetailScreen extends ConsumerWidget {
-  final String saleId;
-  const InvoiceDetailScreen({super.key, required this.saleId});
+  final String invoiceId;
+  const InvoiceDetailScreen({super.key, required this.invoiceId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,7 +24,7 @@ class InvoiceDetailScreen extends ConsumerWidget {
       ),
       data: (invoices) {
         final invoice =
-            invoices.where((inv) => inv.saleId == saleId).firstOrNull;
+            invoices.where((inv) => inv.id == invoiceId).firstOrNull;
 
         if (invoice == null) {
           return const AppScaffold(
@@ -41,15 +39,12 @@ class InvoiceDetailScreen extends ConsumerWidget {
           actions: [
             IconButton(
               icon: const Icon(Icons.share_outlined),
-              onPressed: () {
-                // TODO: Share PDF
-              },
+              onPressed: () {},
             ),
           ],
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // Locked badge
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -72,19 +67,21 @@ class InvoiceDetailScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
 
-              // Customer info
               _Card(children: [
                 _Row('Invoice Number', invoice.invoiceNumber),
                 _Row('Date', DateHelper.display(invoice.invoiceDate)),
-                _Row('Customer', invoice.customer.name),
-                _Row('Address', invoice.customer.address),
-                if (invoice.customer.gstin != null)
-                  _Row('GSTIN', invoice.customer.gstin!),
+                _Row('Due Date', DateHelper.display(invoice.dueDate)),
+                _Row('Customer', invoice.customerName),
+                if (invoice.customerAddress != null)
+                  _Row('Address', invoice.customerAddress!),
+                if (invoice.customerGst != null)
+                  _Row('GSTIN', invoice.customerGst!),
+                if (invoice.customerPhone != null) _Row('Phone', invoice.customerPhone!),
+                _Row('Status', invoice.status.name.toUpperCase()),
               ]),
 
               const SizedBox(height: 12),
 
-              // Line items
               Card(
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -96,40 +93,26 @@ class InvoiceDetailScreen extends ConsumerWidget {
                       const Text('Items',
                           style: TextStyle(fontWeight: FontWeight.w600)),
                       const Divider(),
-                      ...invoice.lineItems.map(
-                        (item) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ProductImageThumbnail(
-                                imageData: item.productImage,
-                                size: 52,
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(item.productName,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w500)),
-                                    Text(
-                                        'Qty: ${item.quantity} · Price: ${CurrencyFormatter.format(item.rate)}',
-                                        style: const TextStyle(
-                                            fontSize: 12, color: Colors.grey)),
-                                    Text(
-                                      'Subtotal: ${CurrencyFormatter.format(item.totalAmount)}',
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ],
+                      if (invoice.itemIds.isEmpty)
+                        const Text('No items.',
+                            style: TextStyle(color: Colors.grey, fontSize: 13))
+                      else
+                        ...invoice.itemIds.map(
+                          (id) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.inventory_2_outlined,
+                                    size: 20, color: Colors.grey),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(id,
+                                      style: const TextStyle(fontSize: 13)),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -137,29 +120,27 @@ class InvoiceDetailScreen extends ConsumerWidget {
 
               const SizedBox(height: 12),
 
-              // GST breakdown
               GstBreakdownTile(
-                subtotal: invoice.summary.subtotal,
-                cgst: invoice.summary.totalCgst,
-                sgst: invoice.summary.totalSgst,
-                igst: invoice.summary.totalIgst,
-                roundOff: invoice.summary.roundOff,
-                totalAmount: invoice.summary.totalAmount,
+                subtotal: invoice.subtotal,
+                cgst: invoice.taxAmount / 2,
+                sgst: invoice.taxAmount / 2,
+                igst: invoice.igstAmount,
+                roundOff: invoice.roundOff,
+                totalAmount: invoice.grandTotalRounded,
               ),
 
               const SizedBox(height: 12),
 
-              // Amount in words
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(invoice.summary.amountInWords,
-                    style: const TextStyle(
-                        fontStyle: FontStyle.italic, fontSize: 13)),
-              ),
+              _Card(children: [
+                _Row('Discount',
+                    CurrencyFormatter.format(invoice.discountAmount)),
+                _Row('Tax', CurrencyFormatter.format(invoice.taxAmount)),
+                _Row('Total', CurrencyFormatter.format(invoice.totalAmount),
+                    isBold: true),
+                _Row('Paid', CurrencyFormatter.format(invoice.paidAmount)),
+                _Row('Balance', CurrencyFormatter.format(invoice.balanceAmount),
+                    isBold: true),
+              ]),
 
               if (invoice.notes != null && invoice.notes!.isNotEmpty) ...[
                 const SizedBox(height: 12),
@@ -168,6 +149,17 @@ class InvoiceDetailScreen extends ConsumerWidget {
                       style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
                   Text(invoice.notes!),
+                ]),
+              ],
+
+              if (invoice.termsAndConditions != null &&
+                  invoice.termsAndConditions!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _Card(children: [
+                  const Text('Terms & Conditions',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text(invoice.termsAndConditions!),
                 ]),
               ],
             ],
@@ -198,7 +190,8 @@ class _Card extends StatelessWidget {
 class _Row extends StatelessWidget {
   final String label;
   final String value;
-  const _Row(this.label, this.value);
+  final bool isBold;
+  const _Row(this.label, this.value, {this.isBold = false});
 
   @override
   Widget build(BuildContext context) {
@@ -208,13 +201,15 @@ class _Row extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          Text(label,
+              style: const TextStyle(color: Colors.grey, fontSize: 13)),
           const SizedBox(width: 12),
           Flexible(
             child: Text(value,
                 textAlign: TextAlign.end,
-                style:
-                    const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+                style: TextStyle(
+                    fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 13)),
           ),
         ],
       ),
