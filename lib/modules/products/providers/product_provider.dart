@@ -3,15 +3,12 @@ import 'package:SmartERP/core/exceptions/app_exception.dart';
 import 'package:SmartERP/core/models/product_model.dart';
 import 'package:SmartERP/core/utils/logger.dart';
 import 'package:SmartERP/modules/products/services/product_service.dart';
-import 'package:SmartERP/modules/products/services/product_seed_service.dart';
 
 class ProductProvider extends ChangeNotifier {
   final ProductService _service;
-  final ProductSeedService _seedService;
-  bool _initialized = false;
   VoidCallback? onDataChanged;
 
-  ProductProvider(this._service, this._seedService, {VoidCallback? onDataChanged})
+  ProductProvider(this._service, {VoidCallback? onDataChanged})
       : onDataChanged = onDataChanged;
 
   List<ProductModel> _products = [];
@@ -44,19 +41,6 @@ class ProductProvider extends ChangeNotifier {
   int get outOfStockCount => _products.where((p) => p.isOutOfStock).length;
   double get totalInventoryValue =>
       _products.fold(0.0, (sum, p) => sum + p.inventoryValue);
-
-  Future<void> initializeProducts() async {
-    if (_initialized) return;
-    _initialized = true;
-
-    try {
-      await _seedService.seedProducts();
-      await loadProducts();
-    } catch (e, stackTrace) {
-      Logger.error('Failed to initialize products', e, stackTrace);
-      _initialized = false;
-    }
-  }
 
   Future<void> loadProducts() async {
     try {

@@ -2,6 +2,7 @@ import 'package:SmartERP/core/models/expense_model.dart';
 import 'package:SmartERP/core/models/transaction_model.dart';
 import 'package:SmartERP/core/utils/logger.dart';
 import 'package:SmartERP/modules/finance/repositories/finance_repository.dart';
+import 'package:SmartERP/modules/finance/services/return_service.dart';
 import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
 import 'package:SmartERP/modules/products/services/product_service.dart';
 import 'package:SmartERP/modules/payroll/services/employee_service.dart';
@@ -13,6 +14,7 @@ class FinanceService {
   final ProductService productService;
   final EmployeeService employeeService;
   final ExpenseRepository expenseRepository;
+  final ReturnService returnService;
 
   FinanceService({
     required this.financeRepository,
@@ -20,6 +22,7 @@ class FinanceService {
     required this.productService,
     required this.employeeService,
     required this.expenseRepository,
+    required this.returnService,
   });
 
   Future<Map<String, dynamic>> getFinancialSummary(DateTime startDate, DateTime endDate) async {
@@ -30,9 +33,10 @@ class FinanceService {
       final employees = await employeeService.getAllEmployees();
       final invoices = await invoiceService.getAllInvoices();
 
+      final totalReturns = await returnService.getTotalReturns();
       final totalSales = sales.fold<double>(
         0, (sum, s) => sum + ((s['total'] as num?)?.toDouble() ?? 0),
-      );
+      ) - totalReturns;
 
       final totalPurchases = purchases.fold<double>(
         0, (sum, p) => sum + ((p['totalAmount'] as num?)?.toDouble() ?? 0),
@@ -132,10 +136,6 @@ class FinanceService {
     }
   }
 
-  Future<void> saveSale(Map<String, dynamic> sale) async {
-    await financeRepository.saveSale(sale);
-  }
-
   Future<void> savePurchase(Map<String, dynamic> purchase) async {
     await financeRepository.savePurchase(purchase);
   }
@@ -158,7 +158,9 @@ class FinanceService {
 
   Future<double> getTotalSales() async {
     final sales = await getAllSales();
-    return sales.fold<double>(0, (sum, s) => sum + ((s['total'] as num?)?.toDouble() ?? 0));
+    final totalReturns = await returnService.getTotalReturns();
+    final grossSales = sales.fold<double>(0, (sum, s) => sum + ((s['total'] as num?)?.toDouble() ?? 0));
+    return grossSales - totalReturns;
   }
 
   Future<double> getTotalPurchases() async {

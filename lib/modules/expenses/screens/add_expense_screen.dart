@@ -1,8 +1,95 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:SmartERP/core/extensions/context_extensions.dart';
 import 'package:SmartERP/modules/expenses/providers/expense_provider.dart';
+
+// ── Shared brand tokens (aligned with dashboard_screen.dart) ─────────────────
+class _T {
+  static const gradientStart = Color(0xFF4F6EF7);
+  static const gradientEnd   = Color(0xFF7C3AED);
+  static const bg            = Color(0xFFF5F7FA);
+  static const white         = Colors.white;
+  static const textDark      = Color(0xFF111827);
+  static const textMid       = Color(0xFF374151);
+  static const textMuted     = Color(0xFF6B7280);
+  static const textLight     = Color(0xFF9CA3AF);
+  static const divider       = Color(0xFFE5E7EB);
+  static const danger        = Color(0xFFEF4444);
+  static const success       = Color(0xFF10B981);
+
+  static const Gradient brandGradient = LinearGradient(
+    colors: [gradientStart, gradientEnd],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static BoxDecoration card({double radius = 16}) => BoxDecoration(
+        color: white,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: divider),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E2A6E).withOpacity(0.06),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      );
+
+  // Input decoration factory
+  static InputDecoration inputDecoration({
+    required String label,
+    required IconData icon,
+    String? prefix,
+    String? hint,
+    Widget? suffix,
+  }) =>
+      InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Icon(icon, size: 18, color: textMuted),
+        ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 48),
+        prefixText: prefix,
+        prefixStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: textDark,
+        ),
+        suffix: suffix,
+        labelStyle: const TextStyle(fontSize: 13, color: textMuted),
+        hintStyle: const TextStyle(fontSize: 13, color: textLight),
+        filled: true,
+        fillColor: const Color(0xFFFAFAFB),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: divider),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: divider),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: gradientStart, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: danger),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: danger, width: 1.5),
+        ),
+        errorStyle: const TextStyle(fontSize: 11, color: danger),
+      );
+}
 
 class AddExpenseScreen extends StatefulWidget {
   const AddExpenseScreen({super.key});
@@ -17,16 +104,51 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   late final TextEditingController _descCtrl;
   late final TextEditingController _vendorCtrl;
   late final TextEditingController _notesCtrl;
-  String _category = ExpenseProvider.categories.first;
-  DateTime _date = DateTime.now();
+  String   _category = ExpenseProvider.categories.first;
+  DateTime _date      = DateTime.now();
+
+  // Category icon map for visual richness
+  static const Map<String, IconData> _categoryIcons = {
+    'Food & Beverage'  : Icons.restaurant_rounded,
+    'Transport'        : Icons.directions_car_rounded,
+    'Utilities'        : Icons.bolt_rounded,
+    'Office Supplies'  : Icons.work_rounded,
+    'Marketing'        : Icons.campaign_rounded,
+    'Salaries'         : Icons.people_rounded,
+    'Rent'             : Icons.home_rounded,
+    'Maintenance'      : Icons.build_rounded,
+    'Travel'           : Icons.flight_rounded,
+    'Miscellaneous'    : Icons.category_rounded,
+  };
+
+  static const List<Color> _categoryColors = [
+    Color(0xFF4F6EF7),
+    Color(0xFF10B981),
+    Color(0xFFF59E0B),
+    Color(0xFF7C3AED),
+    Color(0xFFEC4899),
+    Color(0xFF64748B),
+    Color(0xFF0D9488),
+    Color(0xFFEF4444),
+    Color(0xFF06B6D4),
+    Color(0xFF8B5CF6),
+  ];
+
+  Color get _selectedCategoryColor {
+    final idx = ExpenseProvider.categories.indexOf(_category);
+    return _categoryColors[idx % _categoryColors.length];
+  }
+
+  IconData get _selectedCategoryIcon =>
+      _categoryIcons[_category] ?? Icons.category_rounded;
 
   @override
   void initState() {
     super.initState();
     _amountCtrl = TextEditingController();
-    _descCtrl = TextEditingController();
+    _descCtrl   = TextEditingController();
     _vendorCtrl = TextEditingController();
-    _notesCtrl = TextEditingController();
+    _notesCtrl  = TextEditingController();
   }
 
   @override
@@ -48,24 +170,16 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
     try {
       await context.read<ExpenseProvider>().addExpense(
-        category: _category,
+        category   : _category,
         description: _descCtrl.text.trim(),
-        amount: parsedAmount,
+        amount     : parsedAmount,
         expenseDate: _date,
-        vendor: _vendorCtrl.text.trim().isEmpty
-            ? null
-            : _vendorCtrl.text.trim(),
-        notes: _notesCtrl.text.trim().isEmpty
-            ? null
-            : _notesCtrl.text.trim(),
+        vendor     : _vendorCtrl.text.trim().isEmpty ? null : _vendorCtrl.text.trim(),
+        notes      : _notesCtrl.text.trim().isEmpty  ? null : _notesCtrl.text.trim(),
       );
-      if (mounted) {
-        _showSuccessDialog();
-      }
+      if (mounted) _showSuccessDialog();
     } catch (e) {
-      if (mounted) {
-        _showSnack('Failed to save expense: $e');
-      }
+      if (mounted) _showSnack('Failed to save expense: $e');
     }
   }
 
@@ -73,160 +187,579 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.info_outline_rounded,
+                  color: _T.white, size: 16),
+              const SizedBox(width: 8),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          backgroundColor: _T.textDark,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
   }
 
   Future<void> _showSuccessDialog() async {
     if (!mounted) return;
     await showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Success'),
-        content: const Text('Expense added successfully'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              context.pop();
-            },
-            child: const Text('OK'),
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
+        elevation: 0,
+        backgroundColor: _T.white,
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color       : _T.success.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(Icons.check_circle_rounded,
+                    color: _T.success, size: 30),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Expense Saved!',
+                style: TextStyle(
+                  fontSize  : 18,
+                  fontWeight: FontWeight.w800,
+                  color     : _T.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Your expense has been recorded successfully.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color   : _T.textMuted,
+                  height  : 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient    : _T.brandGradient,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow   : [
+                      BoxShadow(
+                        color     : _T.gradientStart.withOpacity(0.28),
+                        blurRadius: 10,
+                        offset    : const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      context.pop();
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(
+                        color     : _T.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize  : 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  String _formattedDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-  }
+  String _formattedDate(DateTime date) =>
+      '${date.day.toString().padLeft(2, '0')}/'
+      '${date.month.toString().padLeft(2, '0')}/'
+      '${date.year}';
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<ExpenseProvider>();
+    final provider  = context.watch<ExpenseProvider>();
     final isLoading = provider.isLoading;
+    final isMobile  = MediaQuery.of(context).size.width < 600;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Form(
-        key: _formKey,
-        child: SizedBox(
-          width: 600,
+    return Container(
+      color: _T.bg,
+      child: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.all(isMobile ? 16 : 24),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Page header ──────────────────────────────────────────
+                  _buildPageHeader(context, isMobile)
+                      .animate()
+                      .fadeIn(duration: 380.ms)
+                      .slideX(begin: -0.04, end: 0),
+
+                  SizedBox(height: isMobile ? 20 : 28),
+
+                  // ── Form card ────────────────────────────────────────────
+                  Container(
+                    decoration: _T.card(radius: 20),
+                    padding: EdgeInsets.all(isMobile ? 18 : 24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Section: Basic Info
+                          _sectionLabel('Basic Information',
+                              Icons.info_outline_rounded),
+                          const SizedBox(height: 14),
+
+                          // Category picker
+                          _buildCategoryPicker(isMobile)
+                              .animate()
+                              .fadeIn(delay: 60.ms, duration: 280.ms),
+
+                          const SizedBox(height: 14),
+
+                          // Amount field
+                          TextFormField(
+                            controller   : _amountCtrl,
+                            keyboardType : const TextInputType.numberWithOptions(decimal: true),
+                            style        : const TextStyle(
+                              fontSize  : 14,
+                              fontWeight: FontWeight.w600,
+                              color     : _T.textDark,
+                            ),
+                            decoration: _T.inputDecoration(
+                              label : 'Amount (₹) *',
+                              icon  : Icons.currency_rupee_rounded,
+                              hint  : '0.00',
+                            ),
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) {
+                                return 'Amount is required';
+                              }
+                              final val = double.tryParse(v.trim());
+                              if (val == null || val <= 0) {
+                                return 'Enter a valid amount';
+                              }
+                              return null;
+                            },
+                          ).animate().fadeIn(delay: 90.ms, duration: 280.ms),
+
+                          const SizedBox(height: 14),
+
+                          // Description field
+                          TextFormField(
+                            controller: _descCtrl,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: _T.textDark,
+                            ),
+                            decoration: _T.inputDecoration(
+                              label: 'Description *',
+                              icon : Icons.notes_rounded,
+                              hint : 'Brief description of expense',
+                            ),
+                            validator: (v) => v == null || v.trim().isEmpty
+                                ? 'Description is required'
+                                : null,
+                          ).animate().fadeIn(delay: 110.ms, duration: 280.ms),
+
+                          const SizedBox(height: 24),
+
+                          // Section: Additional Details
+                          _sectionLabel('Additional Details',
+                              Icons.tune_rounded),
+                          const SizedBox(height: 14),
+
+                          // Vendor field
+                          TextFormField(
+                            controller: _vendorCtrl,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: _T.textDark,
+                            ),
+                            decoration: _T.inputDecoration(
+                              label: 'Vendor / Payee',
+                              icon : Icons.storefront_rounded,
+                              hint : 'Optional',
+                            ),
+                          ).animate().fadeIn(delay: 130.ms, duration: 280.ms),
+
+                          const SizedBox(height: 14),
+
+                          // Notes field
+                          TextFormField(
+                            controller : _notesCtrl,
+                            maxLines   : 3,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: _T.textDark,
+                            ),
+                            decoration: _T.inputDecoration(
+                              label: 'Notes',
+                              icon : Icons.sticky_note_2_outlined,
+                              hint : 'Any additional notes (optional)',
+                            ),
+                          ).animate().fadeIn(delay: 150.ms, duration: 280.ms),
+
+                          const SizedBox(height: 14),
+
+                          // Date picker
+                          _buildDatePicker(isMobile)
+                              .animate()
+                              .fadeIn(delay: 170.ms, duration: 280.ms),
+
+                          const SizedBox(height: 28),
+
+                          // ── Action buttons ───────────────────────────────
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => context.pop(),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
+                                    side: const BorderSide(color: _T.divider),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      color     : _T.textMid,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize  : 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 2,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient    : isLoading ? null : _T.brandGradient,
+                                    color       : isLoading
+                                        ? const Color(0xFFE5E7EB)
+                                        : null,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow   : isLoading
+                                        ? []
+                                        : [
+                                            BoxShadow(
+                                              color: _T.gradientStart
+                                                  .withOpacity(0.28),
+                                              blurRadius: 12,
+                                              offset: const Offset(0, 5),
+                                            ),
+                                          ],
+                                  ),
+                                  child: TextButton(
+                                    onPressed: isLoading ? null : _handleSubmit,
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 14),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: isLoading
+                                        ? const SizedBox(
+                                            height: 18,
+                                            width : 18,
+                                            child : CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: _T.white,
+                                            ),
+                                          )
+                                        : const Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.save_rounded,
+                                                color: _T.white,
+                                                size: 17,
+                                              ),
+                                              SizedBox(width: 7),
+                                              Text(
+                                                'Save Expense',
+                                                style: TextStyle(
+                                                  color     : _T.white,
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize  : 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ).animate().fadeIn(delay: 200.ms, duration: 280.ms),
+                        ],
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 50.ms, duration: 350.ms)
+                   .slideY(begin: 0.06, end: 0),
+
+                  SizedBox(height: isMobile ? 16 : 24),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Page header ────────────────────────────────────────────────────────────
+  Widget _buildPageHeader(BuildContext context, bool isMobile) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width : 42,
+          height: 42,
+          decoration: BoxDecoration(
+            gradient    : _T.brandGradient,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow   : [
+              BoxShadow(
+                color     : _T.gradientStart.withOpacity(0.28),
+                blurRadius: 10,
+                offset    : const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Icon(Icons.receipt_long_rounded,
+              color: _T.white, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Add New Expense',
-                style: context.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+                style: TextStyle(
+                  fontSize    : isMobile ? 20 : 24,
+                  fontWeight  : FontWeight.w800,
+                  color       : _T.textDark,
+                  letterSpacing: -0.4,
                 ),
               ),
-              const SizedBox(height: 24),
-              DropdownButtonFormField<String>(
-                value: _category,
-                decoration: const InputDecoration(
-                  labelText: 'Category *',
-                  border: OutlineInputBorder(),
-                ),
-                items: ExpenseProvider.categories
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
-                onChanged: (v) => setState(() => _category = v!),
+              const SizedBox(height: 2),
+              const Text(
+                'Record a business expense to your ledger.',
+                style: TextStyle(fontSize: 12, color: _T.textMuted),
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _amountCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Amount (₹) *',
-                  prefixText: '₹ ',
-                  border: OutlineInputBorder(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Section label ──────────────────────────────────────────────────────────
+  Widget _sectionLabel(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          width : 26,
+          height: 26,
+          decoration: BoxDecoration(
+            gradient    : _T.brandGradient,
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Icon(icon, color: _T.white, size: 13),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize  : 13,
+            fontWeight: FontWeight.w700,
+            color     : _T.textDark,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Category picker ────────────────────────────────────────────────────────
+  Widget _buildCategoryPicker(bool isMobile) {
+    return DropdownButtonFormField<String>(
+      value    : _category,
+      style    : const TextStyle(
+        fontSize  : 14,
+        fontWeight: FontWeight.w600,
+        color     : _T.textDark,
+      ),
+      icon: const Icon(Icons.keyboard_arrow_down_rounded,
+          color: _T.textMuted, size: 20),
+      dropdownColor: _T.white,
+      decoration: _T.inputDecoration(
+        label: 'Category *',
+        icon : _selectedCategoryIcon,
+      ).copyWith(
+        prefixIcon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Container(
+            width : 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color       : _selectedCategoryColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Icon(_selectedCategoryIcon,
+                size: 15, color: _selectedCategoryColor),
+          ),
+        ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 56),
+      ),
+      items: ExpenseProvider.categories.asMap().entries.map((entry) {
+        final idx   = entry.key;
+        final cat   = entry.value;
+        final color = _categoryColors[idx % _categoryColors.length];
+        final icon  = _categoryIcons[cat] ?? Icons.category_rounded;
+        return DropdownMenuItem(
+          value: cat,
+          child: Row(
+            children: [
+              Container(
+                width : 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color       : color.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(7),
                 ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Amount is required';
-                  final val = double.tryParse(v.trim());
-                  if (val == null || val <= 0) return 'Enter a valid amount';
-                  return null;
-                },
+                child: Icon(icon, size: 14, color: color),
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Description *',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Description is required' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _vendorCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Vendor / Payee (optional)',
-                  border: OutlineInputBorder(),
+              const SizedBox(width: 10),
+              Text(
+                cat,
+                style: const TextStyle(
+                  fontSize  : 13,
+                  fontWeight: FontWeight.w600,
+                  color     : _T.textDark,
                 ),
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _notesCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Notes (optional)',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 2,
+            ],
+          ),
+        );
+      }).toList(),
+      onChanged: (v) => setState(() => _category = v!),
+    );
+  }
+
+  // ── Date picker tile ───────────────────────────────────────────────────────
+  Widget _buildDatePicker(bool isMobile) {
+    return GestureDetector(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context  : context,
+          initialDate: _date,
+          firstDate: DateTime(2020),
+          lastDate : DateTime.now(),
+          builder  : (context, child) => Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: const ColorScheme.light(
+                primary  : _T.gradientStart,
+                onPrimary: _T.white,
+                surface  : _T.white,
               ),
-              const SizedBox(height: 16),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Expense Date'),
-                trailing: TextButton(
-                  onPressed: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _date,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now(),
-                    );
-                    if (picked != null) setState(() => _date = picked);
-                  },
-                  child: Text(
-                    _formattedDate(_date),
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
+              dialogBackgroundColor: _T.white,
+            ),
+            child: child!,
+          ),
+        );
+        if (picked != null) setState(() => _date = picked);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color       : const Color(0xFFFAFAFB),
+          borderRadius: BorderRadius.circular(12),
+          border      : Border.all(color: _T.divider),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width : 28,
+              height: 28,
+              decoration: BoxDecoration(
+                gradient    : _T.brandGradient,
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(height: 32),
-              Row(
+              child: const Icon(Icons.calendar_today_rounded,
+                  color: _T.white, size: 14),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => context.pop(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: const Text('Cancel'),
-                    ),
+                  const Text(
+                    'Expense Date',
+                    style: TextStyle(fontSize: 11, color: _T.textMuted),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : _handleSubmit,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: isLoading
-                          ? const SizedBox(
-                              height: 16,
-                              width: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Save Expense', style: TextStyle(fontSize: 16)),
+                  const SizedBox(height: 2),
+                  Text(
+                    _formattedDate(_date),
+                    style: const TextStyle(
+                      fontSize  : 14,
+                      fontWeight: FontWeight.w700,
+                      color     : _T.textDark,
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color       : _T.gradientStart.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                'Change',
+                style: TextStyle(
+                  fontSize  : 11,
+                  fontWeight: FontWeight.w600,
+                  color     : _T.gradientStart,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

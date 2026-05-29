@@ -12,11 +12,11 @@ import 'package:SmartERP/modules/auth/providers/auth_provider.dart';
 import 'package:SmartERP/modules/settings/providers/theme_provider.dart';
 import 'package:SmartERP/modules/products/repositories/product_repository.dart';
 import 'package:SmartERP/modules/products/services/product_service.dart';
-import 'package:SmartERP/modules/products/services/product_seed_service.dart';
 import 'package:SmartERP/modules/dashboard/providers/dashboard_provider.dart';
 import 'package:SmartERP/modules/products/providers/product_provider.dart';
 import 'package:SmartERP/modules/finance/repositories/finance_repository.dart';
 import 'package:SmartERP/modules/finance/services/finance_service.dart';
+import 'package:SmartERP/modules/finance/services/return_service.dart';
 import 'package:SmartERP/modules/finance/providers/finance_provider.dart';
 import 'package:SmartERP/modules/expenses/repositories/expense_repository.dart';
 import 'package:SmartERP/modules/expenses/services/expense_service.dart';
@@ -101,8 +101,39 @@ Future<void> _initializeApp() async {
   await _initializeHiveBoxes();
   Logger.success('Hive boxes initialized');
 
+  await _cleanupLegacySeedData();
+
   final preferencesService = await PreferencesService.getInstance();
   Logger.success('Preferences service initialized');
+}
+
+Future<void> _cleanupLegacySeedData() async {
+  try {
+    final productsBox = Hive.box(StorageKeys.productsBox);
+    final keysToRemove = <dynamic>[];
+
+    for (final key in productsBox.keys) {
+      final data = productsBox.get(key);
+      if (data is Map) {
+        final name = data['productName'] as String?;
+        final id = data['id'] as String?;
+        if (name == 'Default Product' || id == 'default-product') {
+          keysToRemove.add(key);
+        }
+      }
+    }
+
+    for (final key in keysToRemove) {
+      await productsBox.delete(key);
+      Logger.info('Removed legacy seed product: $key');
+    }
+
+    if (keysToRemove.isNotEmpty) {
+      Logger.success('Cleaned up ${keysToRemove.length} legacy seed product(s)');
+    }
+  } catch (e, stackTrace) {
+    Logger.warning('Failed to clean up legacy seed data', e);
+  }
 }
 
 Future<void> _initializeHiveBoxes() async {
@@ -118,6 +149,7 @@ Future<void> _initializeHiveBoxes() async {
     StorageKeys.customersBox,
     StorageKeys.paymentsBox,
     StorageKeys.invoiceItemsBox,
+    StorageKeys.returnsBox,
   ];
 
   for (final boxName in boxes) {
@@ -233,6 +265,7 @@ class _SmartERPAppState extends State<SmartERPApp> {
           );
         }
 
+
         final preferencesService = snapshot.data!;
 
         return MultiProvider(
@@ -262,23 +295,18 @@ class _SmartERPAppState extends State<SmartERPApp> {
             Provider<ProductService>(
               create: (context) => ProductService(context.read<ProductRepository>()),
             ),
-            Provider<ProductSeedService>(
-              create: (context) => ProductSeedService(
-                repository: context.read<ProductRepository>(),
-              ),
-            ),
+            
             ChangeNotifierProvider<ProductProvider>(
               create: (context) {
                 final provider = ProductProvider(
                   context.read<ProductService>(),
-                  context.read<ProductSeedService>(),
                 );
                 provider.onDataChanged = () {
                   try {
                     context.read<DashboardProvider>().refresh();
                   } catch (_) {}
                 };
-                provider.initializeProducts();
+                provider.loadProducts();
                 return provider;
               },
             ),
@@ -422,6 +450,13 @@ class _SmartERPAppState extends State<SmartERPApp> {
             ),
 
             // Finance Module Services & State
+            Provider<ReturnService>(
+              create: (context) => ReturnService(
+                invoiceRepository: context.read<InvoiceRepository>(),
+                productRepository: context.read<ProductRepository>(),
+                financeRepository: context.read<FinanceRepository>(),
+              ),
+            ),
             Provider<FinanceService>(
               create: (context) => FinanceService(
                 financeRepository: context.read<FinanceRepository>(),
@@ -429,10 +464,20 @@ class _SmartERPAppState extends State<SmartERPApp> {
                 productService: context.read<ProductService>(),
                 employeeService: context.read<EmployeeService>(),
                 expenseRepository: context.read<ExpenseRepository>(),
+                returnService: context.read<ReturnService>(),
               ),
             ),
             ChangeNotifierProvider<FinanceProvider>(
-              create: (context) => FinanceProvider(context.read<FinanceService>())..loadTransactions(),
+              create: (context) {
+                final provider = FinanceProvider(context.read<FinanceService>());
+                provider.onDataChanged = () {
+                  try {
+                    context.read<DashboardProvider>().refresh();
+                  } catch (_) {}
+                };
+                provider.loadTransactions();
+                return provider;
+              },
             ),
             ChangeNotifierProvider<DashboardProvider>(
               create: (context) => DashboardProvider(

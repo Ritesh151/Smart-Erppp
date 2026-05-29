@@ -792,7 +792,7 @@ class _Header extends StatelessWidget {
                   ),
                   const SizedBox(height: 1),
                   Text(
-                    'Enterprise Resource Planning',
+                    'Siddhivinayak Enterprise',
                     style: GoogleFonts.sora(
                       fontSize: 8.5,
                       fontWeight: FontWeight.w500,
@@ -805,8 +805,8 @@ class _Header extends StatelessWidget {
             ),
           ],
 
-          // ── Collapse toggle ───────────────────────────────
-          _CollapseButton(isCollapsed: isCollapsed, onTap: onToggle),
+          // // ── Collapse toggle ───────────────────────────────
+          // _CollapseButton(isCollapsed: isCollapsed, onTap: onToggle),
         ],
       ),
     );

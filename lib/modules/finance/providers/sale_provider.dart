@@ -4,9 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:SmartERP/core/constants/storage_keys.dart';
 import 'package:SmartERP/core/models/product_model.dart';
 import 'package:SmartERP/core/storage/storage_service.dart';
-import 'package:SmartERP/Models/sale_model.dart';
 import 'package:SmartERP/Models/sale_item_model.dart';
-import 'package:uuid/uuid.dart';
 
 class SaleRecord {
   final String saleId;
@@ -96,62 +94,6 @@ class ProductInfo {
       price: (map['price'] as num?)?.toDouble() ?? 0,
       stock: (map['stockQuantity'] as int?) ?? (map['stock'] as int?) ?? 0,
     );
-  }
-}
-
-class SaleService {
-  final StorageService<Map<dynamic, dynamic>> _salesStorage;
-  final StorageService<Map<dynamic, dynamic>> _productsStorage;
-
-  SaleService()
-      : _salesStorage =
-            StorageService<Map<dynamic, dynamic>>(StorageKeys.salesBox),
-        _productsStorage =
-            StorageService<Map<dynamic, dynamic>>(StorageKeys.productsBox);
-
-  Future<void> saveSaleWithStockUpdate({required SaleModel sale}) async {
-    final id = const Uuid().v4();
-    final saleMap = {
-      'id': id,
-      'saleId': id,
-      'customerName': sale.customerName,
-      'customerPhone': sale.customerPhone,
-      'customerAddress': sale.customerAddress,
-      'items': sale.items.map((e) => e.toJson()).toList(),
-      'total': sale.total,
-      'createdAt': DateTime.now().toIso8601String(),
-    };
-
-    final productsBox = _getProductsBox();
-    for (final item in sale.items) {
-      final existingRaw = productsBox.get(item.productId);
-      if (existingRaw != null) {
-        if (existingRaw is ProductModel) {
-          final newQty = existingRaw.stockQuantity - item.quantity.toInt();
-          final updated = existingRaw.copyWith(
-            stockQuantity: newQty < 0 ? 0 : newQty,
-            updatedAt: DateTime.now(),
-          );
-          await productsBox.put(item.productId, updated);
-        } else if (existingRaw is Map) {
-          final raw = Map<String, dynamic>.from(existingRaw as Map<dynamic, dynamic>);
-          final currentStock = (raw['stockQuantity'] as num?)?.toInt() ?? 0;
-          final newQty = currentStock - item.quantity.toInt();
-          raw['stockQuantity'] = newQty < 0 ? 0 : newQty;
-          raw['updatedAt'] = DateTime.now().toIso8601String();
-          await productsBox.put(item.productId, raw);
-        }
-      }
-    }
-
-    await _salesStorage.save(id, saleMap);
-  }
-
-  Box<dynamic> _getProductsBox() {
-    if (Hive.isBoxOpen(StorageKeys.productsBox)) {
-      return Hive.box(StorageKeys.productsBox);
-    }
-    throw Exception('Products box not initialized');
   }
 }
 
@@ -247,6 +189,4 @@ final productsStreamProvider = StreamProvider<List<ProductInfo>>((ref) {
   return controller.stream;
 });
 
-final saleServiceProvider = Provider<SaleService>((ref) {
-  return SaleService();
-});
+

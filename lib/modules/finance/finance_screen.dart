@@ -64,16 +64,12 @@ class _FinanceScreenState extends State<FinanceScreen>
   }
 
   Widget _getFloatingActionButton() {
-    if (_tabController.index == 0) {
-      return FloatingActionButton(
-        onPressed: () => context.go('/finance/create-sale'),
-        child: const Icon(Icons.add),
-      );
-    } else {
+    if (_tabController.index == 1) {
       return FloatingActionButton(
         onPressed: () => context.go('/purchases/add'),
         child: const Icon(Icons.add),
       );
     }
+    return const SizedBox.shrink();
   }
 }

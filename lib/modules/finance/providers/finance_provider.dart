@@ -5,6 +5,7 @@ import 'package:SmartERP/modules/finance/services/finance_service.dart';
 
 class FinanceProvider extends ChangeNotifier {
   final FinanceService _service;
+  VoidCallback? onDataChanged;
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -123,20 +124,9 @@ class FinanceProvider extends ChangeNotifier {
     try {
       _transactions = await _service.getAllTransactions();
       notifyListeners();
+      onDataChanged?.call();
     } catch (e, stackTrace) {
       Logger.error('Failed to load transactions', e, stackTrace);
-    }
-  }
-
-  Future<void> saveSale(Map<String, dynamic> sale) async {
-    try {
-      await _service.saveSale(sale);
-      await loadTransactions();
-    } catch (e, stackTrace) {
-      _errorMessage = 'Failed to save sale';
-      notifyListeners();
-      Logger.error('Failed to save sale', e, stackTrace);
-      rethrow;
     }
   }
 

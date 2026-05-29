@@ -9,7 +9,7 @@ import 'package:SmartERP/modules/products/screens/products_screen.dart';
 import 'package:SmartERP/modules/products/screens/product_form_screen.dart';
 import 'package:SmartERP/modules/products/screens/product_detail_screen.dart';
 import 'package:SmartERP/modules/finance/finance_screen.dart';
-import 'package:SmartERP/modules/finance/create_sale_screen.dart';
+
 import 'package:SmartERP/modules/invoice/screens/invoices_screen.dart';
 import 'package:SmartERP/modules/invoice/screens/invoice_form_screen.dart';
 import 'package:SmartERP/modules/invoice/screens/invoice_detail_screen.dart';
@@ -125,17 +125,6 @@ class AppRouter {
           state: state,
           child: const FinanceScreen(),
         ),
-        routes: [
-          GoRoute(
-            path: 'create-sale',
-            name: 'finance-create-sale',
-            pageBuilder: (context, state) => _buildShellPage(
-              context: context,
-              state: state,
-              child: CreateSaleScreen(),
-            ),
-          ),
-        ],
       ),
       GoRoute(
         path: AppRoutes.invoices,
@@ -145,50 +134,52 @@ class AppRouter {
           state: state,
           child: const InvoicesScreen(),
         ),
-      ),
-      GoRoute(
-        path: AppRoutes.invoiceCreate,
-        name: 'invoice-create',
-        pageBuilder: (context, state) => _buildShellPage(
-          context: context,
-          state: state,
-          child: const InvoiceFormScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.invoiceDetails,
-        name: 'invoice-detail',
-        pageBuilder: (context, state) {
-          final id = state.pathParameters['id']!;
-          return _buildShellPage(
-            context: context,
-            state: state,
-            child: InvoiceDetailScreen(invoiceId: id),
-          );
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.invoiceEdit,
-        name: 'invoice-edit',
-        pageBuilder: (context, state) {
-          return _buildShellPage(
-            context: context,
-            state: state,
-            child: const InvoiceFormScreen(),
-          );
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.invoicePayments,
-        name: 'invoice-payments',
-        pageBuilder: (context, state) {
-          final id = state.pathParameters['id']!;
-          return _buildShellPage(
-            context: context,
-            state: state,
-            child: PaymentHistoryScreen(invoiceId: id),
-          );
-        },
+        routes: [
+          GoRoute(
+            path: 'create',
+            name: 'invoice-create',
+            pageBuilder: (context, state) => _buildShellPage(
+              context: context,
+              state: state,
+              child: const InvoiceFormScreen(),
+            ),
+          ),
+          GoRoute(
+            path: ':id',
+            name: 'invoice-detail',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return _buildShellPage(
+                context: context,
+                state: state,
+                child: InvoiceDetailScreen(invoiceId: id),
+              );
+            },
+          ),
+          GoRoute(
+            path: ':id/edit',
+            name: 'invoice-edit',
+            pageBuilder: (context, state) {
+              return _buildShellPage(
+                context: context,
+                state: state,
+                child: const InvoiceFormScreen(),
+              );
+            },
+          ),
+          GoRoute(
+            path: ':id/payments',
+            name: 'invoice-payments',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return _buildShellPage(
+                context: context,
+                state: state,
+                child: PaymentHistoryScreen(invoiceId: id),
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.customers,

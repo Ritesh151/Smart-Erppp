@@ -46,4 +46,5 @@ class StorageKeys {
   static const String notificationBox = 'notification_box';
   static const String backupBox = 'backup_box';
   static const String alertsBox = 'alerts_box';
+  static const String returnsBox = 'returns_box';
 }
