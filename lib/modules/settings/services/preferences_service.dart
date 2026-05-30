@@ -21,10 +21,6 @@ class PreferencesService {
   }
 
   Future<PreferencesModel> _loadPreferences() async {
-    final themeName = _preferences.getString(
-      StorageKeys.selectedTheme,
-      defaultValue: 'light',
-    )!;
     final sidebarCollapsed = _preferences.getBool(
       StorageKeys.sidebarCollapsed,
       defaultValue: false,
@@ -32,7 +28,7 @@ class PreferencesService {
 
     _cached = PreferencesModel.create(
       userId: 'default',
-      themeName: themeName,
+      themeName: 'light',
       sidebarCollapsed: sidebarCollapsed,
       dateFormat: _preferences.getString(
         StorageKeys.language,
@@ -44,26 +40,6 @@ class PreferencesService {
       )!,
     );
     return _cached!;
-  }
-
-  Future<void> updateThemePreference(String themeName) async {
-    try {
-      await _preferences.setString(StorageKeys.selectedTheme, themeName);
-      _cached = _cached?.copyWith(themeName: themeName, updatedAt: DateTime.now());
-      Logger.info('Theme preference updated: $themeName');
-    } catch (e, stackTrace) {
-      Logger.error('Failed to update theme preference', e, stackTrace);
-    }
-  }
-
-  Future<void> updateDateFormat(String format) async {
-    try {
-      final prefs = await getPreferences();
-      _cached = prefs.copyWith(dateFormat: format, updatedAt: DateTime.now());
-      Logger.info('Date format preference updated: $format');
-    } catch (e, stackTrace) {
-      Logger.error('Failed to update date format preference', e, stackTrace);
-    }
   }
 
   Future<void> updateSidebarCollapsed(bool collapsed) async {
@@ -148,10 +124,6 @@ class PreferencesService {
 
   String getCurrentDateFormat() {
     return _cached?.dateFormat ?? 'dd/MM/yyyy';
-  }
-
-  String getCurrentThemeName() {
-    return _cached?.themeName ?? 'light';
   }
 
   bool isSidebarCollapsed() {

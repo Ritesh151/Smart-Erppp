@@ -2,12 +2,9 @@
 <html>
 <head>
   <!--
-    Force HTML renderer to avoid CanvasKit WebGL context loss crash.
-    See: https://github.com/flutter/flutter/issues/149862
+    Renderer is configured via flutter_bootstrap.js / _flutter.loader.load().
+    Do NOT use the deprecated window.flutterConfiguration.
   -->
-  <script>
-    self.flutterConfiguration = { renderer: 'html' };
-  </script>
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.

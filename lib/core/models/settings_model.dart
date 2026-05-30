@@ -67,6 +67,12 @@ class SettingsModel extends HiveObject {
   @HiveField(20)
   final DateTime updatedAt;
 
+  @HiveField(21)
+  final bool lowStockAlertsEnabled;
+
+  @HiveField(22)
+  final String defaultSalaryPaymentMode;
+
   SettingsModel({
     required this.id,
     required this.companyName,
@@ -87,6 +93,8 @@ class SettingsModel extends HiveObject {
     this.sidebarCollapsed = false,
     this.language = 'en',
     this.moduleSettings = const {},
+    this.lowStockAlertsEnabled = true,
+    this.defaultSalaryPaymentMode = 'Cash',
     required this.createdAt,
     required this.updatedAt,
   });
@@ -110,6 +118,8 @@ class SettingsModel extends HiveObject {
     bool sidebarCollapsed = false,
     String language = 'en',
     Map<String, dynamic> moduleSettings = const {},
+    bool lowStockAlertsEnabled = true,
+    String defaultSalaryPaymentMode = 'Cash',
   }) {
     final now = DateTime.now();
     return SettingsModel(
@@ -132,6 +142,8 @@ class SettingsModel extends HiveObject {
       sidebarCollapsed: sidebarCollapsed,
       language: language,
       moduleSettings: moduleSettings,
+      lowStockAlertsEnabled: lowStockAlertsEnabled,
+      defaultSalaryPaymentMode: defaultSalaryPaymentMode,
       createdAt: now,
       updatedAt: now,
     );
@@ -166,6 +178,8 @@ class SettingsModel extends HiveObject {
       moduleSettings: json['moduleSettings'] != null
           ? Map<String, dynamic>.from(json['moduleSettings'] as Map)
           : {},
+      lowStockAlertsEnabled: (json['lowStockAlertsEnabled'] as bool?) ?? true,
+      defaultSalaryPaymentMode: (json['defaultSalaryPaymentMode'] as String?) ?? 'Cash',
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
@@ -192,6 +206,8 @@ class SettingsModel extends HiveObject {
       'sidebarCollapsed': sidebarCollapsed,
       'language': language,
       'moduleSettings': moduleSettings,
+      'lowStockAlertsEnabled': lowStockAlertsEnabled,
+      'defaultSalaryPaymentMode': defaultSalaryPaymentMode,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -217,6 +233,8 @@ class SettingsModel extends HiveObject {
     bool? sidebarCollapsed,
     String? language,
     Map<String, dynamic>? moduleSettings,
+    bool? lowStockAlertsEnabled,
+    String? defaultSalaryPaymentMode,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -240,6 +258,8 @@ class SettingsModel extends HiveObject {
       sidebarCollapsed: sidebarCollapsed ?? this.sidebarCollapsed,
       language: language ?? this.language,
       moduleSettings: moduleSettings ?? this.moduleSettings,
+      lowStockAlertsEnabled: lowStockAlertsEnabled ?? this.lowStockAlertsEnabled,
+      defaultSalaryPaymentMode: defaultSalaryPaymentMode ?? this.defaultSalaryPaymentMode,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

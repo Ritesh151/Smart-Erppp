@@ -12,6 +12,7 @@ import 'package:SmartERP/core/models/transaction_model.dart';
 import 'package:SmartERP/modules/dashboard/providers/dashboard_provider.dart';
 import 'package:SmartERP/modules/products/providers/product_provider.dart';
 import 'package:SmartERP/modules/finance/providers/finance_provider.dart';
+import 'package:SmartERP/modules/settings/providers/settings_provider.dart';
 
 // ── Shared brand tokens (same as LoginScreen & SidebarMenu) ──────────────────
 class _T {
@@ -43,7 +44,60 @@ class _T {
             offset: const Offset(0, 4),
           ),
         ],
-      );
+    );
+}
+
+// ── Hover card with subtle elevation animation ──────────────────
+class _HoverCard extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  final bool isMobile;
+
+  const _HoverCard({
+    required this.child,
+    required this.onTap,
+    required this.isMobile,
+  });
+
+  @override
+  State<_HoverCard> createState() => _HoverCardState();
+}
+
+class _HoverCardState extends State<_HoverCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.all(widget.isMobile ? 14 : 18),
+          decoration: BoxDecoration(
+            color: _T.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _hovered ? _T.gradientStart.withOpacity(0.15) : _T.divider,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1E2A6E).withOpacity(_hovered ? 0.10 : 0.06),
+                blurRadius: _hovered ? 24 : 16,
+                offset: Offset(0, _hovered ? 8 : 4),
+              ),
+            ],
+          ),
+          child: widget.child,
+        ),
+      ),
+    );
+  }
 }
 
 class DashboardScreen extends StatelessWidget {
@@ -51,23 +105,21 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appTheme         = context.appTheme;
-    final productProvider  = context.watch<ProductProvider>();
-    final financeProvider  = context.watch<FinanceProvider>();
-    final dashboardProvider = context.watch<DashboardProvider>();
-
-    final totalInventory      = productProvider.totalInventoryValue;
-    final financeSummary      = financeProvider.summary;
-    final recentTransactions  = financeProvider.transactions.take(5).toList();
-    final recentProducts      = productProvider.products.take(5).toList();
+    final appTheme          = context.appTheme;
+    final totalInventory    = context.select<ProductProvider, double>((p) => p.totalInventoryValue);
+    final financeSummary    = context.select<FinanceProvider, dynamic>((p) => p.summary);
+    final transactions      = context.select<FinanceProvider, List<TransactionModel>>((p) => p.transactions);
+    final products          = context.select<ProductProvider, List<ProductModel>>((p) => p.products);
+    final recentTransactions = transactions.take(5).toList();
+    final recentProducts    = products.take(5).toList();
 
     return RefreshIndicator(
       color: _T.gradientStart,
       onRefresh: () async {
         await Future.wait([
-          productProvider.loadProducts(),
-          financeProvider.loadTransactions(),
-          dashboardProvider.refresh(),
+          context.read<ProductProvider>().loadProducts(),
+          context.read<FinanceProvider>().loadTransactions(),
+          context.read<DashboardProvider>().refresh(),
         ]);
       },
       child: SafeArea(
@@ -84,7 +136,7 @@ class DashboardScreen extends StatelessWidget {
               SizedBox(height: context.isMobile ? 16 : 24),
               _buildQuickAccessSection(context),
               SizedBox(height: context.isMobile ? 16 : 24),
-              _buildPaymentDueMonitoring(context, dashboardProvider, appTheme),
+              _buildPaymentDueMonitoring(context, appTheme),
               SizedBox(height: context.isMobile ? 16 : 24),
               if (context.isDesktop)
                 Row(
@@ -94,8 +146,8 @@ class DashboardScreen extends StatelessWidget {
                       flex: 6,
                       child: _buildChartsSection(
                         context,
-                        financeProvider.transactions,
-                        productProvider.products,
+                        transactions,
+                        products,
                         appTheme,
                       ),
                     ),
@@ -114,8 +166,8 @@ class DashboardScreen extends StatelessWidget {
               else ...[
                 _buildChartsSection(
                   context,
-                  financeProvider.transactions,
-                  productProvider.products,
+                  transactions,
+                  products,
                   appTheme,
                 ),
                 SizedBox(height: context.isMobile ? 16 : 24),
@@ -210,16 +262,16 @@ class DashboardScreen extends StatelessWidget {
                 Container(
                   width: 28,
                   height: 28,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [_T.gradientStart, _T.gradientEnd],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [_T.gradientStart, _T.gradientEnd],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
                     ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.calendar_today_rounded,
-                      color: _T.white, size: 14),
+                    child: Icon(Icons.calendar_today_rounded,
+                        color: _T.white, size: 14),
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -274,9 +326,12 @@ class DashboardScreen extends StatelessWidget {
     double totalInventoryValue,
     AppThemeExtension appTheme,
   ) {
-    final db = context.watch<DashboardProvider>();
-    final sales     = db.totalSales > 0 ? db.totalSales : (financeSummary.totalSales as double);
-    final profit    = db.netProfit;
+    final totalSales   = context.select<DashboardProvider, double>((p) => p.totalSales);
+    final netProfit    = context.select<DashboardProvider, double>((p) => p.netProfit);
+    final lowStockCount = context.select<DashboardProvider, int>((p) => p.lowStockCount);
+    final lowStockEnabled = context.select<SettingsProvider, bool>((p) => p.lowStockAlertsEnabled);
+    final sales     = totalSales > 0 ? totalSales : (financeSummary.totalSales as double);
+    final profit    = netProfit;
     final purchases = financeSummary.totalPurchases as double;
     final margin    = sales > 0 ? (profit / sales) * 100 : 0;
 
@@ -323,7 +378,9 @@ class DashboardScreen extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         'bg'      : const Color(0xFFF5F3FF),
-        'subtitle': '${db.lowStockCount} low stock items',
+        'subtitle': lowStockEnabled
+            ? '$lowStockCount low stock items'
+            : '$lowStockCount items below threshold',
       },
       {
         'title'   : 'Total Purchases',
@@ -394,83 +451,69 @@ class DashboardScreen extends StatelessWidget {
     required Color bgColor,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return _HoverCard(
       onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(context.isMobile ? 14 : 18),
-        decoration: BoxDecoration(
-          color: _T.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _T.divider, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1E2A6E).withOpacity(0.06),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: context.isMobile ? 36 : 42,
-                  height: context.isMobile ? 36 : 42,
-                  decoration: BoxDecoration(
-                    gradient: gradient,
-                    borderRadius: BorderRadius.circular(11),
-                    boxShadow: [
-                      BoxShadow(
-                        color: gradient.colors.first.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Icon(icon,
-                      color: _T.white,
-                      size: context.isMobile ? 18 : 20),
+      isMobile: context.isMobile,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: context.isMobile ? 36 : 42,
+                height: context.isMobile ? 36 : 42,
+                decoration: BoxDecoration(
+                  gradient: gradient,
+                  borderRadius: BorderRadius.circular(11),
+                  boxShadow: [
+                    BoxShadow(
+                      color: gradient.colors.first.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                Icon(Icons.arrow_outward_rounded,
-                    size: 14, color: _T.textLight),
-              ],
-            ),
-            const Spacer(),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: context.isMobile ? 18 : 22,
-                fontWeight: FontWeight.w800,
-                color: _T.textDark,
-                letterSpacing: -0.5,
+                child: Icon(icon,
+                    color: _T.white,
+                    size: context.isMobile ? 18 : 20),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              Icon(Icons.arrow_outward_rounded,
+                  size: 14, color: _T.textLight),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: context.isMobile ? 18 : 22,
+              fontWeight: FontWeight.w800,
+              color: _T.textDark,
+              letterSpacing: -0.5,
             ),
-            const SizedBox(height: 2),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: context.isMobile ? 11 : 12,
-                fontWeight: FontWeight.w600,
-                color: _T.textMuted,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: context.isMobile ? 11 : 12,
+              fontWeight: FontWeight.w600,
+              color: _T.textMuted,
             ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: const TextStyle(fontSize: 10, color: _T.textLight),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: const TextStyle(fontSize: 10, color: _T.textLight),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
@@ -550,7 +593,8 @@ class DashboardScreen extends StatelessWidget {
 
   // ── Payment due monitoring ────────────────────────────────────────────────
   Widget _buildPaymentDueMonitoring(
-      BuildContext context, DashboardProvider dp, AppThemeExtension appTheme) {
+      BuildContext context, AppThemeExtension appTheme) {
+    final dp = context.select<DashboardProvider, DashboardProvider>((p) => p);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1156,13 +1200,13 @@ class DashboardScreen extends StatelessWidget {
         Container(
           width : 32,
           height: 32,
-          decoration: BoxDecoration(
-            gradient     : const LinearGradient(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
               colors: [_T.gradientStart, _T.gradientEnd],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius : BorderRadius.circular(9),
+            borderRadius: BorderRadius.all(Radius.circular(9)),
           ),
           child: Icon(icon, color: _T.white, size: 16),
         ),

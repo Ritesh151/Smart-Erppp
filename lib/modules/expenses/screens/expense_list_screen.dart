@@ -868,14 +868,6 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         .key;
   }
 
-  String _formatAmount(double amount) {
-    if (amount >= 10000000) {
-      return '₹${(amount / 10000000).toStringAsFixed(1)}Cr';
-    }
-    if (amount >= 100000) return '₹${(amount / 100000).toStringAsFixed(1)}L';
-    if (amount >= 1000)   return '₹${(amount / 1000).toStringAsFixed(1)}K';
-    return '₹${amount.toStringAsFixed(2)}';
-  }
 }
 
 // ── Expense tile ──────────────────────────────────────────────────────────────

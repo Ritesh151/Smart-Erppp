@@ -100,6 +100,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
   bool    _isEditMode       = false;
   String? _editInvoiceId;
   String? _editInvoiceNumber;
+  bool    _isSaving         = false;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   @override
@@ -125,9 +126,10 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     });
   }
 
-  void _loadInvoiceForEdit(String id) async {
+  Future<void> _loadInvoiceForEdit(String id) async {
     final provider = context.read<InvoiceProvider>();
     await provider.loadInvoiceDetails(id);
+    if (!mounted) return;
     final invoice = provider.selectedInvoice;
     if (invoice != null && invoice.id.isNotEmpty) {
       provider.populateEditingFromInvoice(
@@ -1247,12 +1249,14 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
           icon: _isEditMode
               ? Icons.save_rounded
               : Icons.drafts_rounded,
+          isLoading: _isSaving,
           onTap: () => _submitForm(provider, InvoiceStatus.draft),
         );
 
         final sendBtn = _PrimaryActionButton(
           label: 'Save & Send',
           icon: Icons.send_rounded,
+          isLoading: _isSaving,
           onTap: () => _submitForm(provider, InvoiceStatus.sent),
         );
 
@@ -1305,6 +1309,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
       return;
     }
 
+    setState(() => _isSaving = true);
     try {
       if (_isEditMode && _editInvoiceId != null) {
         await provider.updateInvoice(_editInvoiceId!);
@@ -1323,6 +1328,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
       }
     } catch (e) {
       if (mounted) {
+        setState(() => _isSaving = false);
         context.showSnackBar('Failed to save invoice: $e',
             isError: true);
       }
@@ -1467,11 +1473,13 @@ class _PrimaryActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback onTap;
+  final bool isLoading;
 
   const _PrimaryActionButton({
     required this.label,
     required this.icon,
     required this.onTap,
+    this.isLoading = false,
   });
 
   @override
@@ -1495,12 +1503,23 @@ class _PrimaryActionButton extends StatelessWidget {
         child: InkWell(
           borderRadius:
               BorderRadius.circular(AppConstants.defaultBorderRadius),
-          onTap: onTap,
+          onTap: isLoading ? null : onTap,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: Colors.white, size: 17),
-              const SizedBox(width: 8),
+              if (isLoading)
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              else ...[
+                Icon(icon, color: Colors.white, size: 17),
+                const SizedBox(width: 8),
+              ],
               Text(
                 label,
                 style: const TextStyle(

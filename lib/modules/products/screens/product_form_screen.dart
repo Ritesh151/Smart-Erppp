@@ -1048,6 +1048,7 @@ class _ProductFormScreenState extends State<ProductFormScreen>
           ? await _imageService.pickFromCamera()
           : await _imageService.pickFromGallery();
       if (path != null && path.trim().isNotEmpty) {
+        if (!mounted) return;
         setState(() => _imagePath = path);
         if (mounted) context.showSnackBar('Product image uploaded successfully');
       }

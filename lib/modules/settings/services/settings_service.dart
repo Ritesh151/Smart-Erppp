@@ -1,4 +1,3 @@
-import 'package:SmartERP/core/constants/storage_keys.dart';
 import 'package:SmartERP/core/exceptions/app_exception.dart';
 import 'package:SmartERP/core/models/settings_model.dart';
 import 'package:SmartERP/core/storage/preferences_service.dart';
@@ -7,13 +6,11 @@ import 'package:SmartERP/modules/settings/repositories/settings_repository.dart'
 
 class SettingsService {
   final SettingsRepository _repository;
-  final PreferencesService _preferencesService;
 
   SettingsService({
     required SettingsRepository repository,
     required PreferencesService preferencesService,
-  })  : _repository = repository,
-        _preferencesService = preferencesService;
+  })  : _repository = repository;
 
   Future<SettingsModel?> getSettings() async {
     try {
@@ -56,12 +53,6 @@ class SettingsService {
     try {
       final updated = settings.copyWith(updatedAt: DateTime.now());
       await _repository.update(updated);
-
-      await _preferencesService.setString(
-        StorageKeys.selectedTheme,
-        updated.dateFormat,
-      );
-
       Logger.success('Settings updated');
       return updated;
     } catch (e, stackTrace) {
@@ -138,6 +129,24 @@ class SettingsService {
     }
   }
 
+  Future<bool> isLowStockAlertsEnabled() async {
+    try {
+      final settings = await getSettings();
+      return settings?.lowStockAlertsEnabled ?? true;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  Future<String> getDefaultSalaryPaymentMode() async {
+    try {
+      final settings = await getSettings();
+      return settings?.defaultSalaryPaymentMode ?? 'Cash';
+    } catch (e) {
+      return 'Cash';
+    }
+  }
+
   Future<int> getLowStockThreshold() async {
     try {
       final settings = await getSettings();
@@ -153,6 +162,30 @@ class SettingsService {
       return settings?.dateFormat ?? 'dd/MM/yyyy';
     } catch (e) {
       return 'dd/MM/yyyy';
+    }
+  }
+
+  Future<void> toggleLowStockAlerts(bool enabled) async {
+    try {
+      final settings = await ensureSettings();
+      await updateSettings(settings.copyWith(
+        lowStockAlertsEnabled: enabled,
+      ));
+      Logger.info('Low stock alerts ${enabled ? 'enabled' : 'disabled'}');
+    } catch (e, stackTrace) {
+      Logger.error('Failed to toggle low stock alerts', e, stackTrace);
+    }
+  }
+
+  Future<void> updateDefaultSalaryPaymentMode(String mode) async {
+    try {
+      final settings = await ensureSettings();
+      await updateSettings(settings.copyWith(
+        defaultSalaryPaymentMode: mode,
+      ));
+      Logger.info('Default salary payment mode updated to: $mode');
+    } catch (e, stackTrace) {
+      Logger.error('Failed to update default salary payment mode', e, stackTrace);
     }
   }
 

@@ -35,11 +35,13 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       final map = await ref
           .read(attendanceServiceProvider)
           .fetchAttendanceForDate('', _selectedDate);
+      if (!mounted) return;
       setState(() {
         _attendanceMap = map;
         _isLoadingMap = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoadingMap = false);
     }
   }
@@ -52,6 +54,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       lastDate: DateTime.now(),
     );
     if (picked != null) {
+      if (!mounted) return;
       setState(() {
         _selectedDate = picked;
         _attendanceMap = {};
@@ -74,8 +77,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     );
     try {
       await ref.read(attendanceControllerProvider).markAttendance(record);
-      setState(() => _attendanceMap[emp.id] = record);
       if (!mounted) return;
+      setState(() => _attendanceMap[emp.id] = record);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

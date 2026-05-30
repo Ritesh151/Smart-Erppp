@@ -35,6 +35,8 @@ class StockAlertService {
 
   Future<List<StockAlert>> checkAndGenerateAlerts() async {
     try {
+      if (!await _settingsService.isLowStockAlertsEnabled()) return [];
+
       final alerts = <StockAlert>[];
       final items = await _lowStockService.getLowStockItems();
       final threshold = await _settingsService.getLowStockThreshold();
@@ -61,6 +63,8 @@ class StockAlertService {
 
   Future<void> sendLowStockNotifications() async {
     try {
+      if (!await _settingsService.isLowStockAlertsEnabled()) return;
+
       final items = await _lowStockService.getLowStockItems();
       for (final item in items) {
         await _notificationService.createNotification(

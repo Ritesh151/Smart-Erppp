@@ -368,7 +368,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
     required Color bgColor,
   }) {
     return Container(
-      padding: EdgeInsets.all(context.isMobile ? 10 : 12),
+      padding: EdgeInsets.fromLTRB(
+        context.isMobile ? 10 : 12,
+        context.isMobile ? 8 : 10,
+        context.isMobile ? 10 : 12,
+        context.isMobile ? 6 : 8,
+      ),
       decoration: BoxDecoration(
         color: _T.white,
         borderRadius: BorderRadius.circular(16),
@@ -389,8 +394,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                width : context.isMobile ? 34 : 38,
-                height: context.isMobile ? 34 : 38,
+                width : context.isMobile ? 32 : 36,
+                height: context.isMobile ? 32 : 36,
                 decoration: BoxDecoration(
                   gradient     : gradient,
                   borderRadius : BorderRadius.circular(10),
@@ -402,16 +407,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ),
                   ],
                 ),
-                child: Icon(icon, color: _T.white, size: context.isMobile ? 16 : 18),
+                child: Icon(icon, color: _T.white, size: context.isMobile ? 15 : 17),
               ),
-              Icon(Icons.arrow_outward_rounded, size: 13, color: _T.textLight),
+              Icon(Icons.arrow_outward_rounded, size: 12, color: _T.textLight),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             value,
             style: TextStyle(
-              fontSize    : context.isMobile ? 17 : 20,
+              fontSize    : context.isMobile ? 16 : 19,
               fontWeight  : FontWeight.w800,
               color       : _T.textDark,
               letterSpacing: -0.5,
@@ -419,21 +424,21 @@ class _ProductsScreenState extends State<ProductsScreen> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 1),
+          const SizedBox(height: 0),
           Text(
             title,
             style: TextStyle(
-              fontSize  : context.isMobile ? 11 : 12,
+              fontSize  : context.isMobile ? 10 : 11,
               fontWeight: FontWeight.w600,
               color     : _T.textMuted,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 1),
+          const SizedBox(height: 0),
           Text(
             subtitle,
-            style: const TextStyle(fontSize: 10, color: _T.textLight),
+            style: const TextStyle(fontSize: 9, color: _T.textLight),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -533,9 +538,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
           (i) => Container(
             height: context.isMobile ? 80 : 68,
             margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: _T.white,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.all(Radius.circular(14)),
             ),
           ),
         ),
@@ -568,9 +573,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 children: [
                   Container(
                     width: 28, height: 28,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       gradient: _T.brandGradient,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
                     ),
                     child: const Icon(Icons.list_alt_rounded, color: _T.white, size: 14),
                   ),
@@ -904,11 +909,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
       height: 52,
       decoration: BoxDecoration(
         color       : const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: const BorderRadius.all(Radius.circular(13)),
         border      : Border.all(color: _T.divider),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: const BorderRadius.all(Radius.circular(13)),
         child: imageProvider != null
             ? Image(image: imageProvider, fit: BoxFit.cover)
             : const Icon(Icons.inventory_2_outlined,

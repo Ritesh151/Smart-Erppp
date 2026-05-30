@@ -26,6 +26,8 @@ class SettingsProvider extends ChangeNotifier {
   bool get salaryReminderEnabled => _settings?.salaryReminderEnabled ?? true;
   bool get autoBackupEnabled => _settings?.autoBackupEnabled ?? false;
   bool get notificationsEnabled => _settings?.notificationsEnabled ?? true;
+  bool get lowStockAlertsEnabled => _settings?.lowStockAlertsEnabled ?? true;
+  String get defaultSalaryPaymentMode => _settings?.defaultSalaryPaymentMode ?? 'Cash';
 
   Future<void> loadSettings() async {
     try {
@@ -135,6 +137,30 @@ class SettingsProvider extends ChangeNotifier {
       _errorMessage = 'Failed to toggle notifications';
       notifyListeners();
       Logger.error('Failed to toggle notifications', e, stackTrace);
+    }
+  }
+
+  Future<void> toggleLowStockAlerts(bool enabled) async {
+    try {
+      await _service.toggleLowStockAlerts(enabled);
+      _settings = await _service.getSettings();
+      notifyListeners();
+    } catch (e, stackTrace) {
+      _errorMessage = 'Failed to toggle low stock alerts';
+      notifyListeners();
+      Logger.error('Failed to toggle low stock alerts', e, stackTrace);
+    }
+  }
+
+  Future<void> updateDefaultSalaryPaymentMode(String mode) async {
+    try {
+      await _service.updateDefaultSalaryPaymentMode(mode);
+      _settings = await _service.getSettings();
+      notifyListeners();
+    } catch (e, stackTrace) {
+      _errorMessage = 'Failed to update salary payment mode';
+      notifyListeners();
+      Logger.error('Failed to update salary payment mode', e, stackTrace);
     }
   }
 

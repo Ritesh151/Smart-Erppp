@@ -7,9 +7,9 @@ import 'package:SmartERP/core/routes/app_router.dart';
 import 'package:SmartERP/core/services/auth_service.dart';
 import 'package:SmartERP/core/storage/storage_service.dart';
 import 'package:SmartERP/core/storage/preferences_service.dart';
+import 'package:SmartERP/core/theme/app_theme.dart';
 import 'package:SmartERP/core/utils/logger.dart';
 import 'package:SmartERP/modules/auth/providers/auth_provider.dart';
-import 'package:SmartERP/modules/settings/providers/theme_provider.dart';
 import 'package:SmartERP/modules/products/repositories/product_repository.dart';
 import 'package:SmartERP/modules/products/services/product_service.dart';
 import 'package:SmartERP/modules/dashboard/providers/dashboard_provider.dart';
@@ -61,7 +61,6 @@ import 'package:SmartERP/modules/settings/repositories/settings_repository.dart'
 import 'package:SmartERP/modules/settings/repositories/notification_repository.dart';
 import 'package:SmartERP/modules/settings/repositories/backup_repository.dart';
 import 'package:SmartERP/modules/settings/services/settings_service.dart';
-import 'package:SmartERP/modules/settings/services/theme_service.dart';
 import 'package:SmartERP/modules/settings/services/notification_service.dart';
 import 'package:SmartERP/modules/settings/services/preferences_service.dart' as settings_pref;
 import 'package:SmartERP/modules/settings/services/date_format_service.dart';
@@ -278,10 +277,6 @@ class _SmartERPAppState extends State<SmartERPApp> {
               create: (context) => AuthProvider(
                 context.read<AuthService>(),
               )..initialize(),
-            ),
-              ChangeNotifierProvider<ThemeProvider>(
-              create: (context) => ThemeProvider(preferencesService)
-                ..initialize(),
             ),
             
             // Product Module Services & State
@@ -628,11 +623,6 @@ class _SmartERPAppState extends State<SmartERPApp> {
                 preferencesService: context.read<PreferencesService>(),
               ),
             ),
-            Provider<ThemeService>(
-              create: (context) => ThemeService(
-                preferencesService: context.read<PreferencesService>(),
-              ),
-            ),
             Provider<NotificationService>(
               create: (context) => NotificationService(
                 repository: context.read<NotificationRepository>(),
@@ -643,10 +633,14 @@ class _SmartERPAppState extends State<SmartERPApp> {
                 preferencesService: context.read<PreferencesService>(),
               ),
             ),
-            Provider<DateFormatService>(
-              create: (context) => DateFormatService(
-                settingsService: context.read<SettingsService>(),
-              ),
+            ChangeNotifierProvider<DateFormatService>(
+              create: (context) {
+                final service = DateFormatService(
+                  settingsService: context.read<SettingsService>(),
+                );
+                service.initialize();
+                return service;
+              },
             ),
             Provider<LowStockService>(
               create: (context) => LowStockService(
@@ -763,8 +757,8 @@ class _SmartERPAppState extends State<SmartERPApp> {
               ),
             ),
           ],
-          child: Consumer<ThemeProvider>(
-            builder: (context, themeProvider, _) {
+          child: Builder(
+            builder: (context) {
               final authProvider = context.read<AuthProvider>();
               _appRouter ??= AppRouter(authProvider);
 
@@ -772,7 +766,7 @@ class _SmartERPAppState extends State<SmartERPApp> {
                 child: MaterialApp.router(
                   title: 'SmartERP',
                   debugShowCheckedModeBanner: false,
-                  theme: themeProvider.themeData,
+                  theme: AppTheme.defaultTheme,
                   routerConfig: _appRouter!.router,
                 ),
               );

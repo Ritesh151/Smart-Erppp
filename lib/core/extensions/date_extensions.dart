@@ -1,17 +1,17 @@
 import 'package:intl/intl.dart';
-import 'package:SmartERP/core/constants/app_constants.dart';
+import 'package:SmartERP/core/utils/date_formatter_config.dart';
 
 extension DateTimeExtensions on DateTime {
   String toFormattedDate() {
-    return DateFormat(AppConstants.dateFormat).format(this);
+    return DateFormat(DateFormatterConfig.toDateFormatPattern()).format(this);
   }
 
   String toFormattedDateTime() {
-    return DateFormat(AppConstants.dateTimeFormat).format(this);
+    return DateFormat('${DateFormatterConfig.toDateFormatPattern()} HH:mm').format(this);
   }
 
   String toFormattedTime() {
-    return DateFormat(AppConstants.timeFormat).format(this);
+    return DateFormat('HH:mm').format(this);
   }
 
   bool isSameDay(DateTime other) {

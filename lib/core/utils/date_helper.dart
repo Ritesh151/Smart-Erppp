@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:SmartERP/core/utils/date_formatter_config.dart';
 
 class DateHelper {
-  static final DateFormat _displayFormat = DateFormat('dd MMM yyyy');
   static final DateFormat _monthYearFormat = DateFormat('MMMM yyyy');
   static final DateFormat _monthKeyFormat = DateFormat('yyyy-MM');
 
   static String display(DateTime? date) {
     if (date == null) return '';
-    return _displayFormat.format(date);
+    final pattern = DateFormatterConfig.toDateFormatPattern();
+    return DateFormat(pattern).format(date);
   }
 
   static String monthYear(DateTime? date) {
@@ -29,7 +30,8 @@ class DateHelper {
 
   static String displayDateTime(DateTime? date) {
     if (date == null) return '';
-    return DateFormat('dd MMM yyyy HH:mm').format(date);
+    final pattern = DateFormatterConfig.toDateFormatPattern();
+    return DateFormat('$pattern HH:mm').format(date);
   }
 
   static String firestoreKey(DateTime date) {

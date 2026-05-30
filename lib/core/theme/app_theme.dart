@@ -2,28 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:SmartERP/core/theme/theme_extensions.dart';
 
-enum AppThemeMode {
-  light,
-  dark,
-  businessBlue,
-  professionalGreen,
-}
-
 class AppTheme {
   AppTheme._();
 
-  static ThemeData getTheme(AppThemeMode mode) {
-    switch (mode) {
-      case AppThemeMode.light:
-        return _lightTheme;
-      case AppThemeMode.dark:
-        return _darkTheme;
-      case AppThemeMode.businessBlue:
-        return _businessBlueTheme;
-      case AppThemeMode.professionalGreen:
-        return _professionalGreenTheme;
-    }
-  }
+  static ThemeData get defaultTheme => _lightTheme;
 
   static final _lightTheme = ThemeData(
     useMaterial3: true,
@@ -49,87 +31,6 @@ class AppTheme {
     textButtonTheme: _buildTextButtonTheme(Brightness.light),
     extensions: [
       AppThemeExtension.light(),
-    ],
-  );
-
-  static final _darkTheme = ThemeData(
-    useMaterial3: true,
-    brightness: Brightness.dark,
-    colorScheme: ColorScheme.dark(
-      primary: const Color(0xFF42A5F5),
-      secondary: const Color(0xFF78909C),
-      tertiary: const Color(0xFF26A69A),
-      error: const Color(0xFFEF5350),
-      surface: const Color(0xFF1E1E1E),
-      onPrimary: Colors.black,
-      onSecondary: Colors.white,
-      onSurface: const Color(0xFFE0E0E0),
-      onError: Colors.black,
-      surfaceContainerHighest: const Color(0xFF2C2C2C),
-    ),
-    textTheme: _buildTextTheme(Brightness.dark),
-    cardTheme: _buildCardTheme(Brightness.dark),
-    appBarTheme: _buildAppBarTheme(Brightness.dark),
-    inputDecorationTheme: _buildInputDecorationTheme(Brightness.dark),
-    elevatedButtonTheme: _buildElevatedButtonTheme(Brightness.dark),
-    outlinedButtonTheme: _buildOutlinedButtonTheme(Brightness.dark),
-    textButtonTheme: _buildTextButtonTheme(Brightness.dark),
-    extensions: [
-      AppThemeExtension.dark(),
-    ],
-  );
-
-  static final _businessBlueTheme = ThemeData(
-    useMaterial3: true,
-    brightness: Brightness.light,
-    colorScheme: ColorScheme.light(
-      primary: const Color(0xFF0D47A1),
-      secondary: const Color(0xFF1565C0),
-      tertiary: const Color(0xFF0277BD),
-      error: const Color(0xFFD32F2F),
-      surface: const Color(0xFFFAFAFA),
-      onPrimary: Colors.white,
-      onSecondary: Colors.white,
-      onSurface: const Color(0xFF263238),
-      onError: Colors.white,
-      surfaceContainerHighest: const Color(0xFFE3F2FD),
-    ),
-    textTheme: _buildTextTheme(Brightness.light),
-    cardTheme: _buildCardTheme(Brightness.light),
-    appBarTheme: _buildAppBarTheme(Brightness.light),
-    inputDecorationTheme: _buildInputDecorationTheme(Brightness.light),
-    elevatedButtonTheme: _buildElevatedButtonTheme(Brightness.light),
-    outlinedButtonTheme: _buildOutlinedButtonTheme(Brightness.light),
-    textButtonTheme: _buildTextButtonTheme(Brightness.light),
-    extensions: [
-      AppThemeExtension.businessBlue(),
-    ],
-  );
-
-  static final _professionalGreenTheme = ThemeData(
-    useMaterial3: true,
-    brightness: Brightness.light,
-    colorScheme: ColorScheme.light(
-      primary: const Color(0xFF2E7D32),
-      secondary: const Color(0xFF388E3C),
-      tertiary: const Color(0xFF00695C),
-      error: const Color(0xFFD32F2F),
-      surface: const Color(0xFFFAFAFA),
-      onPrimary: Colors.white,
-      onSecondary: Colors.white,
-      onSurface: const Color(0xFF1B5E20),
-      onError: Colors.white,
-      surfaceContainerHighest: const Color(0xFFE8F5E9),
-    ),
-    textTheme: _buildTextTheme(Brightness.light),
-    cardTheme: _buildCardTheme(Brightness.light),
-    appBarTheme: _buildAppBarTheme(Brightness.light),
-    inputDecorationTheme: _buildInputDecorationTheme(Brightness.light),
-    elevatedButtonTheme: _buildElevatedButtonTheme(Brightness.light),
-    outlinedButtonTheme: _buildOutlinedButtonTheme(Brightness.light),
-    textButtonTheme: _buildTextButtonTheme(Brightness.light),
-    extensions: [
-      AppThemeExtension.professionalGreen(),
     ],
   );
 

@@ -383,9 +383,7 @@ class AppRouter {
         pageBuilder: (context, state) => _buildShellPage(
           context: context,
           state: state,
-          child: const Scaffold(
-            body: Center(child: Text('Coming Soon')),
-          ),
+          child: _buildPlaceholderPage('Purchase Entry', Icons.shopping_bag_rounded),
         ),
       ),
     ],
@@ -441,25 +439,54 @@ class AppRouter {
     return CustomTransitionPage(
       key: state.pageKey,
       child: child,
+      transitionDuration: const Duration(milliseconds: 250),
+      reverseTransitionDuration: const Duration(milliseconds: 200),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = Offset(1.0, 0.0);
-        const end = Offset.zero;
-        const curve = Curves.easeInOut;
+        final slideTween = Tween<Offset>(
+          begin: const Offset(0.0, 0.06),
+          end: Offset.zero,
+        ).chain(CurveTween(curve: Curves.easeOutCubic));
 
-        final tween = Tween(begin: begin, end: end).chain(
-          CurveTween(curve: curve),
-        );
-
-        final offsetAnimation = animation.drive(tween);
+        final fadeTween = Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeOut));
 
         return SlideTransition(
-          position: offsetAnimation,
+          position: animation.drive(slideTween),
           child: FadeTransition(
-            opacity: animation,
+            opacity: animation.drive(fadeTween),
             child: child,
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPlaceholderPage(String title, IconData icon) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 64, color: const Color(0xFF94A3B8)),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'This feature is being developed and will be available soon.',
+              style: TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

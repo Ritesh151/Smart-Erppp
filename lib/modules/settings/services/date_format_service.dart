@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'package:SmartERP/core/utils/date_formatter_config.dart';
 import 'package:SmartERP/core/utils/logger.dart';
 import 'package:SmartERP/modules/settings/services/settings_service.dart';
 
-class DateFormatService {
+class DateFormatService extends ChangeNotifier {
   final SettingsService _settingsService;
   String _currentFormat = 'dd/MM/yyyy';
   bool _initialized = false;
@@ -11,10 +13,12 @@ class DateFormatService {
       : _settingsService = settingsService;
 
   String get currentFormat => _currentFormat;
+  bool get isInitialized => _initialized;
 
   Future<void> initialize() async {
     try {
       _currentFormat = await _settingsService.getDateFormat();
+      DateFormatterConfig.setFormat(_currentFormat);
       _initialized = true;
       Logger.info('DateFormatService initialized: $_currentFormat');
     } catch (e, stackTrace) {
@@ -29,8 +33,10 @@ class DateFormatService {
       return;
     }
     _currentFormat = format;
+    DateFormatterConfig.setFormat(format);
     await _settingsService.updateDateFormat(format);
     Logger.info('Date format changed to: $format');
+    notifyListeners();
   }
 
   String format(DateTime date) {
@@ -142,6 +148,4 @@ class DateFormatService {
         '${date.month.toString().padLeft(2, '0')}/'
         '${date.year}';
   }
-
-  bool get isInitialized => _initialized;
 }

@@ -479,7 +479,7 @@ class _TransportDetailScreenState extends ConsumerState<TransportDetailScreen> {
     );
   }
 
-  void _updateStatus(
+  Future<void> _updateStatus(
     BuildContext context,
     String transportId,
     ExportStatus newStatus,
@@ -497,7 +497,7 @@ class _TransportDetailScreenState extends ConsumerState<TransportDetailScreen> {
     }
   }
 
-  void _deleteTransport(
+  Future<void> _deleteTransport(
     BuildContext context,
     TransportModel transport,
   ) async {
@@ -515,7 +515,7 @@ class _TransportDetailScreenState extends ConsumerState<TransportDetailScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete', style: TextStyle(color: Color(0xFFEF4444))),
           ),
         ],
       ),
