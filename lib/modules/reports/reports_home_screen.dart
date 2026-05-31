@@ -1,7 +1,7 @@
 // lib/Pages/Reports/reports_home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_scaffold.dart';
 
 class ReportsHomeScreen extends StatelessWidget {
   const ReportsHomeScreen({super.key});

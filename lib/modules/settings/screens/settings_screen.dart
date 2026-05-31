@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:SmartERP/core/routes/app_routes.dart';
-import 'package:SmartERP/modules/auth/providers/auth_provider.dart';
-import 'package:SmartERP/modules/settings/providers/settings_provider.dart';
-import 'package:SmartERP/modules/settings/services/date_format_service.dart';
+import 'package:siddhivinayak_enterprise/core/routes/app_routes.dart';
+import 'package:siddhivinayak_enterprise/modules/auth/providers/auth_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/providers/settings_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/date_format_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -296,7 +296,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSystemInfoCard(BuildContext context) {
-    final appName = _packageInfo?.appName ?? 'SmartERP';
+    final appName = _packageInfo?.appName ?? 'Siddhivinayak Enterprise';
     final version = _packageInfo != null
         ? '${_packageInfo!.version}+${_packageInfo!.buildNumber}'
         : '1.0.0+1';

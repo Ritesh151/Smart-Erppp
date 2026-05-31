@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
-import 'package:SmartERP/core/exceptions/app_exception.dart';
-import 'package:SmartERP/core/models/invoice_item_model.dart';
-import 'package:SmartERP/core/models/invoice_model.dart';
-import 'package:SmartERP/core/models/product_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
-import 'package:SmartERP/modules/products/providers/product_provider.dart';
+import 'package:siddhivinayak_enterprise/core/exceptions/app_exception.dart';
+import 'package:siddhivinayak_enterprise/core/models/invoice_item_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/invoice_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/product_model.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/services/invoice_service.dart';
+import 'package:siddhivinayak_enterprise/modules/products/providers/product_provider.dart';
 import 'package:uuid/uuid.dart';
 
 class InvoiceProvider extends ChangeNotifier {

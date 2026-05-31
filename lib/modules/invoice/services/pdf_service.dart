@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:SmartERP/core/models/invoice_item_model.dart';
-import 'package:SmartERP/core/models/invoice_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/core/models/invoice_item_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/invoice_model.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
 import 'package:path_provider/path_provider.dart';
 
 class PdfService {

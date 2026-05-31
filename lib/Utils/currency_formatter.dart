@@ -1,1 +1,1 @@
-export 'package:SmartERP/core/utils/currency_formatter.dart';
+export 'package:siddhivinayak_enterprise/core/utils/currency_formatter.dart';

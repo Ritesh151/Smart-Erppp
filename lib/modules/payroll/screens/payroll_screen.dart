@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:SmartERP/modules/payroll/payroll_dashboard_screen.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/payroll_dashboard_screen.dart';
 
 class PayrollScreen extends StatelessWidget {
   const PayrollScreen({super.key});

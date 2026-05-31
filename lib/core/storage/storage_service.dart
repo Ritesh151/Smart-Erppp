@@ -1,6 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:SmartERP/core/exceptions/app_exception.dart';
-import 'package:SmartERP/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/core/exceptions/app_exception.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
 
 class StorageService<T> {
   final String boxName;

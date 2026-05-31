@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:SmartERP/core/exceptions/app_exception.dart';
-import 'package:SmartERP/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/core/exceptions/app_exception.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
 
 class PreferencesService {
   static PreferencesService? _instance;

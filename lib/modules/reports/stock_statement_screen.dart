@@ -1,12 +1,12 @@
 // lib/Pages/Reports/stock_statement_screen.dart
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:SmartERP/core/constants/storage_keys.dart';
-import 'package:SmartERP/core/models/product_model.dart';
-import 'package:SmartERP/core/utils/currency_formatter.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
-import 'package:SmartERP/core/widgets/empty_state_widget.dart';
-import 'package:SmartERP/core/widgets/low_stock_badge.dart';
+import 'package:siddhivinayak_enterprise/core/constants/storage_keys.dart';
+import 'package:siddhivinayak_enterprise/core/models/product_model.dart';
+import 'package:siddhivinayak_enterprise/core/utils/currency_formatter.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_scaffold.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/empty_state_widget.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/low_stock_badge.dart';
 
 class _StockItem {
   final String name;

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:SmartERP/core/utils/currency_formatter.dart';
-import 'package:SmartERP/core/utils/date_helper.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
-import 'package:SmartERP/modules/finance/providers/finance_provider.dart';
+import 'package:siddhivinayak_enterprise/core/utils/currency_formatter.dart';
+import 'package:siddhivinayak_enterprise/core/utils/date_helper.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_scaffold.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/providers/finance_provider.dart';
 
 class ProfitLossScreen extends StatefulWidget {
   const ProfitLossScreen({super.key});

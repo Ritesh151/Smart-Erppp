@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:SmartERP/core/constants/storage_keys.dart';
-import 'package:SmartERP/core/storage/storage_service.dart';
+import 'package:siddhivinayak_enterprise/core/constants/storage_keys.dart';
+import 'package:siddhivinayak_enterprise/core/storage/storage_service.dart';
 
 class SupplierInfo {
   final String name;

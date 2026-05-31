@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
-import 'package:SmartERP/core/extensions/context_extensions.dart';
-import 'package:SmartERP/core/widgets/loading_widget.dart';
-import 'package:SmartERP/modules/expenses/providers/expense_provider.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/loading_widget.dart';
+import 'package:siddhivinayak_enterprise/modules/expenses/providers/expense_provider.dart';
 
 // ── Shared brand tokens (aligned with dashboard_screen.dart) ─────────────────
 class _T {

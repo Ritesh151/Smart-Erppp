@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
-import 'package:SmartERP/modules/finance/providers/finance_provider.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_scaffold.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/providers/finance_provider.dart';
 import 'finance_sales_tab.dart';
 import 'finance_purchases_tab.dart';
 

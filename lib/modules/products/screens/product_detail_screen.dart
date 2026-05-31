@@ -3,14 +3,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'package:SmartERP/core/constants/app_constants.dart';
-import 'package:SmartERP/core/extensions/context_extensions.dart';
-import 'package:SmartERP/core/extensions/date_extensions.dart';
-import 'package:SmartERP/core/models/product_model.dart';
-import 'package:SmartERP/core/theme/theme_extensions.dart';
-import 'package:SmartERP/core/utils/platform_image_provider.dart';
-import 'package:SmartERP/core/widgets/app_button.dart';
-import 'package:SmartERP/modules/products/providers/product_provider.dart';
+import 'package:siddhivinayak_enterprise/core/constants/app_constants.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/date_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/models/product_model.dart';
+import 'package:siddhivinayak_enterprise/core/theme/theme_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/utils/platform_image_provider.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_button.dart';
+import 'package:siddhivinayak_enterprise/modules/products/providers/product_provider.dart';
 
 // ── Shared brand tokens (aligned with dashboard_screen.dart) ─────────────────
 class _T {

@@ -1,1 +1,1 @@
-export 'package:SmartERP/modules/finance/providers/purchase_provider.dart';
+export 'package:siddhivinayak_enterprise/modules/finance/providers/purchase_provider.dart';

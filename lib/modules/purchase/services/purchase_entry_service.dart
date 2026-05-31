@@ -1,8 +1,8 @@
-import 'package:SmartERP/core/exceptions/app_exception.dart';
-import 'package:SmartERP/core/models/product_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/products/repositories/product_repository.dart';
-import 'package:SmartERP/modules/purchase/repositories/purchase_entry_repository.dart';
+import 'package:siddhivinayak_enterprise/core/exceptions/app_exception.dart';
+import 'package:siddhivinayak_enterprise/core/models/product_model.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/modules/products/repositories/product_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/purchase/repositories/purchase_entry_repository.dart';
 import 'package:uuid/uuid.dart';
 
 class PurchaseEntryService {

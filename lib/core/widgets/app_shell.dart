@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:SmartERP/core/constants/storage_keys.dart';
-import 'package:SmartERP/core/extensions/context_extensions.dart';
-import 'package:SmartERP/core/routes/app_routes.dart';
-import 'package:SmartERP/core/storage/preferences_service.dart';
-import 'package:SmartERP/core/widgets/sidebar_menu.dart';
-import 'package:SmartERP/modules/auth/providers/auth_provider.dart';
+import 'package:siddhivinayak_enterprise/core/constants/storage_keys.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/routes/app_routes.dart';
+import 'package:siddhivinayak_enterprise/core/storage/preferences_service.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/sidebar_menu.dart';
+import 'package:siddhivinayak_enterprise/modules/auth/providers/auth_provider.dart';
 
 class AppShell extends StatefulWidget {
   final Widget child;
@@ -139,7 +139,7 @@ class _AppShellState extends State<AppShell> {
   Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SmartERP'),
+        title: const Text('Siddhivinayak Enterprise'),
         actions: [
           _buildUserMenu(),
         ],
@@ -293,6 +293,6 @@ class _AppShellState extends State<AppShell> {
     if (location.startsWith('/payroll')) return 'Payroll';
     if (location == AppRoutes.reports) return 'Reports';
     if (location == AppRoutes.settings) return 'Settings';
-    return 'SmartERP';
+    return 'Siddhivinayak Enterprise';
   }
 }

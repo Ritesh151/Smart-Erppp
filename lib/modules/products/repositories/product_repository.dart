@@ -1,7 +1,7 @@
-import 'package:SmartERP/core/exceptions/app_exception.dart';
-import 'package:SmartERP/core/models/product_model.dart';
-import 'package:SmartERP/core/storage/storage_service.dart';
-import 'package:SmartERP/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/core/exceptions/app_exception.dart';
+import 'package:siddhivinayak_enterprise/core/models/product_model.dart';
+import 'package:siddhivinayak_enterprise/core/storage/storage_service.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
 
 class ProductRepository {
   final StorageService<Map<dynamic, dynamic>> _storage;

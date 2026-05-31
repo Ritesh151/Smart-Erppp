@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:SmartERP/core/models/attendance_model.dart';
-import 'package:SmartERP/modules/payroll/services/attendance_service.dart';
+import 'package:siddhivinayak_enterprise/core/models/attendance_model.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/attendance_service.dart';
 
 class AttendanceProvider extends ChangeNotifier {
   final AttendanceService _service;

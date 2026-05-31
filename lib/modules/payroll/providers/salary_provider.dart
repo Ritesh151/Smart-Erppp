@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:SmartERP/core/constants/storage_keys.dart';
-import 'package:SmartERP/core/models/salary_model.dart';
-import 'package:SmartERP/core/models/salary_history_model.dart';
-import 'package:SmartERP/modules/payroll/services/salary_service.dart';
+import 'package:siddhivinayak_enterprise/core/constants/storage_keys.dart';
+import 'package:siddhivinayak_enterprise/core/models/salary_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/salary_history_model.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/salary_service.dart';
 
 class SalaryProvider extends ChangeNotifier {
   final SalaryService _service;

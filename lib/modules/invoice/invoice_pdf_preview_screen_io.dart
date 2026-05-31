@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
-import 'package:SmartERP/local_db/hive_boxes.dart';
-import 'package:SmartERP/local_db/models/local_invoice.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_scaffold.dart';
+import 'package:siddhivinayak_enterprise/local_db/hive_boxes.dart';
+import 'package:siddhivinayak_enterprise/local_db/models/local_invoice.dart';
 
 class InvoicePdfPreviewScreen extends StatelessWidget {
   final String invoiceId;

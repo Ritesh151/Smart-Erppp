@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:SmartERP/core/constants/storage_keys.dart';
-import 'package:SmartERP/core/exceptions/app_exception.dart';
-import 'package:SmartERP/core/models/product_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/products/services/product_service.dart';
+import 'package:siddhivinayak_enterprise/core/constants/storage_keys.dart';
+import 'package:siddhivinayak_enterprise/core/exceptions/app_exception.dart';
+import 'package:siddhivinayak_enterprise/core/models/product_model.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/modules/products/services/product_service.dart';
 
 class ProductProvider extends ChangeNotifier {
   final ProductService _service;

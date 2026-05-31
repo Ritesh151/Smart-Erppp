@@ -2,13 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:SmartERP/core/models/employee_model.dart';
-import 'package:SmartERP/Providers/payroll_provider.dart';
-import 'package:SmartERP/core/utils/currency_formatter.dart';
-import 'package:SmartERP/core/utils/date_helper.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
-import 'package:SmartERP/core/widgets/empty_state_widget.dart';
-import 'package:SmartERP/core/widgets/loading_widget.dart';
+import 'package:siddhivinayak_enterprise/core/models/employee_model.dart';
+import 'package:siddhivinayak_enterprise/Providers/payroll_provider.dart';
+import 'package:siddhivinayak_enterprise/core/utils/currency_formatter.dart';
+import 'package:siddhivinayak_enterprise/core/utils/date_helper.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_scaffold.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/empty_state_widget.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/loading_widget.dart';
 
 class PayrollDashboardScreen extends ConsumerStatefulWidget {
   const PayrollDashboardScreen({super.key});

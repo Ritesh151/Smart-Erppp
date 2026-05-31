@@ -5,85 +5,85 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Provider, ChangeNotifierProvider, Consumer;
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:SmartERP/core/constants/storage_keys.dart';
-import 'package:SmartERP/core/routes/app_router.dart';
-import 'package:SmartERP/core/services/auth_service.dart';
-import 'package:SmartERP/core/storage/storage_service.dart';
-import 'package:SmartERP/core/storage/preferences_service.dart';
-import 'package:SmartERP/core/theme/app_theme.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/auth/providers/auth_provider.dart';
-import 'package:SmartERP/modules/products/repositories/product_repository.dart';
-import 'package:SmartERP/modules/products/services/product_service.dart';
-import 'package:SmartERP/modules/dashboard/providers/dashboard_provider.dart';
-import 'package:SmartERP/modules/products/providers/product_provider.dart';
-import 'package:SmartERP/modules/finance/repositories/finance_repository.dart';
-import 'package:SmartERP/modules/finance/services/finance_service.dart';
-import 'package:SmartERP/modules/finance/services/return_service.dart';
-import 'package:SmartERP/modules/finance/providers/finance_provider.dart';
-import 'package:SmartERP/modules/expenses/repositories/expense_repository.dart';
-import 'package:SmartERP/modules/expenses/services/expense_service.dart';
-import 'package:SmartERP/modules/expenses/providers/expense_provider.dart';
-import 'package:SmartERP/modules/invoice/repositories/customer_repository.dart';
-import 'package:SmartERP/modules/invoice/repositories/invoice_repository.dart';
-import 'package:SmartERP/modules/invoice/repositories/payment_repository.dart';
-import 'package:SmartERP/modules/invoice/services/customer_service.dart';
-import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
-import 'package:SmartERP/modules/invoice/services/payment_service.dart';
-import 'package:SmartERP/modules/invoice/services/pdf_service.dart';
-import 'package:SmartERP/modules/invoice/providers/customer_provider.dart';
-import 'package:SmartERP/modules/invoice/providers/invoice_provider.dart';
-import 'package:SmartERP/modules/invoice/providers/payment_provider.dart';
-import 'package:SmartERP/modules/payroll/repositories/employee_repository.dart';
-import 'package:SmartERP/modules/payroll/repositories/attendance_repository.dart';
-import 'package:SmartERP/modules/payroll/repositories/salary_repository.dart';
-import 'package:SmartERP/modules/payroll/services/employee_service.dart';
-import 'package:SmartERP/modules/payroll/services/attendance_service.dart';
-import 'package:SmartERP/modules/payroll/services/salary_service.dart';
-import 'package:SmartERP/modules/payroll/services/payroll_service.dart';
-import 'package:SmartERP/modules/payroll/services/employee_search_service.dart';
-import 'package:SmartERP/modules/payroll/services/employee_filter_service.dart';
-import 'package:SmartERP/modules/payroll/services/salary_calculation_service.dart';
-import 'package:SmartERP/modules/payroll/services/salary_payment_service.dart';
-import 'package:SmartERP/modules/payroll/providers/employee_provider.dart';
-import 'package:SmartERP/modules/payroll/providers/attendance_provider.dart';
-import 'package:SmartERP/modules/payroll/providers/salary_provider.dart';
-import 'package:SmartERP/modules/payroll/providers/payroll_provider.dart';
-import 'package:SmartERP/modules/reports/repositories/report_repository.dart';
-import 'package:SmartERP/modules/reports/repositories/sales_report_repository.dart';
-import 'package:SmartERP/modules/reports/repositories/expense_report_repository.dart';
-import 'package:SmartERP/modules/reports/repositories/payroll_report_repository.dart';
-import 'package:SmartERP/modules/reports/services/report_service.dart';
-import 'package:SmartERP/modules/reports/services/analytics_service.dart';
-import 'package:SmartERP/modules/reports/services/business_intelligence_service.dart';
-import 'package:SmartERP/modules/reports/services/report_export_service.dart';
-import 'package:SmartERP/modules/reports/providers/report_provider.dart';
-import 'package:SmartERP/modules/reports/providers/analytics_provider.dart';
-import 'package:SmartERP/modules/reports/providers/business_intelligence_provider.dart';
-import 'package:SmartERP/modules/settings/repositories/settings_repository.dart';
-import 'package:SmartERP/modules/settings/repositories/notification_repository.dart';
-import 'package:SmartERP/modules/settings/repositories/backup_repository.dart';
-import 'package:SmartERP/modules/settings/services/settings_service.dart';
-import 'package:SmartERP/modules/settings/services/notification_service.dart';
-import 'package:SmartERP/modules/settings/services/preferences_service.dart' as settings_pref;
-import 'package:SmartERP/modules/settings/services/date_format_service.dart';
-import 'package:SmartERP/modules/settings/services/low_stock_service.dart';
-import 'package:SmartERP/modules/settings/services/stock_alert_service.dart';
-import 'package:SmartERP/modules/settings/services/salary_reminder_service.dart';
-import 'package:SmartERP/modules/settings/services/backup_service.dart';
-import 'package:SmartERP/modules/settings/services/restore_service.dart';
-import 'package:SmartERP/modules/settings/services/data_export_service.dart';
-import 'package:SmartERP/modules/settings/services/data_import_service.dart';
-import 'package:SmartERP/modules/settings/services/app_intelligence_service.dart';
-import 'package:SmartERP/modules/settings/services/business_alert_service.dart';
-import 'package:SmartERP/modules/settings/services/settings_search_service.dart';
-import 'package:SmartERP/modules/settings/services/settings_filter_service.dart';
-import 'package:SmartERP/modules/settings/providers/settings_provider.dart';
-import 'package:SmartERP/modules/settings/providers/notification_provider.dart';
-import 'package:SmartERP/modules/settings/providers/preferences_provider.dart';
-import 'package:SmartERP/modules/purchase/repositories/purchase_entry_repository.dart';
-import 'package:SmartERP/modules/purchase/services/purchase_entry_service.dart';
-import 'package:SmartERP/modules/purchase/providers/purchase_entry_provider.dart';
+import 'package:siddhivinayak_enterprise/core/constants/storage_keys.dart';
+import 'package:siddhivinayak_enterprise/core/routes/app_router.dart';
+import 'package:siddhivinayak_enterprise/core/services/auth_service.dart';
+import 'package:siddhivinayak_enterprise/core/storage/storage_service.dart';
+import 'package:siddhivinayak_enterprise/core/storage/preferences_service.dart';
+import 'package:siddhivinayak_enterprise/core/theme/app_theme.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/modules/auth/providers/auth_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/products/repositories/product_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/products/services/product_service.dart';
+import 'package:siddhivinayak_enterprise/modules/dashboard/providers/dashboard_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/products/providers/product_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/repositories/finance_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/services/finance_service.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/services/return_service.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/providers/finance_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/expenses/repositories/expense_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/expenses/services/expense_service.dart';
+import 'package:siddhivinayak_enterprise/modules/expenses/providers/expense_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/repositories/customer_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/repositories/invoice_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/repositories/payment_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/services/customer_service.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/services/invoice_service.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/services/payment_service.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/services/pdf_service.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/providers/customer_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/providers/invoice_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/providers/payment_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/repositories/employee_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/repositories/attendance_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/repositories/salary_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/employee_service.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/attendance_service.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/salary_service.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/payroll_service.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/employee_search_service.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/employee_filter_service.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/salary_calculation_service.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/salary_payment_service.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/providers/employee_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/providers/attendance_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/providers/salary_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/providers/payroll_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/reports/repositories/report_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/reports/repositories/sales_report_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/reports/repositories/expense_report_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/reports/repositories/payroll_report_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/reports/services/report_service.dart';
+import 'package:siddhivinayak_enterprise/modules/reports/services/analytics_service.dart';
+import 'package:siddhivinayak_enterprise/modules/reports/services/business_intelligence_service.dart';
+import 'package:siddhivinayak_enterprise/modules/reports/services/report_export_service.dart';
+import 'package:siddhivinayak_enterprise/modules/reports/providers/report_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/reports/providers/analytics_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/reports/providers/business_intelligence_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/repositories/settings_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/repositories/notification_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/repositories/backup_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/settings_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/notification_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/preferences_service.dart' as settings_pref;
+import 'package:siddhivinayak_enterprise/modules/settings/services/date_format_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/low_stock_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/stock_alert_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/salary_reminder_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/backup_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/restore_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/data_export_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/data_import_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/app_intelligence_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/business_alert_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/settings_search_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/settings_filter_service.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/providers/settings_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/providers/notification_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/providers/preferences_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/purchase/repositories/purchase_entry_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/purchase/services/purchase_entry_service.dart';
+import 'package:siddhivinayak_enterprise/modules/purchase/providers/purchase_entry_provider.dart';
 
 void main() {
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -129,7 +129,7 @@ void main() {
     WidgetsFlutterBinding.ensureInitialized();
     try {
       await _initializeApp();
-      runApp(const SmartERPApp());
+      runApp(const SiddhivinayakEnterpriseApp());
     } catch (e, stackTrace) {
       Logger.error('Failed to initialize app', e, stackTrace);
       runApp(ErrorApp(message: e.toString()));
@@ -141,7 +141,7 @@ void main() {
 }
 
 Future<void> _initializeApp() async {
-  Logger.info('Initializing SmartERP...');
+  Logger.info('Initializing Siddhivinayak Enterprise...');
 
   await Hive.initFlutter();
   Logger.success('Hive initialized');
@@ -276,14 +276,14 @@ Future<void> _initializeHiveBoxes() async {
   }
 }
 
-class SmartERPApp extends StatefulWidget {
-  const SmartERPApp({super.key});
+class SiddhivinayakEnterpriseApp extends StatefulWidget {
+  const SiddhivinayakEnterpriseApp({super.key});
 
   @override
-  State<SmartERPApp> createState() => _SmartERPAppState();
+  State<SiddhivinayakEnterpriseApp> createState() => _SiddhivinayakEnterpriseAppState();
 }
 
-class _SmartERPAppState extends State<SmartERPApp> {
+class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp> {
   AppRouter? _appRouter;
   Future<PreferencesService>? _preferencesFuture;
   PreferencesService? _preferencesService;
@@ -867,7 +867,7 @@ class _SmartERPAppState extends State<SmartERPApp> {
 
               return ProviderScope(
                 child: MaterialApp.router(
-                  title: 'SmartERP',
+                  title: 'Siddhivinayak Enterprise',
                   debugShowCheckedModeBanner: false,
                   theme: AppTheme.defaultTheme,
                   routerConfig: _appRouter!.router,

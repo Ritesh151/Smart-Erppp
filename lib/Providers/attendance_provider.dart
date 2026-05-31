@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:SmartERP/core/models/attendance_model.dart';
-import 'package:SmartERP/core/storage/storage_service.dart';
-import 'package:SmartERP/core/constants/storage_keys.dart';
-import 'package:SmartERP/modules/payroll/repositories/attendance_repository.dart';
-import 'package:SmartERP/modules/payroll/services/attendance_service.dart';
+import 'package:siddhivinayak_enterprise/core/models/attendance_model.dart';
+import 'package:siddhivinayak_enterprise/core/storage/storage_service.dart';
+import 'package:siddhivinayak_enterprise/core/constants/storage_keys.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/repositories/attendance_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/attendance_service.dart';
 
 final _attendanceStorageProvider = Provider<StorageService<Map<dynamic, dynamic>>>((ref) {
   return StorageService<Map<dynamic, dynamic>>(StorageKeys.attendanceBox)..init();

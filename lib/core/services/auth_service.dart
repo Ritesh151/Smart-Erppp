@@ -1,9 +1,9 @@
-import 'package:SmartERP/core/constants/app_constants.dart';
-import 'package:SmartERP/core/constants/storage_keys.dart';
-import 'package:SmartERP/core/exceptions/app_exception.dart';
-import 'package:SmartERP/core/models/user_model.dart';
-import 'package:SmartERP/core/storage/preferences_service.dart';
-import 'package:SmartERP/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/core/constants/app_constants.dart';
+import 'package:siddhivinayak_enterprise/core/constants/storage_keys.dart';
+import 'package:siddhivinayak_enterprise/core/exceptions/app_exception.dart';
+import 'package:siddhivinayak_enterprise/core/models/user_model.dart';
+import 'package:siddhivinayak_enterprise/core/storage/preferences_service.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
 import 'package:uuid/uuid.dart';
 
 class AuthService {

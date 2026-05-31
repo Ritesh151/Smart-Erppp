@@ -1,4 +1,4 @@
-import 'package:SmartERP/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
 
 class PurchasePdfService {
   static const String companyName = 'Siddhivinayak Enterprise';

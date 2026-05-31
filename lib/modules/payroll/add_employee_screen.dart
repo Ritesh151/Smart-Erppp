@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:SmartERP/Providers/payroll_provider.dart';
-import 'package:SmartERP/Utils/validators.dart';
-import 'package:SmartERP/core/models/employee_model.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
+import 'package:siddhivinayak_enterprise/Providers/payroll_provider.dart';
+import 'package:siddhivinayak_enterprise/Utils/validators.dart';
+import 'package:siddhivinayak_enterprise/core/models/employee_model.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_scaffold.dart';
 import 'package:uuid/uuid.dart';
 
 class AddEmployeeScreen extends ConsumerStatefulWidget {

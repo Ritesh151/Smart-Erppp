@@ -4,16 +4,16 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'package:SmartERP/core/constants/app_constants.dart';
-import 'package:SmartERP/core/extensions/context_extensions.dart';
-import 'package:SmartERP/core/extensions/date_extensions.dart';
-import 'package:SmartERP/core/models/invoice_model.dart';
-import 'package:SmartERP/core/models/payment_model.dart';
-import 'package:SmartERP/core/theme/theme_extensions.dart';
-import 'package:SmartERP/core/widgets/app_button.dart';
-import 'package:SmartERP/core/widgets/empty_state_widget.dart';
-import 'package:SmartERP/modules/invoice/providers/invoice_provider.dart';
-import 'package:SmartERP/modules/invoice/providers/payment_provider.dart';
+import 'package:siddhivinayak_enterprise/core/constants/app_constants.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/date_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/models/invoice_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/payment_model.dart';
+import 'package:siddhivinayak_enterprise/core/theme/theme_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_button.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/empty_state_widget.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/providers/invoice_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/providers/payment_provider.dart';
 
 // ── Shared brand tokens (mirrors dashboard_screen.dart) ──────────────────────
 class _T {

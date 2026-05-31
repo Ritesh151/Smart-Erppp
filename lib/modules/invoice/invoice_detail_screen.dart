@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:SmartERP/modules/invoice/providers/invoice_screen_provider.dart';
-import 'package:SmartERP/core/utils/currency_formatter.dart';
-import 'package:SmartERP/core/utils/date_helper.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
-import 'package:SmartERP/core/widgets/gst_breakdown_tile.dart';
-import 'package:SmartERP/core/widgets/loading_widget.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/providers/invoice_screen_provider.dart';
+import 'package:siddhivinayak_enterprise/core/utils/currency_formatter.dart';
+import 'package:siddhivinayak_enterprise/core/utils/date_helper.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_scaffold.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/gst_breakdown_tile.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/loading_widget.dart';
 
 class InvoiceDetailScreen extends ConsumerWidget {
   final String invoiceId;

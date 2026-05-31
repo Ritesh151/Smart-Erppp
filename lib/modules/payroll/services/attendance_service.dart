@@ -1,5 +1,5 @@
-import 'package:SmartERP/core/models/attendance_model.dart';
-import 'package:SmartERP/modules/payroll/repositories/attendance_repository.dart';
+import 'package:siddhivinayak_enterprise/core/models/attendance_model.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/repositories/attendance_repository.dart';
 
 class AttendanceService {
   final AttendanceRepository _repository;

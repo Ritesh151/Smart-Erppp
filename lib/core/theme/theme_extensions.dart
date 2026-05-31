@@ -65,7 +65,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       warningColor: Color(0xFFF59E0B),
       infoColor: Color(0xFF3B82F6),
       errorColor: Color(0xFFEF4444),
-      sidebarWidth: 280.0,
+      sidebarWidth: 240.0,
       sidebarCollapsedWidth: 72.0,
       contentPadding: EdgeInsets.all(24.0),
     );
@@ -90,7 +90,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       warningColor: Color(0xFFFF9800),
       infoColor: Color(0xFF2196F3),
       errorColor: Color(0xFFF44336),
-      sidebarWidth: 280.0,
+      sidebarWidth: 240.0,
       sidebarCollapsedWidth: 72.0,
       contentPadding: EdgeInsets.all(16.0),
     );
@@ -115,7 +115,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       warningColor: Color(0xFFFF9800),
       infoColor: Color(0xFF2196F3),
       errorColor: Color(0xFFF44336),
-      sidebarWidth: 280.0,
+      sidebarWidth: 240.0,
       sidebarCollapsedWidth: 72.0,
       contentPadding: EdgeInsets.all(20.0),
     );
@@ -140,7 +140,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       warningColor: Color(0xFFFFA726),
       infoColor: Color(0xFF29B6F6),
       errorColor: Color(0xFFEF5350),
-      sidebarWidth: 280.0,
+      sidebarWidth: 240.0,
       sidebarCollapsedWidth: 72.0,
       contentPadding: EdgeInsets.all(20.0),
     );

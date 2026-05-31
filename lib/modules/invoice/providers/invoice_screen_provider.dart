@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:SmartERP/core/models/invoice_model.dart';
-import 'package:SmartERP/core/constants/storage_keys.dart';
+import 'package:siddhivinayak_enterprise/core/models/invoice_model.dart';
+import 'package:siddhivinayak_enterprise/core/constants/storage_keys.dart';
 
 InvoiceModel? _parseInvoice(Map<String, dynamic> map) {
   try {

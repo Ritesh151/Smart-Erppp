@@ -1,5 +1,5 @@
 import 'package:intl/intl.dart';
-import 'package:SmartERP/core/utils/date_formatter_config.dart';
+import 'package:siddhivinayak_enterprise/core/utils/date_formatter_config.dart';
 
 extension DateTimeExtensions on DateTime {
   String toFormattedDate() {

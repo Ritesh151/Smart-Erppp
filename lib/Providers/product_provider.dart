@@ -1,1 +1,1 @@
-export 'package:SmartERP/modules/finance/providers/sale_provider.dart' show productsStreamProvider, ProductInfo;
+export 'package:siddhivinayak_enterprise/modules/finance/providers/sale_provider.dart' show productsStreamProvider, ProductInfo;

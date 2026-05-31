@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:SmartERP/core/models/employee_model.dart';
-import 'package:SmartERP/core/models/salary_model.dart';
-import 'package:SmartERP/core/models/salary_history_model.dart';
-import 'package:SmartERP/core/storage/storage_service.dart';
-import 'package:SmartERP/core/constants/storage_keys.dart';
-import 'package:SmartERP/modules/payroll/repositories/employee_repository.dart';
-import 'package:SmartERP/modules/payroll/repositories/salary_repository.dart';
-import 'package:SmartERP/modules/payroll/services/employee_service.dart';
-import 'package:SmartERP/modules/payroll/services/salary_service.dart';
+import 'package:siddhivinayak_enterprise/core/models/employee_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/salary_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/salary_history_model.dart';
+import 'package:siddhivinayak_enterprise/core/storage/storage_service.dart';
+import 'package:siddhivinayak_enterprise/core/constants/storage_keys.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/repositories/employee_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/repositories/salary_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/employee_service.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/salary_service.dart';
 
 // Backward-compatibility extensions for old payroll screens
 extension EmployeeCompat on EmployeeModel {

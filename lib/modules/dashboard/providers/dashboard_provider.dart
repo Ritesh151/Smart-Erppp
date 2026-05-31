@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:SmartERP/core/constants/storage_keys.dart';
-import 'package:SmartERP/core/models/invoice_model.dart';
-import 'package:SmartERP/core/models/product_model.dart';
-import 'package:SmartERP/core/models/transaction_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/finance/services/finance_service.dart';
-import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
-import 'package:SmartERP/modules/products/services/product_service.dart';
+import 'package:siddhivinayak_enterprise/core/constants/storage_keys.dart';
+import 'package:siddhivinayak_enterprise/core/models/invoice_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/product_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/transaction_model.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/services/finance_service.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/services/invoice_service.dart';
+import 'package:siddhivinayak_enterprise/modules/products/services/product_service.dart';
 
 class DashboardProvider extends ChangeNotifier {
   DashboardProvider({

@@ -1,7 +1,7 @@
 class AppConstants {
   AppConstants._();
 
-  static const String appName = 'SmartERP';
+  static const String appName = 'Siddhivinayak Enterprise';
   static const String appVersion = '1.0.0';
   
   static const String fixedEmail = 'ritesh.work.1510@gmail.com';

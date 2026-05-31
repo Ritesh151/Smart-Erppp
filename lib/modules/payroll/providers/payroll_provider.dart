@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:SmartERP/core/models/employee_model.dart';
-import 'package:SmartERP/modules/payroll/services/payroll_service.dart';
+import 'package:siddhivinayak_enterprise/core/models/employee_model.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/payroll_service.dart';
 
 class PayrollProvider extends ChangeNotifier {
   final PayrollService _service;

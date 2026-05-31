@@ -1,1 +1,1 @@
-export 'package:SmartERP/core/widgets/app_scaffold.dart';
+export 'package:siddhivinayak_enterprise/core/widgets/app_scaffold.dart';

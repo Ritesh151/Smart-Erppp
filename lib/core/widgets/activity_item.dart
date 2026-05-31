@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:SmartERP/core/extensions/context_extensions.dart';
-import 'package:SmartERP/core/extensions/date_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/date_extensions.dart';
 
 class ActivityItem extends StatelessWidget {
   final IconData icon;

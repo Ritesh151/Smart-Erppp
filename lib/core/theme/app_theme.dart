@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:SmartERP/core/theme/theme_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/theme/theme_extensions.dart';
 
 class AppTheme {
   AppTheme._();

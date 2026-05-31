@@ -5,12 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import 'package:SmartERP/core/extensions/context_extensions.dart';
-import 'package:SmartERP/core/extensions/date_extensions.dart';
-import 'package:SmartERP/core/models/invoice_model.dart';
-import 'package:SmartERP/core/widgets/empty_state_widget.dart';
-import 'package:SmartERP/core/widgets/search_filter_bar.dart';
-import 'package:SmartERP/modules/invoice/providers/invoice_provider.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/date_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/models/invoice_model.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/empty_state_widget.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/search_filter_bar.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/providers/invoice_provider.dart';
 
 // ── Shared brand tokens (mirrors dashboard_screen.dart) ──────────────────────
 class _T {

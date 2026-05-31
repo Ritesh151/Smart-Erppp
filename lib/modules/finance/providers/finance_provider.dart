@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:SmartERP/core/constants/storage_keys.dart';
-import 'package:SmartERP/core/models/transaction_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/finance/services/finance_service.dart';
+import 'package:siddhivinayak_enterprise/core/constants/storage_keys.dart';
+import 'package:siddhivinayak_enterprise/core/models/transaction_model.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/services/finance_service.dart';
 
 class FinanceProvider extends ChangeNotifier {
   final FinanceService _service;

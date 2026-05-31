@@ -3,16 +3,16 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:SmartERP/core/extensions/context_extensions.dart';
-import 'package:SmartERP/core/extensions/date_extensions.dart';
-import 'package:SmartERP/core/routes/app_routes.dart';
-import 'package:SmartERP/core/theme/theme_extensions.dart';
-import 'package:SmartERP/core/models/product_model.dart';
-import 'package:SmartERP/core/models/transaction_model.dart';
-import 'package:SmartERP/modules/dashboard/providers/dashboard_provider.dart';
-import 'package:SmartERP/modules/products/providers/product_provider.dart';
-import 'package:SmartERP/modules/finance/providers/finance_provider.dart';
-import 'package:SmartERP/modules/settings/providers/settings_provider.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/date_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/routes/app_routes.dart';
+import 'package:siddhivinayak_enterprise/core/theme/theme_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/models/product_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/transaction_model.dart';
+import 'package:siddhivinayak_enterprise/modules/dashboard/providers/dashboard_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/products/providers/product_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/providers/finance_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/providers/settings_provider.dart';
 
 // ── Shared brand tokens (same as LoginScreen & SidebarMenu) ──────────────────
 class _T {

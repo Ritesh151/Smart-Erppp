@@ -1,9 +1,9 @@
-import 'package:SmartERP/core/models/employee_model.dart';
-import 'package:SmartERP/core/models/attendance_model.dart';
-import 'package:SmartERP/core/models/salary_model.dart';
-import 'package:SmartERP/modules/payroll/repositories/employee_repository.dart';
-import 'package:SmartERP/modules/payroll/repositories/attendance_repository.dart';
-import 'package:SmartERP/modules/payroll/repositories/salary_repository.dart';
+import 'package:siddhivinayak_enterprise/core/models/employee_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/attendance_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/salary_model.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/repositories/employee_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/repositories/attendance_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/repositories/salary_repository.dart';
 
 class PayrollService {
   final EmployeeRepository employeeRepository;

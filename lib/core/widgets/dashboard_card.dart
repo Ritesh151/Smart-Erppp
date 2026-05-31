@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:SmartERP/core/constants/app_constants.dart';
-import 'package:SmartERP/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/constants/app_constants.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
 
 class DashboardCard extends StatelessWidget {
   final String title;

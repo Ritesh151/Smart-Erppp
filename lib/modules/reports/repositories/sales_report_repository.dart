@@ -1,4 +1,4 @@
-import 'package:SmartERP/core/storage/storage_service.dart';
+import 'package:siddhivinayak_enterprise/core/storage/storage_service.dart';
 
 class SalesReportRepository {
   final StorageService<Map<dynamic, dynamic>> salesStorage;

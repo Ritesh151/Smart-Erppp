@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
-import 'package:SmartERP/core/extensions/context_extensions.dart';
-import 'package:SmartERP/core/models/notification_model.dart';
-import 'package:SmartERP/core/widgets/app_shell.dart';
-import 'package:SmartERP/core/widgets/empty_state_widget.dart';
-import 'package:SmartERP/modules/settings/providers/notification_provider.dart';
-import 'package:SmartERP/modules/settings/widgets/notification_card_widget.dart';
-import 'package:SmartERP/modules/settings/widgets/settings_page_transition.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/models/notification_model.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_shell.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/empty_state_widget.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/providers/notification_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/widgets/notification_card_widget.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/widgets/settings_page_transition.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});

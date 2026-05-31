@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:SmartERP/Providers/sale_provider.dart';
-import 'package:SmartERP/Providers/purchase_provider.dart';
-import 'package:SmartERP/core/utils/currency_formatter.dart';
-import 'package:SmartERP/core/utils/date_helper.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
-import 'package:SmartERP/core/widgets/date_range_picker.dart';
-import 'package:SmartERP/core/widgets/loading_widget.dart';
+import 'package:siddhivinayak_enterprise/Providers/sale_provider.dart';
+import 'package:siddhivinayak_enterprise/Providers/purchase_provider.dart';
+import 'package:siddhivinayak_enterprise/core/utils/currency_formatter.dart';
+import 'package:siddhivinayak_enterprise/core/utils/date_helper.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_scaffold.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/date_range_picker.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/loading_widget.dart';
 
 class GstSummaryScreen extends ConsumerStatefulWidget {
   const GstSummaryScreen({super.key});

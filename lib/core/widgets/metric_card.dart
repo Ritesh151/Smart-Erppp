@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:SmartERP/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
 
 class MetricCard extends StatelessWidget {
   final String title;

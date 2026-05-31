@@ -1,6 +1,6 @@
-import 'package:SmartERP/core/models/expense_model.dart';
-import 'package:SmartERP/modules/expenses/repositories/expense_repository.dart';
-import 'package:SmartERP/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/core/models/expense_model.dart';
+import 'package:siddhivinayak_enterprise/modules/expenses/repositories/expense_repository.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
 import 'package:uuid/uuid.dart';
 
 class ExpenseService {

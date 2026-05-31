@@ -1,6 +1,6 @@
-import 'package:SmartERP/core/models/attendance_model.dart';
-import 'package:SmartERP/core/storage/storage_service.dart';
-import 'package:SmartERP/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/core/models/attendance_model.dart';
+import 'package:siddhivinayak_enterprise/core/storage/storage_service.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
 
 class AttendanceRepository {
   final StorageService<Map<dynamic, dynamic>> _storage;

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:SmartERP/core/extensions/context_extensions.dart';
-import 'package:SmartERP/core/models/expense_model.dart';
-import 'package:SmartERP/modules/expenses/providers/expense_provider.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/models/expense_model.dart';
+import 'package:siddhivinayak_enterprise/modules/expenses/providers/expense_provider.dart';
 
 class _T {
   static const gradientStart = Color(0xFF4F6EF7);

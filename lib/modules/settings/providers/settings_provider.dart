@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:SmartERP/core/models/settings_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/settings/services/settings_service.dart';
+import 'package:siddhivinayak_enterprise/core/models/settings_model.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/modules/settings/services/settings_service.dart';
 
 class SettingsProvider extends ChangeNotifier {
   final SettingsService _service;

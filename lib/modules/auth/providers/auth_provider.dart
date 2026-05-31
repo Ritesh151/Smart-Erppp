@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:SmartERP/core/exceptions/app_exception.dart';
-import 'package:SmartERP/core/models/user_model.dart';
-import 'package:SmartERP/core/services/auth_service.dart';
-import 'package:SmartERP/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/core/exceptions/app_exception.dart';
+import 'package:siddhivinayak_enterprise/core/models/user_model.dart';
+import 'package:siddhivinayak_enterprise/core/services/auth_service.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService;

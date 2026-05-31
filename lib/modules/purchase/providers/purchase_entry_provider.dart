@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:SmartERP/core/exceptions/app_exception.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/purchase/services/purchase_entry_service.dart';
+import 'package:siddhivinayak_enterprise/core/exceptions/app_exception.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/modules/purchase/services/purchase_entry_service.dart';
 import 'package:uuid/uuid.dart';
 
 class PurchaseItemModel {

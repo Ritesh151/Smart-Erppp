@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:SmartERP/core/models/expense_model.dart';
-import 'package:SmartERP/modules/expenses/services/expense_service.dart';
-import 'package:SmartERP/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/core/models/expense_model.dart';
+import 'package:siddhivinayak_enterprise/modules/expenses/services/expense_service.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
 
 class ExpenseProvider extends ChangeNotifier {
   final ExpenseService _service;

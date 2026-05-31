@@ -1,14 +1,14 @@
-import 'package:SmartERP/core/models/expense_model.dart';
-import 'package:SmartERP/core/models/invoice_model.dart';
-import 'package:SmartERP/core/models/transaction_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/finance/repositories/finance_repository.dart';
-import 'package:SmartERP/modules/finance/services/return_service.dart';
-import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
-import 'package:SmartERP/modules/products/services/product_service.dart';
-import 'package:SmartERP/modules/payroll/services/employee_service.dart';
-import 'package:SmartERP/modules/payroll/repositories/salary_repository.dart';
-import 'package:SmartERP/modules/expenses/repositories/expense_repository.dart';
+import 'package:siddhivinayak_enterprise/core/models/expense_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/invoice_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/transaction_model.dart';
+import 'package:siddhivinayak_enterprise/core/utils/logger.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/repositories/finance_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/services/return_service.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/services/invoice_service.dart';
+import 'package:siddhivinayak_enterprise/modules/products/services/product_service.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/employee_service.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/repositories/salary_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/expenses/repositories/expense_repository.dart';
 
 class FinanceService {
   final FinanceRepository financeRepository;

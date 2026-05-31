@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:SmartERP/core/widgets/app_button.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_button.dart';
 
 class AppDialog extends StatelessWidget {
   final String title;

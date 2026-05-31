@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:SmartERP/modules/reports/services/report_service.dart';
+import 'package:siddhivinayak_enterprise/modules/reports/services/report_service.dart';
 
 class ReportProvider extends ChangeNotifier {
   final ReportService _service;

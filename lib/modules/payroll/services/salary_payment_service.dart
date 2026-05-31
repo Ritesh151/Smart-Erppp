@@ -1,6 +1,6 @@
-import 'package:SmartERP/core/models/salary_model.dart';
-import 'package:SmartERP/core/models/salary_history_model.dart';
-import 'package:SmartERP/modules/payroll/repositories/salary_repository.dart';
+import 'package:siddhivinayak_enterprise/core/models/salary_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/salary_history_model.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/repositories/salary_repository.dart';
 
 class SalaryPaymentService {
   final SalaryRepository _repository;

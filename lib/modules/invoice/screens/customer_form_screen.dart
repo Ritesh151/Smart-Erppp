@@ -3,14 +3,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'package:SmartERP/core/constants/app_constants.dart';
-import 'package:SmartERP/core/extensions/context_extensions.dart';
-import 'package:SmartERP/core/models/customer_model.dart';
-import 'package:SmartERP/core/routes/app_routes.dart';
-import 'package:SmartERP/core/theme/theme_extensions.dart';
-import 'package:SmartERP/core/widgets/app_button.dart';
-import 'package:SmartERP/core/widgets/app_text_field.dart';
-import 'package:SmartERP/modules/invoice/providers/customer_provider.dart';
+import 'package:siddhivinayak_enterprise/core/constants/app_constants.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/models/customer_model.dart';
+import 'package:siddhivinayak_enterprise/core/routes/app_routes.dart';
+import 'package:siddhivinayak_enterprise/core/theme/theme_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_button.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_text_field.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/providers/customer_provider.dart';
 
 class _T {
   static const gradientStart = Color(0xFF4F6EF7);

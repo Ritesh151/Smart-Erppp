@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:SmartERP/core/models/product_model.dart';
-import 'package:SmartERP/modules/products/providers/product_provider.dart';
+import 'package:siddhivinayak_enterprise/core/models/product_model.dart';
+import 'package:siddhivinayak_enterprise/modules/products/providers/product_provider.dart';
 
 class ProductSelectorDialog extends StatefulWidget {
   final List<dynamic>? initialProducts;

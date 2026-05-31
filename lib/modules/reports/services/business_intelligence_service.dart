@@ -1,7 +1,7 @@
-import 'package:SmartERP/modules/finance/services/finance_service.dart';
-import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
-import 'package:SmartERP/modules/products/services/product_service.dart';
-import 'package:SmartERP/modules/payroll/services/payroll_service.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/services/finance_service.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/services/invoice_service.dart';
+import 'package:siddhivinayak_enterprise/modules/products/services/product_service.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/payroll_service.dart';
 
 class BusinessIntelligenceService {
   final FinanceService financeService;

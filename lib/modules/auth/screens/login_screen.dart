@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:SmartERP/core/constants/app_constants.dart';
-import 'package:SmartERP/core/extensions/context_extensions.dart';
-import 'package:SmartERP/core/extensions/string_extensions.dart';
-import 'package:SmartERP/core/routes/app_routes.dart';
-import 'package:SmartERP/core/widgets/app_button.dart';
-import 'package:SmartERP/core/widgets/app_text_field.dart';
-import 'package:SmartERP/modules/auth/providers/auth_provider.dart';
+import 'package:siddhivinayak_enterprise/core/constants/app_constants.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/string_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/routes/app_routes.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_button.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_text_field.dart';
+import 'package:siddhivinayak_enterprise/modules/auth/providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

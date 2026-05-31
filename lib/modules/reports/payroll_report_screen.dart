@@ -1,13 +1,13 @@
 // lib/Pages/Reports/payroll_report_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:SmartERP/core/models/salary_model.dart';
-import 'package:SmartERP/core/utils/currency_formatter.dart';
-import 'package:SmartERP/core/utils/date_helper.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
-import 'package:SmartERP/core/widgets/loading_widget.dart';
-import 'package:SmartERP/modules/payroll/providers/employee_provider.dart';
-import 'package:SmartERP/modules/payroll/providers/salary_provider.dart';
+import 'package:siddhivinayak_enterprise/core/models/salary_model.dart';
+import 'package:siddhivinayak_enterprise/core/utils/currency_formatter.dart';
+import 'package:siddhivinayak_enterprise/core/utils/date_helper.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_scaffold.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/loading_widget.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/providers/employee_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/providers/salary_provider.dart';
 
 class PayrollReportScreen extends StatefulWidget {
   const PayrollReportScreen({super.key});

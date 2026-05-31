@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:SmartERP/core/responsive/breakpoints.dart';
+import 'package:siddhivinayak_enterprise/core/responsive/breakpoints.dart';
 
 class ResponsiveBuilder extends StatelessWidget {
   final Widget Function(BuildContext context, DeviceType deviceType) builder;

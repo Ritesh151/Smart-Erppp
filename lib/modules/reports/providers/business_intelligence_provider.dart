@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:SmartERP/modules/reports/services/business_intelligence_service.dart';
+import 'package:siddhivinayak_enterprise/modules/reports/services/business_intelligence_service.dart';
 
 class BusinessIntelligenceProvider extends ChangeNotifier {
   final BusinessIntelligenceService _service;

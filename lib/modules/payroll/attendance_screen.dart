@@ -1,13 +1,13 @@
 // lib/Pages/Payroll/attendance_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:SmartERP/core/models/attendance_model.dart';
-import 'package:SmartERP/core/models/employee_model.dart';
-import 'package:SmartERP/Providers/attendance_provider.dart';
-import 'package:SmartERP/Providers/payroll_provider.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
-import 'package:SmartERP/core/widgets/empty_state_widget.dart';
-import 'package:SmartERP/core/widgets/loading_widget.dart';
+import 'package:siddhivinayak_enterprise/core/models/attendance_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/employee_model.dart';
+import 'package:siddhivinayak_enterprise/Providers/attendance_provider.dart';
+import 'package:siddhivinayak_enterprise/Providers/payroll_provider.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_scaffold.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/empty_state_widget.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/loading_widget.dart';
 
 class AttendanceScreen extends ConsumerStatefulWidget {
   const AttendanceScreen({super.key});

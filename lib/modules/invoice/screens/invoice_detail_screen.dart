@@ -4,15 +4,15 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import 'package:SmartERP/core/extensions/context_extensions.dart';
-import 'package:SmartERP/core/extensions/date_extensions.dart';
-import 'package:SmartERP/core/models/invoice_model.dart';
-import 'package:SmartERP/core/models/payment_model.dart';
-import 'package:SmartERP/core/utils/download_helper.dart';
-import 'package:SmartERP/core/widgets/app_button.dart';
-import 'package:SmartERP/modules/invoice/providers/invoice_provider.dart';
-import 'package:SmartERP/modules/invoice/providers/payment_provider.dart';
-import 'package:SmartERP/modules/invoice/services/pdf_service.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/date_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/models/invoice_model.dart';
+import 'package:siddhivinayak_enterprise/core/models/payment_model.dart';
+import 'package:siddhivinayak_enterprise/core/utils/download_helper.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_button.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/providers/invoice_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/providers/payment_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/services/pdf_service.dart';
 
 class _T {
   static const gradientStart = Color(0xFF4F6EF7);

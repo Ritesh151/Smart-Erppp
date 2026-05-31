@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:SmartERP/core/constants/app_constants.dart';
-import 'package:SmartERP/core/extensions/context_extensions.dart';
-import 'package:SmartERP/core/widgets/app_card.dart';
+import 'package:siddhivinayak_enterprise/core/constants/app_constants.dart';
+import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/widgets/app_card.dart';
 
 class QuickActionCard extends StatefulWidget {
   final String title;
