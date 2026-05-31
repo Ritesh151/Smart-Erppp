@@ -143,7 +143,7 @@ class EmployeeListScreen extends ConsumerWidget {
         context.go('/payroll/$employeeId/edit');
         break;
       case 'salary':
-        context.go('/payroll/$employeeId/edit');
+        context.go('/payroll/$employeeId/salary');
         break;
       case 'delete':
         final confirmed = await showDialog<bool>(

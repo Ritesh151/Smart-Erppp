@@ -1,16 +1,9 @@
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/settings/repositories/backup_repository.dart';
-import 'package:SmartERP/modules/settings/repositories/notification_repository.dart';
-import 'package:SmartERP/modules/settings/services/preferences_service.dart';
+import '../../../core/utils/logger.dart';
+import '../../../modules/settings/repositories/backup_repository.dart';
+import '../../../modules/settings/repositories/notification_repository.dart';
+import '../../../modules/settings/services/preferences_service.dart';
 
 class SearchResult {
-  final String id;
-  final String title;
-  final String subtitle;
-  final String type;
-  final String? actionRoute;
-  final dynamic source;
-
   SearchResult({
     required this.id,
     required this.title,
@@ -19,13 +12,16 @@ class SearchResult {
     this.actionRoute,
     this.source,
   });
+
+  final String id;
+  final String title;
+  final String subtitle;
+  final String type;
+  final String? actionRoute;
+  final dynamic source;
 }
 
 class SettingsSearchService {
-  final NotificationRepository _notificationRepository;
-  final BackupRepository _backupRepository;
-  final PreferencesService _preferencesService;
-
   SettingsSearchService({
     required NotificationRepository notificationRepository,
     required BackupRepository backupRepository,
@@ -34,8 +30,14 @@ class SettingsSearchService {
         _backupRepository = backupRepository,
         _preferencesService = preferencesService;
 
+  final NotificationRepository _notificationRepository;
+  final BackupRepository _backupRepository;
+  final PreferencesService _preferencesService;
+
   Future<List<SearchResult>> searchAll(String query) async {
-    if (query.trim().isEmpty) return [];
+    if (query.trim().isEmpty) {
+      return [];
+    }
 
     final q = query.toLowerCase().trim();
     final results = <SearchResult>[];
@@ -46,9 +48,7 @@ class SettingsSearchService {
       _searchPreferences(q),
     ]);
 
-    for (final r in futures) {
-      results.addAll(r);
-    }
+    futures.forEach(results.addAll);
 
     results.sort((a, b) => a.title.compareTo(b.title));
     Logger.debug('Search "$query" returned ${results.length} results');
@@ -56,7 +56,9 @@ class SettingsSearchService {
   }
 
   Future<List<SearchResult>> searchByType(String query, String type) async {
-    if (query.trim().isEmpty) return [];
+    if (query.trim().isEmpty) {
+      return [];
+    }
 
     final q = query.toLowerCase().trim();
     switch (type) {
@@ -91,7 +93,7 @@ class SettingsSearchService {
         }
       }
       return results;
-    } catch (e) {
+    } on Exception catch (_) {
       return [];
     }
   }
@@ -116,7 +118,7 @@ class SettingsSearchService {
         }
       }
       return results;
-    } catch (e) {
+    } on Exception catch (_) {
       return [];
     }
   }
@@ -139,13 +141,15 @@ class SettingsSearchService {
         }
       }
       return results;
-    } catch (e) {
+    } on Exception catch (_) {
       return [];
     }
   }
 
   Future<List<String>> getSearchSuggestions(String query) async {
-    if (query.trim().isEmpty) return [];
+    if (query.trim().isEmpty) {
+      return [];
+    }
 
     final q = query.toLowerCase().trim();
     final suggestions = <String>{

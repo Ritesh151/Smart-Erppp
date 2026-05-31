@@ -2,12 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:SmartERP/modules/transport/models/transport_screen_model.dart';
-import 'package:SmartERP/modules/transport/providers/transport_screen_provider.dart';
-import 'package:SmartERP/core/utils/date_helper.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
-import 'package:SmartERP/core/widgets/loading_widget.dart';
-import 'package:SmartERP/core/widgets/empty_state_widget.dart';
+import '../../core/utils/date_helper.dart';
+import '../../core/widgets/app_scaffold.dart';
+import '../../core/widgets/empty_state_widget.dart';
+import '../../core/widgets/loading_widget.dart';
+import 'models/transport_screen_model.dart';
+import 'providers/transport_screen_provider.dart';
 
 class TransportListScreen extends ConsumerStatefulWidget {
   const TransportListScreen({super.key});
@@ -141,11 +141,11 @@ class _TransportListScreenState extends ConsumerState<TransportListScreen> {
           // Product Search
           TextField(
             controller: _productController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Search by Product',
-              prefixIcon: const Icon(Icons.search, size: 20),
+              prefixIcon: Icon(Icons.search, size: 20),
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
+              contentPadding: EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 10,
               ),
@@ -156,11 +156,11 @@ class _TransportListScreenState extends ConsumerState<TransportListScreen> {
           // Destination Search
           TextField(
             controller: _destinationController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Search by Destination',
-              prefixIcon: const Icon(Icons.location_on, size: 20),
+              prefixIcon: Icon(Icons.location_on, size: 20),
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
+              contentPadding: EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 10,
               ),
@@ -171,17 +171,16 @@ class _TransportListScreenState extends ConsumerState<TransportListScreen> {
           // Status Filter
           DropdownButtonFormField<ExportStatus?>(
             value: _selectedStatus,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Filter by Status',
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
+              contentPadding: EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 10,
               ),
             ),
             items: [
               const DropdownMenuItem(
-                value: null,
                 child: Text('All Status'),
               ),
               ...ExportStatus.values.map(
@@ -268,13 +267,12 @@ class _TransportListScreenState extends ConsumerState<TransportListScreen> {
 }
 
 class _TransportCard extends ConsumerWidget {
-  final TransportModel transport;
-
   const _TransportCard({required this.transport});
+
+  final TransportModel transport;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final productNames = transport.products
         .map((p) => p.productName)
         .toList()
@@ -459,18 +457,16 @@ class _TransportCard extends ConsumerWidget {
                         );
                       }
                     },
-                    itemBuilder: (BuildContext context) {
-                      return ExportStatus.values
-                          .where((s) => s != transport.status)
-                          .map((status) {
-                        return PopupMenuItem<ExportStatus>(
-                          value: status,
-                          child: Text(status.displayName),
-                        );
-                      }).toList();
-                    },
+                    itemBuilder: (BuildContext context) =>
+                        ExportStatus.values
+                            .where((s) => s != transport.status)
+                            .map((status) =>
+                                PopupMenuItem<ExportStatus>(
+                                  value: status,
+                                  child: Text(status.displayName),
+                                )).toList(),
                     child: const Padding(
-                      padding: EdgeInsets.all(8.0),
+                      padding: EdgeInsets.all(8),
                       child: Icon(Icons.more_vert, size: 18),
                     ),
                   ),
@@ -485,19 +481,18 @@ class _TransportCard extends ConsumerWidget {
 }
 
 class _StatPill extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-
   const _StatPill({
     required this.label,
     required this.value,
     required this.color,
   });
 
+  final String label;
+  final String value;
+  final Color color;
+
   @override
-  Widget build(BuildContext context) {
-    return Expanded(
+  Widget build(BuildContext context) => Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
@@ -524,5 +519,4 @@ class _StatPill extends StatelessWidget {
         ),
       ),
     );
-  }
 }

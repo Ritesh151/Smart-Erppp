@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:SmartERP/core/constants/storage_keys.dart';
 import 'package:SmartERP/core/models/invoice_model.dart';
 import 'package:SmartERP/core/models/product_model.dart';
 import 'package:SmartERP/core/models/transaction_model.dart';
@@ -14,7 +18,9 @@ class DashboardProvider extends ChangeNotifier {
     required FinanceService financeService,
   })  : _invoiceService = invoiceService,
         _productService = productService,
-        _financeService = financeService;
+        _financeService = financeService {
+    _subscribeToSourceBoxes();
+  }
 
   final InvoiceService _invoiceService;
   final ProductService _productService;
@@ -35,6 +41,8 @@ class DashboardProvider extends ChangeNotifier {
   String? _errorMessage;
   List<InvoiceModel> _invoices = [];
   List<ProductModel> _products = [];
+  final List<StreamSubscription<dynamic>> _sourceSubscriptions = [];
+  bool _refreshQueued = false;
 
   double get totalSales => _totalSales;
   double get overdueAmount => _overdueAmount;
@@ -97,6 +105,42 @@ class DashboardProvider extends ChangeNotifier {
     }
   }
 
+  void _subscribeToSourceBoxes() {
+    for (final boxName in [
+      StorageKeys.invoicesBox,
+      StorageKeys.invoiceItemsBox,
+      StorageKeys.returnsBox,
+      StorageKeys.productsBox,
+      StorageKeys.expensesBox,
+      StorageKeys.purchaseBox,
+      StorageKeys.salaryBox,
+      StorageKeys.salaryHistoryBox,
+    ]) {
+      if (Hive.isBoxOpen(boxName)) {
+        _sourceSubscriptions.add(Hive.box(boxName).watch().listen((_) {
+          _queueRefresh();
+        }));
+      }
+    }
+  }
+
+  void _queueRefresh() {
+    if (_refreshQueued || _isLoading) return;
+    _refreshQueued = true;
+    Future.microtask(() async {
+      _refreshQueued = false;
+      await refresh();
+    });
+  }
+
+  @override
+  void dispose() {
+    for (final sub in _sourceSubscriptions) {
+      sub.cancel();
+    }
+    super.dispose();
+  }
+
   void _calculateMetrics(
     List<InvoiceModel> invoices,
     List<ProductModel> products,
@@ -104,7 +148,9 @@ class DashboardProvider extends ChangeNotifier {
   ) {
     final now = DateTime.now();
 
-    double salesTotal = 0;
+    double salesTotal = transactions
+        .where((tx) => tx.type == TransactionType.sale)
+        .fold<double>(0, (sum, tx) => sum + tx.amount);
     double overdueTotal = 0;
     int overdueTotalCount = 0;
     double dueSoonTotal = 0;
@@ -113,10 +159,6 @@ class DashboardProvider extends ChangeNotifier {
     int paidThisMonthTotalCount = 0;
 
     for (final inv in invoices) {
-      if (inv.status == InvoiceStatus.paid) {
-        salesTotal += inv.totalAmount;
-      }
-
       if (inv.status != InvoiceStatus.cancelled) {
         final isOverdue = inv.status == InvoiceStatus.overdue ||
             (inv.status != InvoiceStatus.paid &&

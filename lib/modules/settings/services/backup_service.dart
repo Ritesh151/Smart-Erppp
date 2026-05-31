@@ -2,32 +2,21 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:SmartERP/core/models/backup_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/finance/services/finance_service.dart';
-import 'package:SmartERP/modules/invoice/services/customer_service.dart';
-import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
-import 'package:SmartERP/modules/payroll/services/attendance_service.dart';
-import 'package:SmartERP/modules/payroll/services/employee_service.dart';
-import 'package:SmartERP/modules/payroll/services/salary_service.dart';
-import 'package:SmartERP/modules/products/services/product_service.dart';
-import 'package:SmartERP/modules/settings/repositories/backup_repository.dart';
-import 'package:SmartERP/modules/settings/services/notification_service.dart';
-import 'package:SmartERP/modules/settings/services/settings_service.dart';
 
+import '../../../core/models/backup_model.dart';
+import '../../../core/utils/logger.dart';
+import '../../../modules/finance/services/finance_service.dart';
+import '../../../modules/invoice/services/customer_service.dart';
+import '../../../modules/invoice/services/invoice_service.dart';
+import '../../../modules/payroll/services/attendance_service.dart';
+import '../../../modules/payroll/services/employee_service.dart';
+import '../../../modules/payroll/services/salary_service.dart';
+import '../../../modules/products/services/product_service.dart';
+import '../../../modules/settings/repositories/backup_repository.dart';
+import '../../../modules/settings/services/notification_service.dart';
+import '../../../modules/settings/services/settings_service.dart';
 
 class BackupService {
-  final ProductService _productService;
-  final FinanceService _financeService;
-  final InvoiceService _invoiceService;
-  final CustomerService _customerService;
-  final EmployeeService _employeeService;
-  final AttendanceService _attendanceService;
-  final SalaryService _salaryService;
-  final NotificationService _notificationService;
-  final SettingsService _settingsService;
-  final BackupRepository _backupRepository;
-
   BackupService({
     required ProductService productService,
     required FinanceService financeService,
@@ -49,6 +38,17 @@ class BackupService {
         _notificationService = notificationService,
         _settingsService = settingsService,
         _backupRepository = backupRepository;
+
+  final ProductService _productService;
+  final FinanceService _financeService;
+  final InvoiceService _invoiceService;
+  final CustomerService _customerService;
+  final EmployeeService _employeeService;
+  final AttendanceService _attendanceService;
+  final SalaryService _salaryService;
+  final NotificationService _notificationService;
+  final SettingsService _settingsService;
+  final BackupRepository _backupRepository;
 
   Future<BackupModel> createBackup({
     String name = '',
@@ -85,7 +85,7 @@ class BackupService {
       await _notificationService.notifyBackupComplete(saved.name);
       Logger.success('Backup completed: ${saved.name} (${saved.formattedSize})');
       return saved;
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Backup failed', e, stackTrace);
       final failed = backupModel.copyWith(status: BackupStatus.failed);
       await _backupRepository.save(failed);
@@ -161,7 +161,7 @@ class BackupService {
   }
 
   int _countRecords(Map<String, dynamic> data) {
-    int count = 0;
+    var count = 0;
     for (final entry in data.entries) {
       if (entry.value is List) {
         count += (entry.value as List).length;
@@ -174,7 +174,7 @@ class BackupService {
 
   String _computeChecksum(String content) {
     final bytes = utf8.encode(content);
-    int hash = 0;
+    var hash = 0;
     for (final byte in bytes) {
       hash = ((hash << 5) - hash + byte) & 0x7FFFFFFF;
     }
@@ -182,15 +182,15 @@ class BackupService {
   }
 
   List<String> get _allModuleNames => [
-        'products',
-        'finance',
-        'invoices',
-        'customers',
-        'employees',
-        'attendance',
-        'salaries',
-        'settings',
-      ];
+    'products',
+    'finance',
+    'invoices',
+    'customers',
+    'employees',
+    'attendance',
+    'salaries',
+    'settings',
+  ];
 
   String _timestamp() {
     final now = DateTime.now();

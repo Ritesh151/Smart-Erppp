@@ -3,22 +3,18 @@ import 'package:SmartERP/core/models/invoice_item_model.dart';
 import 'package:SmartERP/core/models/invoice_model.dart';
 import 'package:SmartERP/core/utils/logger.dart';
 import 'package:SmartERP/modules/invoice/repositories/invoice_repository.dart';
-import 'package:SmartERP/modules/finance/repositories/finance_repository.dart';
 import 'package:SmartERP/modules/products/repositories/product_repository.dart';
 import 'package:uuid/uuid.dart';
 
 class InvoiceService {
   final InvoiceRepository _invoiceRepository;
   final ProductRepository _productRepository;
-  final FinanceRepository? _financeRepository;
 
   InvoiceService({
     required InvoiceRepository invoiceRepository,
     required ProductRepository productRepository,
-    FinanceRepository? financeRepository,
   })  : _invoiceRepository = invoiceRepository,
-        _productRepository = productRepository,
-        _financeRepository = financeRepository;
+        _productRepository = productRepository;
 
   Future<List<InvoiceModel>> getAllInvoices() async {
     try {
@@ -67,27 +63,13 @@ class InvoiceService {
       final id = const Uuid().v4();
       final itemIds = <String>[];
 
+      await _applyStockDelta(_stockDelta(const [], items), items);
+
       for (final item in items) {
         final itemId = const Uuid().v4();
         itemIds.add(itemId);
         final savedItem = item.copyWith(id: itemId);
         await _invoiceRepository.saveItem(savedItem);
-      }
-
-      for (final item in items) {
-        final product = await _productRepository.getById(item.productId);
-        if (product != null) {
-          final newQuantity = product.stockQuantity - item.quantity.toInt();
-          if (newQuantity < 0) {
-            throw ValidationException(
-                'Insufficient stock for ${item.productName}');
-          }
-          final updatedProduct = product.copyWith(
-            stockQuantity: newQuantity,
-            updatedAt: DateTime.now(),
-          );
-          await _productRepository.update(updatedProduct);
-        }
       }
 
       final invoice = InvoiceModel(
@@ -115,7 +97,6 @@ class InvoiceService {
       );
 
       await _invoiceRepository.save(invoice);
-      await _syncSaleFromInvoice(invoice, items);
       Logger.success('Invoice created: $invoiceNumber');
       return invoice;
     } catch (e, stackTrace) {
@@ -154,22 +135,14 @@ class InvoiceService {
         throw ValidationException('Invoice must have at least one item');
       }
 
+      final oldItems = await _getItemsForInvoice(existingInvoice);
+      await _applyStockDelta(_stockDelta(oldItems, items), [
+        ...oldItems,
+        ...items,
+      ]);
+
       for (final oldItemId in existingInvoice.itemIds) {
-        final oldItem = await _invoiceRepository.getItemById(oldItemId);
-        if (oldItem != null) {
-          final product =
-              await _productRepository.getById(oldItem.productId);
-          if (product != null) {
-            final restoredQuantity =
-                product.stockQuantity + oldItem.quantity.toInt();
-            final updatedProduct = product.copyWith(
-              stockQuantity: restoredQuantity,
-              updatedAt: DateTime.now(),
-            );
-            await _productRepository.update(updatedProduct);
-          }
-          await _invoiceRepository.deleteItem(oldItemId);
-        }
+        await _invoiceRepository.deleteItem(oldItemId);
       }
 
       final itemIds = <String>[];
@@ -178,22 +151,6 @@ class InvoiceService {
         itemIds.add(itemId);
         final savedItem = item.copyWith(id: itemId);
         await _invoiceRepository.saveItem(savedItem);
-      }
-
-      for (final item in items) {
-        final product = await _productRepository.getById(item.productId);
-        if (product != null) {
-          final newQuantity = product.stockQuantity - item.quantity.toInt();
-          if (newQuantity < 0) {
-            throw ValidationException(
-                'Insufficient stock for ${item.productName}');
-          }
-          final updatedProduct = product.copyWith(
-            stockQuantity: newQuantity,
-            updatedAt: DateTime.now(),
-          );
-          await _productRepository.update(updatedProduct);
-        }
       }
 
       final updatedInvoice = existingInvoice.copyWith(
@@ -216,7 +173,6 @@ class InvoiceService {
       );
 
       await _invoiceRepository.update(updatedInvoice);
-      await _syncSaleFromInvoice(updatedInvoice, items);
       Logger.success('Invoice updated: ${updatedInvoice.invoiceNumber}');
       return updatedInvoice;
     } catch (e, stackTrace) {
@@ -232,25 +188,14 @@ class InvoiceService {
         throw NotFoundException('Invoice not found');
       }
 
+      final oldItems = await _getItemsForInvoice(invoice);
+      await _applyStockDelta(_stockDelta(oldItems, const []), oldItems);
+
       for (final itemId in invoice.itemIds) {
-        final item = await _invoiceRepository.getItemById(itemId);
-        if (item != null) {
-          final product = await _productRepository.getById(item.productId);
-          if (product != null) {
-            final restoredQuantity =
-                product.stockQuantity + item.quantity.toInt();
-            final updatedProduct = product.copyWith(
-              stockQuantity: restoredQuantity,
-              updatedAt: DateTime.now(),
-            );
-            await _productRepository.update(updatedProduct);
-          }
-          await _invoiceRepository.deleteItem(itemId);
-        }
+        await _invoiceRepository.deleteItem(itemId);
       }
 
       await _invoiceRepository.delete(id);
-      await _removeSaleForInvoice(id);
       Logger.success('Invoice deleted: ${invoice.invoiceNumber}');
     } catch (e, stackTrace) {
       Logger.error('Failed to delete invoice', e, stackTrace);
@@ -333,6 +278,64 @@ class InvoiceService {
     }
   }
 
+  Future<List<InvoiceItemModel>> _getItemsForInvoice(InvoiceModel invoice) async {
+    final items = <InvoiceItemModel>[];
+    for (final itemId in invoice.itemIds) {
+      final item = await _invoiceRepository.getItemById(itemId);
+      if (item != null) items.add(item);
+    }
+    return items;
+  }
+
+  Map<String, int> _stockDelta(
+    List<InvoiceItemModel> oldItems,
+    List<InvoiceItemModel> newItems,
+  ) {
+    final delta = <String, int>{};
+    for (final item in oldItems) {
+      if (item.productId.isEmpty) continue;
+      delta[item.productId] =
+          (delta[item.productId] ?? 0) - item.quantity.toInt();
+    }
+    for (final item in newItems) {
+      if (item.productId.isEmpty) continue;
+      delta[item.productId] =
+          (delta[item.productId] ?? 0) + item.quantity.toInt();
+    }
+    delta.removeWhere((_, quantity) => quantity == 0);
+    return delta;
+  }
+
+  Future<void> _applyStockDelta(
+    Map<String, int> deltaByProduct,
+    List<InvoiceItemModel> contextItems,
+  ) async {
+    final productNames = {
+      for (final item in contextItems) item.productId: item.productName,
+    };
+
+    for (final entry in deltaByProduct.entries) {
+      if (entry.value <= 0) continue;
+      final product = await _productRepository.getById(entry.key);
+      if (product == null) continue;
+      if (product.stockQuantity - entry.value < 0) {
+        throw ValidationException(
+          'Insufficient stock for ${productNames[entry.key] ?? product.productName}',
+        );
+      }
+    }
+
+    for (final entry in deltaByProduct.entries) {
+      final product = await _productRepository.getById(entry.key);
+      if (product == null) continue;
+      final updatedProduct = product.copyWith(
+        stockQuantity: product.stockQuantity - entry.value,
+        updatedAt: DateTime.now(),
+      );
+      await _productRepository.update(updatedProduct);
+    }
+  }
+
   Future<void> cancelInvoice(String id) async {
     try {
       final invoice = await _invoiceRepository.getById(id);
@@ -340,20 +343,9 @@ class InvoiceService {
         throw NotFoundException('Invoice not found');
       }
 
-      for (final itemId in invoice.itemIds) {
-        final item = await _invoiceRepository.getItemById(itemId);
-        if (item != null) {
-          final product = await _productRepository.getById(item.productId);
-          if (product != null) {
-            final restoredQuantity =
-                product.stockQuantity + item.quantity.toInt();
-            final updatedProduct = product.copyWith(
-              stockQuantity: restoredQuantity,
-              updatedAt: DateTime.now(),
-            );
-            await _productRepository.update(updatedProduct);
-          }
-        }
+      if (invoice.status != InvoiceStatus.cancelled) {
+        final oldItems = await _getItemsForInvoice(invoice);
+        await _applyStockDelta(_stockDelta(oldItems, const []), oldItems);
       }
 
       final updatedInvoice = invoice.copyWith(
@@ -362,7 +354,6 @@ class InvoiceService {
       );
 
       await _invoiceRepository.update(updatedInvoice);
-      await _removeSaleForInvoice(id);
       Logger.success('Invoice cancelled: ${invoice.invoiceNumber}');
     } catch (e, stackTrace) {
       Logger.error('Failed to cancel invoice', e, stackTrace);
@@ -430,43 +421,4 @@ class InvoiceService {
     }
   }
 
-  Future<void> _syncSaleFromInvoice(InvoiceModel invoice, List<InvoiceItemModel> items) async {
-    if (_financeRepository == null) return;
-    try {
-      final saleMap = {
-        'id': invoice.id,
-        'saleId': invoice.id,
-        'invoiceNumber': invoice.invoiceNumber,
-        'customerName': invoice.customerName,
-        'customerPhone': invoice.customerPhone ?? '',
-        'customerAddress': invoice.customerAddress ?? '',
-        'total': invoice.totalAmount,
-        'paidAmount': invoice.paidAmount,
-        'status': invoice.status.name,
-        'items': items.map((e) => {
-          'productId': e.productId,
-          'productName': e.productName,
-          'quantity': e.quantity,
-          'unitPrice': e.unitPrice,
-          'totalAmount': e.amount,
-          'hsnCode': e.hsnCode,
-          'taxRate': e.taxRate,
-        }).toList(),
-        'createdAt': invoice.createdAt.toIso8601String(),
-        'source': 'invoice',
-      };
-      await _financeRepository!.saveSale(saleMap);
-    } catch (e) {
-      Logger.error('Failed to sync sale from invoice', e);
-    }
-  }
-
-  Future<void> _removeSaleForInvoice(String invoiceId) async {
-    if (_financeRepository == null) return;
-    try {
-      await _financeRepository!.deleteSale(invoiceId);
-    } catch (e) {
-      Logger.error('Failed to remove sale for invoice', e);
-    }
-  }
 }

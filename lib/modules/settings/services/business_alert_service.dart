@@ -1,17 +1,9 @@
-import 'package:SmartERP/core/models/notification_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/settings/services/app_intelligence_service.dart';
-import 'package:SmartERP/modules/settings/services/notification_service.dart';
+import '../../../core/models/notification_model.dart';
+import '../../../core/utils/logger.dart';
+import '../../../modules/settings/services/app_intelligence_service.dart';
+import '../../../modules/settings/services/notification_service.dart';
 
 class BusinessAlert {
-  final String id;
-  final String title;
-  final String message;
-  final String severity;
-  final String? actionLabel;
-  final String? actionRoute;
-  final DateTime createdAt;
-
   BusinessAlert({
     required this.id,
     required this.title,
@@ -22,20 +14,28 @@ class BusinessAlert {
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
+  final String id;
+  final String title;
+  final String message;
+  final String severity;
+  final String? actionLabel;
+  final String? actionRoute;
+  final DateTime createdAt;
+
   bool get isCritical => severity == 'critical';
   bool get isWarning => severity == 'warning';
   bool get isInfo => severity == 'info';
 }
 
 class BusinessAlertService {
-  final AppIntelligenceService _intelligenceService;
-  final NotificationService _notificationService;
-
   BusinessAlertService({
     required AppIntelligenceService intelligenceService,
     required NotificationService notificationService,
   })  : _intelligenceService = intelligenceService,
         _notificationService = notificationService;
+
+  final AppIntelligenceService _intelligenceService;
+  final NotificationService _notificationService;
 
   Future<List<BusinessAlert>> generateAlerts() async {
     final alerts = <BusinessAlert>[];

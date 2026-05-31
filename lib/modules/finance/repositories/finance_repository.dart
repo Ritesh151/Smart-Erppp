@@ -2,31 +2,13 @@ import 'package:SmartERP/core/storage/storage_service.dart';
 import 'package:SmartERP/core/utils/logger.dart';
 
 class FinanceRepository {
-  final StorageService<Map<dynamic, dynamic>> salesStorage;
   final StorageService<Map<dynamic, dynamic>> purchaseStorage;
   final StorageService<Map<dynamic, dynamic>> expensesStorage;
 
   FinanceRepository({
-    required this.salesStorage,
     required this.purchaseStorage,
     required this.expensesStorage,
   });
-
-  List<Map<String, dynamic>> getAllSales() {
-    try {
-      return salesStorage.getAll()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList()
-        ..sort((a, b) {
-          final ad = DateTime.tryParse(a['createdAt'] as String? ?? '');
-          final bd = DateTime.tryParse(b['createdAt'] as String? ?? '');
-          return bd?.compareTo(ad ?? DateTime(2000)) ?? 0;
-        });
-    } catch (e, stackTrace) {
-      Logger.error('Failed to get all sales', e, stackTrace);
-      return [];
-    }
-  }
 
   List<Map<String, dynamic>> getAllPurchases() {
     try {
@@ -60,30 +42,12 @@ class FinanceRepository {
     }
   }
 
-  List<Map<String, dynamic>> getSalesByDateRange(DateTime start, DateTime end) {
-    return getAllSales().where((s) {
-      final createdAt = DateTime.tryParse(s['createdAt'] as String? ?? '');
-      if (createdAt == null) return false;
-      return !createdAt.isBefore(start) && !createdAt.isAfter(end);
-    }).toList();
-  }
-
   List<Map<String, dynamic>> getPurchasesByDateRange(DateTime start, DateTime end) {
     return getAllPurchases().where((p) {
       final purchaseDate = DateTime.tryParse(p['purchaseDate'] as String? ?? '');
       if (purchaseDate == null) return false;
       return !purchaseDate.isBefore(start) && !purchaseDate.isAfter(end);
     }).toList();
-  }
-
-  Future<void> saveSale(Map<String, dynamic> sale) async {
-    try {
-      await salesStorage.save(sale['id'] as String, sale);
-      Logger.success('Sale saved: ${sale['id']}');
-    } catch (e, stackTrace) {
-      Logger.error('Failed to save sale', e, stackTrace);
-      rethrow;
-    }
   }
 
   Future<void> savePurchase(Map<String, dynamic> purchase) async {
@@ -96,32 +60,12 @@ class FinanceRepository {
     }
   }
 
-  Future<void> updateSale(Map<String, dynamic> sale) async {
-    try {
-      await salesStorage.update(sale['id'] as String, sale);
-      Logger.success('Sale updated: ${sale['id']}');
-    } catch (e, stackTrace) {
-      Logger.error('Failed to update sale', e, stackTrace);
-      rethrow;
-    }
-  }
-
   Future<void> updatePurchase(Map<String, dynamic> purchase) async {
     try {
       await purchaseStorage.update(purchase['id'] as String, purchase);
       Logger.success('Purchase updated: ${purchase['id']}');
     } catch (e, stackTrace) {
       Logger.error('Failed to update purchase', e, stackTrace);
-      rethrow;
-    }
-  }
-
-  Future<void> deleteSale(String id) async {
-    try {
-      await salesStorage.delete(id);
-      Logger.success('Sale deleted: $id');
-    } catch (e, stackTrace) {
-      Logger.error('Failed to delete sale', e, stackTrace);
       rethrow;
     }
   }

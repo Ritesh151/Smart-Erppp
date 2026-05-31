@@ -1,10 +1,10 @@
-import 'package:SmartERP/core/models/vehicle_model.dart';
-import 'package:SmartERP/modules/transport/repositories/vehicle_repository.dart';
+import '../../../core/models/vehicle_model.dart';
+import '../repositories/vehicle_repository.dart';
 
 class VehicleService {
-  final VehicleRepository _repository;
-
   VehicleService(this._repository);
+
+  final VehicleRepository _repository;
 
   Future<List<VehicleModel>> getAllVehicles() => _repository.getAll();
 

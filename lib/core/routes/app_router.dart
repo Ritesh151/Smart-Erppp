@@ -9,6 +9,7 @@ import 'package:SmartERP/modules/products/screens/products_screen.dart';
 import 'package:SmartERP/modules/products/screens/product_form_screen.dart';
 import 'package:SmartERP/modules/products/screens/product_detail_screen.dart';
 import 'package:SmartERP/modules/finance/finance_screen.dart';
+import 'package:SmartERP/core/models/expense_model.dart';
 
 import 'package:SmartERP/modules/invoice/screens/invoices_screen.dart';
 import 'package:SmartERP/modules/invoice/screens/invoice_form_screen.dart';
@@ -20,10 +21,12 @@ import 'package:SmartERP/modules/invoice/screens/customer_detail_screen.dart';
 import 'package:SmartERP/modules/expenses/screens/expenses_screen.dart';
 import 'package:SmartERP/modules/expenses/screens/add_expense_screen.dart';
 import 'package:SmartERP/modules/expenses/screens/expense_summary_screen.dart';
+import 'package:SmartERP/modules/expenses/screens/expense_detail_screen.dart';
 import 'package:SmartERP/modules/payroll/screens/payroll_screen.dart';
 import 'package:SmartERP/modules/payroll/payroll_dashboard_screen.dart';
 import 'package:SmartERP/modules/payroll/add_employee_screen.dart';
 import 'package:SmartERP/modules/payroll/edit_employee_screen.dart';
+import 'package:SmartERP/modules/payroll/salary_payment_screen.dart';
 import 'package:SmartERP/modules/payroll/salary_history_screen.dart';
 import 'package:SmartERP/modules/payroll/attendance_screen.dart';
 import 'package:SmartERP/modules/reports/reports_home_screen.dart';
@@ -35,6 +38,9 @@ import 'package:SmartERP/modules/reports/stock_statement_screen.dart';
 import 'package:SmartERP/modules/reports/profit_loss_screen.dart';
 import 'package:SmartERP/modules/reports/payroll_report_screen.dart';
 import 'package:SmartERP/modules/settings/screens/settings_screen.dart';
+import 'package:SmartERP/modules/purchase/screens/purchase_list_screen.dart';
+import 'package:SmartERP/modules/purchase/screens/purchase_entry_screen.dart';
+import 'package:SmartERP/modules/purchase/screens/purchase_detail_screen.dart';
 
 class AppRouter {
   final AuthProvider _authProvider;
@@ -231,24 +237,50 @@ class AppRouter {
           state: state,
           child: const ExpensesScreen(),
         ),
-      ),
-      GoRoute(
-        path: AppRoutes.expenseAdd,
-        name: 'expense-add',
-        pageBuilder: (context, state) => _buildShellPage(
-          context: context,
-          state: state,
-          child: const AddExpenseScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.expenseSummary,
-        name: 'expense-summary',
-        pageBuilder: (context, state) => _buildShellPage(
-          context: context,
-          state: state,
-          child: const ExpenseSummaryScreen(),
-        ),
+        routes: [
+          GoRoute(
+            path: 'add',
+            name: 'expense-add',
+            pageBuilder: (context, state) => _buildShellPage(
+              context: context,
+              state: state,
+              child: const AddExpenseScreen(),
+            ),
+          ),
+          GoRoute(
+            path: ':id',
+            name: 'expense-detail',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return _buildShellPage(
+                context: context,
+                state: state,
+                child: ExpenseDetailScreen(expenseId: id),
+              );
+            },
+          ),
+          GoRoute(
+            path: ':id/edit',
+            name: 'expense-edit',
+            pageBuilder: (context, state) {
+              final expense = state.extra as ExpenseModel?;
+              return _buildShellPage(
+                context: context,
+                state: state,
+                child: AddExpenseScreen(expense: expense),
+              );
+            },
+          ),
+          GoRoute(
+            path: 'summary',
+            name: 'expense-summary',
+            pageBuilder: (context, state) => _buildShellPage(
+              context: context,
+              state: state,
+              child: const ExpenseSummaryScreen(),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.payroll,
@@ -277,6 +309,18 @@ class AppRouter {
                 context: context,
                 state: state,
                 child: EditEmployeeScreen(employeeId: id),
+              );
+            },
+          ),
+          GoRoute(
+            path: ':id/salary',
+            name: 'payroll-salary',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return _buildShellPage(
+                context: context,
+                state: state,
+                child: SalaryPaymentScreen(employeeId: id),
               );
             },
           ),
@@ -378,13 +422,47 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: '/purchases/add',
-        name: 'purchases-add',
+        path: AppRoutes.purchases,
+        name: 'purchases',
         pageBuilder: (context, state) => _buildShellPage(
           context: context,
           state: state,
-          child: _buildPlaceholderPage('Purchase Entry', Icons.shopping_bag_rounded),
+          child: const PurchaseListScreen(),
         ),
+        routes: [
+          GoRoute(
+            path: 'create',
+            name: 'purchase-create',
+            pageBuilder: (context, state) => _buildShellPage(
+              context: context,
+              state: state,
+              child: const PurchaseEntryScreen(),
+            ),
+          ),
+          GoRoute(
+            path: ':id',
+            name: 'purchase-detail',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return _buildShellPage(
+                context: context,
+                state: state,
+                child: PurchaseDetailScreen(purchaseId: id),
+              );
+            },
+          ),
+          GoRoute(
+            path: ':id/edit',
+            name: 'purchase-edit',
+            pageBuilder: (context, state) {
+              return _buildShellPage(
+                context: context,
+                state: state,
+                child: const PurchaseEntryScreen(),
+              );
+            },
+          ),
+        ],
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

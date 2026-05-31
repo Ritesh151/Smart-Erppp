@@ -1,9 +1,14 @@
 import 'package:flutter/foundation.dart';
-import 'package:SmartERP/modules/transport/models/transport_screen_model.dart';
-import 'package:SmartERP/modules/transport/services/transport_service.dart';
-import 'package:SmartERP/modules/transport/services/transport_status_service.dart';
+import '../models/transport_screen_model.dart';
+import '../services/transport_service.dart';
+import '../services/transport_status_service.dart';
 
 class TransportProvider extends ChangeNotifier {
+  TransportProvider({
+    required this.service,
+    required this.statusService,
+  });
+
   final TransportService service;
   final TransportStatusService statusService;
 
@@ -15,11 +20,6 @@ class TransportProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  TransportProvider({
-    required this.service,
-    required this.statusService,
-  });
-
   Future<void> loadTransports() async {
     _isLoading = true;
     _error = null;
@@ -27,7 +27,7 @@ class TransportProvider extends ChangeNotifier {
 
     try {
       _transports = await service.getAllTransports();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = e.toString();
     } finally {
       _isLoading = false;
@@ -40,7 +40,7 @@ class TransportProvider extends ChangeNotifier {
       await service.saveTransport(transport);
       await loadTransports();
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _error = e.toString();
       notifyListeners();
       return false;
@@ -52,7 +52,7 @@ class TransportProvider extends ChangeNotifier {
       await service.updateTransport(transport);
       await loadTransports();
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _error = e.toString();
       notifyListeners();
       return false;
@@ -64,7 +64,7 @@ class TransportProvider extends ChangeNotifier {
       await service.deleteTransport(id);
       await loadTransports();
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _error = e.toString();
       notifyListeners();
       return false;
@@ -76,7 +76,7 @@ class TransportProvider extends ChangeNotifier {
       await statusService.updateStatus(id, status);
       await loadTransports();
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _error = e.toString();
       notifyListeners();
       return false;

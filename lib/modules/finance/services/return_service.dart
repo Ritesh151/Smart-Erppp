@@ -1,9 +1,6 @@
 import 'package:SmartERP/core/constants/storage_keys.dart';
-import 'package:SmartERP/core/models/invoice_item_model.dart';
-import 'package:SmartERP/core/models/invoice_model.dart';
 import 'package:SmartERP/core/storage/storage_service.dart';
 import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/finance/repositories/finance_repository.dart';
 import 'package:SmartERP/modules/invoice/repositories/invoice_repository.dart';
 import 'package:SmartERP/modules/products/repositories/product_repository.dart';
 import 'package:uuid/uuid.dart';
@@ -11,16 +8,13 @@ import 'package:uuid/uuid.dart';
 class ReturnService {
   final InvoiceRepository _invoiceRepository;
   final ProductRepository _productRepository;
-  final FinanceRepository _financeRepository;
   final StorageService<Map<dynamic, dynamic>> _returnStorage;
 
   ReturnService({
     required InvoiceRepository invoiceRepository,
     required ProductRepository productRepository,
-    required FinanceRepository financeRepository,
   })  : _invoiceRepository = invoiceRepository,
         _productRepository = productRepository,
-        _financeRepository = financeRepository,
         _returnStorage =
             StorageService<Map<dynamic, dynamic>>(StorageKeys.returnsBox);
 
@@ -68,22 +62,6 @@ class ReturnService {
       };
 
       await _returnStorage.save(returnId, returnMap);
-
-      final saleMap = {
-        'id': 'return-$returnId',
-        'saleId': 'return-$returnId',
-        'invoiceNumber': invoice.invoiceNumber,
-        'customerName': invoice.customerName,
-        'customerPhone': invoice.customerPhone ?? '',
-        'customerAddress': invoice.customerAddress ?? '',
-        'total': -refundAmount,
-        'paidAmount': 0,
-        'status': 'return',
-        'items': returnedItems,
-        'createdAt': now.toIso8601String(),
-        'source': 'return',
-      };
-      await _financeRepository.saveSale(saleMap);
 
       Logger.success('Return created: $returnId for invoice $invoiceId');
       return returnMap;

@@ -1,16 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-import 'package:SmartERP/core/utils/date_formatter_config.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/settings/services/settings_service.dart';
+
+import '../../../core/utils/date_formatter_config.dart';
+import '../../../core/utils/logger.dart';
+import '../../../modules/settings/services/settings_service.dart';
 
 class DateFormatService extends ChangeNotifier {
+  DateFormatService({required SettingsService settingsService})
+      : _settingsService = settingsService;
+
   final SettingsService _settingsService;
   String _currentFormat = 'dd/MM/yyyy';
   bool _initialized = false;
-
-  DateFormatService({required SettingsService settingsService})
-      : _settingsService = settingsService;
 
   String get currentFormat => _currentFormat;
   bool get isInitialized => _initialized;
@@ -21,7 +22,7 @@ class DateFormatService extends ChangeNotifier {
       DateFormatterConfig.setFormat(_currentFormat);
       _initialized = true;
       Logger.info('DateFormatService initialized: $_currentFormat');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       _initialized = true;
       Logger.error('Failed to initialize DateFormatService', e, stackTrace);
     }
@@ -43,7 +44,7 @@ class DateFormatService extends ChangeNotifier {
     try {
       final formatter = DateFormat(_toDateFormatPattern(_currentFormat));
       return formatter.format(date);
-    } catch (e) {
+    } on Exception catch (_) {
       return _fallbackFormat(date);
     }
   }
@@ -52,14 +53,14 @@ class DateFormatService extends ChangeNotifier {
     try {
       final formatter = DateFormat('${_toDateFormatPattern(_currentFormat)} HH:mm');
       return formatter.format(date);
-    } catch (e) {
+    } on Exception catch (_) {
       return _fallbackFormat(date);
     }
   }
 
   String formatMonthYear(int month, int year) {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun',
-      'Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${months[month - 1]} $year';
   }
 
@@ -67,7 +68,7 @@ class DateFormatService extends ChangeNotifier {
     try {
       final formatter = DateFormat(_toDateFormatPattern(_currentFormat));
       return formatter.format(date);
-    } catch (e) {
+    } on Exception catch (_) {
       return _fallbackFormat(date);
     }
   }
@@ -76,10 +77,18 @@ class DateFormatService extends ChangeNotifier {
     final now = DateTime.now();
     final diff = now.difference(date);
 
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    if (diff.inMinutes < 1) {
+      return 'Just now';
+    }
+    if (diff.inHours < 1) {
+      return '${diff.inMinutes}m ago';
+    }
+    if (diff.inDays < 1) {
+      return '${diff.inHours}h ago';
+    }
+    if (diff.inDays < 7) {
+      return '${diff.inDays}d ago';
+    }
     return format(date);
   }
 
@@ -94,7 +103,7 @@ class DateFormatService extends ChangeNotifier {
     try {
       final formatter = DateFormat(_toDateFormatPattern(_currentFormat));
       return formatter.parse(dateString);
-    } catch (e) {
+    } on Exception catch (_) {
       return null;
     }
   }
@@ -139,13 +148,10 @@ class DateFormatService extends ChangeNotifier {
     }
   }
 
-  bool _isValidFormat(String format) {
-    return getAvailableFormats().contains(format);
-  }
+  bool _isValidFormat(String format) => getAvailableFormats().contains(format);
 
-  String _fallbackFormat(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year}';
-  }
+  String _fallbackFormat(DateTime date) =>
+    '${date.day.toString().padLeft(2, '0')}/'
+    '${date.month.toString().padLeft(2, '0')}/'
+    '${date.year}';
 }

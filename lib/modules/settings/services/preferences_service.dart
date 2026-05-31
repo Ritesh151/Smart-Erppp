@@ -1,20 +1,22 @@
-import 'package:SmartERP/core/constants/storage_keys.dart';
-import 'package:SmartERP/core/models/preferences_model.dart';
-import 'package:SmartERP/core/storage/preferences_service.dart' as pref;
-import 'package:SmartERP/core/utils/logger.dart';
+import '../../../core/constants/storage_keys.dart';
+import '../../../core/models/preferences_model.dart';
+import '../../../core/storage/preferences_service.dart' as pref;
+import '../../../core/utils/logger.dart';
 
 class PreferencesService {
-  final pref.PreferencesService _preferences;
-  PreferencesModel? _cached;
-
   PreferencesService({required pref.PreferencesService preferencesService})
       : _preferences = preferencesService;
 
+  final pref.PreferencesService _preferences;
+  PreferencesModel? _cached;
+
   Future<PreferencesModel> getPreferences() async {
     try {
-      if (_cached != null) return _cached!;
+      if (_cached != null) {
+        return _cached!;
+      }
       return await _loadPreferences();
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to get preferences', e, stackTrace);
       rethrow;
     }
@@ -28,7 +30,6 @@ class PreferencesService {
 
     _cached = PreferencesModel.create(
       userId: 'default',
-      themeName: 'light',
       sidebarCollapsed: sidebarCollapsed,
       dateFormat: _preferences.getString(
         StorageKeys.language,
@@ -42,14 +43,14 @@ class PreferencesService {
     return _cached!;
   }
 
-  Future<void> updateSidebarCollapsed(bool collapsed) async {
+  Future<void> updateSidebarCollapsed({required bool collapsed}) async {
     try {
       await _preferences.setBool(StorageKeys.sidebarCollapsed, collapsed);
       _cached = _cached?.copyWith(
         sidebarCollapsed: collapsed,
         updatedAt: DateTime.now(),
       );
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to update sidebar preference', e, stackTrace);
     }
   }
@@ -59,7 +60,7 @@ class PreferencesService {
       final prefs = await getPreferences();
       _cached = prefs.toggleFavorite(moduleName);
       Logger.info('Favorite module toggled: $moduleName');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to toggle favorite module', e, stackTrace);
     }
   }
@@ -71,7 +72,7 @@ class PreferencesService {
         lastUsedModule: moduleName,
         updatedAt: DateTime.now(),
       );
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to update last used module', e, stackTrace);
     }
   }
@@ -82,12 +83,12 @@ class PreferencesService {
       final prefs = await getPreferences();
       _cached = prefs.copyWith(language: language, updatedAt: DateTime.now());
       Logger.info('Language preference updated: $language');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to update language preference', e, stackTrace);
     }
   }
 
-  Future<void> updateNotificationsEnabled(bool enabled) async {
+  Future<void> updateNotificationsEnabled({required bool enabled}) async {
     try {
       final prefs = await getPreferences();
       _cached = prefs.copyWith(
@@ -95,7 +96,7 @@ class PreferencesService {
         updatedAt: DateTime.now(),
       );
       Logger.info('Notifications preference: $enabled');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to update notifications preference', e, stackTrace);
     }
   }
@@ -108,7 +109,7 @@ class PreferencesService {
         updatedAt: DateTime.now(),
       );
       Logger.info('Low stock threshold preference: $threshold');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to update low stock threshold', e, stackTrace);
     }
   }
@@ -117,26 +118,18 @@ class PreferencesService {
     try {
       final prefs = await getPreferences();
       _cached = prefs.copyWith(itemsPerPage: count, updatedAt: DateTime.now());
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to update items per page', e, stackTrace);
     }
   }
 
-  String getCurrentDateFormat() {
-    return _cached?.dateFormat ?? 'dd/MM/yyyy';
-  }
+  String getCurrentDateFormat() => _cached?.dateFormat ?? 'dd/MM/yyyy';
 
-  bool isSidebarCollapsed() {
-    return _cached?.sidebarCollapsed ?? false;
-  }
+  bool isSidebarCollapsed() => _cached?.sidebarCollapsed ?? false;
 
-  bool isNotificationsEnabled() {
-    return _cached?.notificationsEnabled ?? true;
-  }
+  bool isNotificationsEnabled() => _cached?.notificationsEnabled ?? true;
 
-  int getItemsPerPage() {
-    return _cached?.itemsPerPage ?? 20;
-  }
+  int getItemsPerPage() => _cached?.itemsPerPage ?? 20;
 
   void invalidateCache() {
     _cached = null;

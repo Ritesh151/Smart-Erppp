@@ -24,7 +24,7 @@ class FinancePurchasesTab extends ConsumerWidget {
             title: 'No Purchases',
             message: 'Record your raw material purchases here.',
             actionLabel: 'Add Purchase',
-            onAction: () => context.go('/purchases/add'),
+            onAction: () => context.go('/purchases/create'),
           );
         }
         return ListView.separated(
@@ -36,6 +36,7 @@ class FinancePurchasesTab extends ConsumerWidget {
             return Card(
               margin: EdgeInsets.zero,
               child: ListTile(
+                onTap: () => context.go('/purchases/${p.id}'),
                 leading: CircleAvatar(
                   backgroundColor: Colors.blue.shade100,
                   child: Icon(Icons.shopping_cart_outlined,

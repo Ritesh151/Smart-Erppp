@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:SmartERP/core/constants/storage_keys.dart';
 import 'package:SmartERP/core/models/transaction_model.dart';
 import 'package:SmartERP/core/utils/logger.dart';
 import 'package:SmartERP/modules/finance/services/finance_service.dart';
@@ -23,8 +27,12 @@ class FinanceProvider extends ChangeNotifier {
   List<Map<String, dynamic>> monthlyRevenue = [];
   List<Map<String, dynamic>> sales = [];
   List<Map<String, dynamic>> purchases = [];
+  final List<StreamSubscription<dynamic>> _sourceSubscriptions = [];
+  bool _reloadQueued = false;
 
-  FinanceProvider(this._service);
+  FinanceProvider(this._service) {
+    _subscribeToSourceBoxes();
+  }
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -142,18 +150,6 @@ class FinanceProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> deleteSale(String id) async {
-    try {
-      await _service.deleteSale(id);
-      await loadTransactions();
-    } catch (e, stackTrace) {
-      _errorMessage = 'Failed to delete sale';
-      notifyListeners();
-      Logger.error('Failed to delete sale', e, stackTrace);
-      rethrow;
-    }
-  }
-
   Future<void> deletePurchase(String id) async {
     try {
       await _service.deletePurchase(id);
@@ -169,6 +165,40 @@ class FinanceProvider extends ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  void _subscribeToSourceBoxes() {
+    for (final boxName in [
+      StorageKeys.invoicesBox,
+      StorageKeys.invoiceItemsBox,
+      StorageKeys.returnsBox,
+      StorageKeys.purchaseBox,
+      StorageKeys.expensesBox,
+      StorageKeys.salaryHistoryBox,
+    ]) {
+      if (Hive.isBoxOpen(boxName)) {
+        _sourceSubscriptions.add(Hive.box(boxName).watch().listen((_) {
+          _queueReload();
+        }));
+      }
+    }
+  }
+
+  void _queueReload() {
+    if (_reloadQueued || _isLoading) return;
+    _reloadQueued = true;
+    Future.microtask(() async {
+      _reloadQueued = false;
+      await loadTransactions();
+    });
+  }
+
+  @override
+  void dispose() {
+    for (final sub in _sourceSubscriptions) {
+      sub.cancel();
+    }
+    super.dispose();
   }
 }
 

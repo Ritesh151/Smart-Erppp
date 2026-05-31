@@ -1,33 +1,24 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:SmartERP/core/storage/storage_service.dart';
-import 'package:SmartERP/core/utils/logger.dart';
+import '../../../core/storage/storage_service.dart';
+import '../../../core/utils/logger.dart';
 
 class DataImportResult {
-  final int recordsImported;
-  final int recordsSkipped;
-  final List<String> errors;
-
   DataImportResult({
     this.recordsImported = 0,
     this.recordsSkipped = 0,
     this.errors = const [],
   });
 
+  final int recordsImported;
+  final int recordsSkipped;
+  final List<String> errors;
+
   bool get success => errors.isEmpty;
 }
 
 class DataImportService {
-  final StorageService<Map<dynamic, dynamic>> _productsStorage;
-  final StorageService<Map<dynamic, dynamic>> _transactionsStorage;
-  final StorageService<Map<dynamic, dynamic>> _invoicesStorage;
-  final StorageService<Map<dynamic, dynamic>> _customersStorage;
-
-  final StorageService<Map<dynamic, dynamic>> _employeesStorage;
-  final StorageService<Map<dynamic, dynamic>> _attendanceStorage;
-  final StorageService<Map<dynamic, dynamic>> _salariesStorage;
-
   DataImportService({
     required StorageService<Map<dynamic, dynamic>> productsStorage,
     required StorageService<Map<dynamic, dynamic>> transactionsStorage,
@@ -43,6 +34,15 @@ class DataImportService {
         _employeesStorage = employeesStorage,
         _attendanceStorage = attendanceStorage,
         _salariesStorage = salariesStorage;
+
+  final StorageService<Map<dynamic, dynamic>> _productsStorage;
+  final StorageService<Map<dynamic, dynamic>> _transactionsStorage;
+  final StorageService<Map<dynamic, dynamic>> _invoicesStorage;
+  final StorageService<Map<dynamic, dynamic>> _customersStorage;
+
+  final StorageService<Map<dynamic, dynamic>> _employeesStorage;
+  final StorageService<Map<dynamic, dynamic>> _attendanceStorage;
+  final StorageService<Map<dynamic, dynamic>> _salariesStorage;
 
   Future<DataImportResult> importFromFile(
     String filePath, {
@@ -64,13 +64,13 @@ class DataImportService {
     Map<String, dynamic> data;
     try {
       data = json.decode(jsonString) as Map<String, dynamic>;
-    } catch (e) {
+    } on FormatException catch (e) {
       return DataImportResult(errors: ['Invalid JSON: $e']);
     }
 
     final errors = <String>[];
-    int imported = 0;
-    int skipped = 0;
+    var imported = 0;
+    var skipped = 0;
 
     final storageMap = <String, StorageService<Map<dynamic, dynamic>>>{
       'products': _productsStorage,
@@ -83,7 +83,9 @@ class DataImportService {
     };
 
     for (final entry in data.entries) {
-      if (entry.value == null) continue;
+      if (entry.value == null) {
+        continue;
+      }
 
       final storage = storageMap[entry.key];
       if (storage == null) {
@@ -109,7 +111,7 @@ class DataImportService {
             }
           }
         }
-      } catch (e, stackTrace) {
+      } on Exception catch (e, stackTrace) {
         Logger.error('Failed to import module: ${entry.key}', e, stackTrace);
         errors.add('${entry.key}: $e');
       }
@@ -137,7 +139,7 @@ class DataImportService {
     List<dynamic> items;
     try {
       items = json.decode(jsonString) as List<dynamic>;
-    } catch (e) {
+    } on FormatException catch (e) {
       return DataImportResult(errors: ['Invalid JSON array: $e']);
     }
 
@@ -165,8 +167,8 @@ class DataImportService {
     }
 
     final errors = <String>[];
-    int imported = 0;
-    int skipped = 0;
+    var imported = 0;
+    var skipped = 0;
 
     for (final item in items) {
       if (item is! Map) {
@@ -184,7 +186,7 @@ class DataImportService {
           Map<String, dynamic>.from(item),
         );
         imported++;
-      } catch (e) {
+      } on Exception catch (e) {
         errors.add('$e');
       }
     }

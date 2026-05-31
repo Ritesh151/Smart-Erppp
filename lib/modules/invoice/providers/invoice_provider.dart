@@ -212,6 +212,7 @@ class InvoiceProvider extends ChangeNotifier {
       );
 
       _invoices.add(invoice);
+      await _productProvider?.loadProducts();
       resetEditingState();
 
       _isLoading = false;
@@ -266,6 +267,7 @@ class InvoiceProvider extends ChangeNotifier {
       );
 
       _invoices.add(invoice);
+      await _productProvider?.loadProducts();
       resetEditingState();
 
       _isLoading = false;
@@ -328,6 +330,7 @@ class InvoiceProvider extends ChangeNotifier {
         _selectedInvoice = updatedInvoice;
       }
 
+      await _productProvider?.loadProducts();
       resetEditingState();
 
       _isLoading = false;
@@ -362,6 +365,7 @@ class InvoiceProvider extends ChangeNotifier {
         _selectedInvoiceItems = [];
       }
 
+      await _productProvider?.loadProducts();
       _isLoading = false;
       notifyListeners();
       onDataChanged?.call();
@@ -466,6 +470,7 @@ class InvoiceProvider extends ChangeNotifier {
         );
       }
 
+      await _productProvider?.loadProducts();
       _isLoading = false;
       notifyListeners();
       onDataChanged?.call();

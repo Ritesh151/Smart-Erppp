@@ -19,11 +19,38 @@ class ExpenseProvider extends ChangeNotifier {
   String _searchQuery = '';
 
   List<ExpenseModel> get expenses => _filteredExpenses;
+
+  ExpenseModel? getExpenseById(String id) {
+    try {
+      return _expenses.firstWhere((e) => e.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
   Map<String, double> get expensesByCategory => _expensesByCategory;
   double get totalExpenses => _totalExpenses;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
+
+  ExpenseModel? _selectedExpense;
+
+  ExpenseModel? get selectedExpense => _selectedExpense;
+
+  Future<void> loadExpenseById(String id) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      _selectedExpense = await _service.getExpenseById(id);
+    } catch (e, stackTrace) {
+      _errorMessage = 'Failed to load expense details';
+      Logger.error('Failed to load expense details', e, stackTrace);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   static const List<String> categories = [
     'Raw Materials',
@@ -37,24 +64,27 @@ class ExpenseProvider extends ChangeNotifier {
   ];
 
   Future<void> loadExpenses() async {
+    Logger.debug('loadExpenses: START');
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
     try {
-      _isLoading = true;
-      _errorMessage = null;
-      notifyListeners();
-
+      Logger.debug('loadExpenses: calling service.getAllExpenses');
       _expenses = await _service.getAllExpenses();
+      Logger.debug('loadExpenses: getAllExpenses done, count=${_expenses.length}');
       _applyFilters();
+      Logger.debug('loadExpenses: _applyFilters done');
       await _refreshSummary();
-
-      _isLoading = false;
-      notifyListeners();
-      onDataChanged?.call();
+      Logger.debug('loadExpenses: _refreshSummary done');
       Logger.success('Expenses loaded: ${_expenses.length}');
     } catch (e, stackTrace) {
-      _isLoading = false;
       _errorMessage = 'Failed to load expenses';
+      Logger.error('loadExpenses: FAILED', e, stackTrace);
+    } finally {
+      _isLoading = false;
       notifyListeners();
-      Logger.error('Failed to load expenses', e, stackTrace);
+      Logger.debug('loadExpenses: END isLoading=false, errorMessage=$_errorMessage');
+      if (_errorMessage == null) onDataChanged?.call();
     }
   }
 
@@ -67,10 +97,6 @@ class ExpenseProvider extends ChangeNotifier {
     String? notes,
   }) async {
     try {
-      _isLoading = true;
-      _errorMessage = null;
-      notifyListeners();
-
       await _service.createExpense(
         category: category,
         description: description,
@@ -79,13 +105,39 @@ class ExpenseProvider extends ChangeNotifier {
         vendor: vendor,
         notes: notes,
       );
-
       await loadExpenses();
     } catch (e, stackTrace) {
-      _isLoading = false;
       _errorMessage = 'Failed to add expense';
       notifyListeners();
       Logger.error('Failed to add expense', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> updateExpense({
+    required String id,
+    required String category,
+    required String description,
+    required double amount,
+    required DateTime expenseDate,
+    String? vendor,
+    String? notes,
+  }) async {
+    try {
+      await _service.updateExpense(
+        id: id,
+        category: category,
+        description: description,
+        amount: amount,
+        expenseDate: expenseDate,
+        vendor: vendor,
+        notes: notes,
+      );
+      await loadExpenses();
+    } catch (e, stackTrace) {
+      _errorMessage = 'Failed to update expense';
+      notifyListeners();
+      Logger.error('Failed to update expense', e, stackTrace);
       rethrow;
     }
   }
@@ -100,8 +152,8 @@ class ExpenseProvider extends ChangeNotifier {
       onDataChanged?.call();
     } catch (e, stackTrace) {
       _errorMessage = 'Failed to delete expense';
-      notifyListeners();
       Logger.error('Failed to delete expense', e, stackTrace);
+      notifyListeners();
       rethrow;
     }
   }

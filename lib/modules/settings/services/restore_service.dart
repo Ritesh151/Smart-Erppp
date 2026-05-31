@@ -1,20 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:SmartERP/core/models/backup_model.dart';
-import 'package:SmartERP/core/models/notification_model.dart';
-import 'package:SmartERP/core/storage/storage_service.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/settings/repositories/backup_repository.dart';
-import 'package:SmartERP/modules/settings/services/notification_service.dart';
+import '../../../core/models/backup_model.dart';
+import '../../../core/models/notification_model.dart';
+import '../../../core/storage/storage_service.dart';
+import '../../../core/utils/logger.dart';
+import '../../../modules/settings/repositories/backup_repository.dart';
+import '../../../modules/settings/services/notification_service.dart';
 
 class RestoreResult {
-  final bool success;
-  final int modulesRestored;
-  final int recordsRestored;
-  final List<String> errors;
-  final String? backupName;
-
   RestoreResult({
     required this.success,
     this.modulesRestored = 0,
@@ -22,20 +16,15 @@ class RestoreResult {
     this.errors = const [],
     this.backupName,
   });
+
+  final bool success;
+  final int modulesRestored;
+  final int recordsRestored;
+  final List<String> errors;
+  final String? backupName;
 }
 
 class RestoreService {
-  final BackupRepository _backupRepository;
-  final NotificationService _notificationService;
-  final StorageService<Map<dynamic, dynamic>> _productsStorage;
-  final StorageService<Map<dynamic, dynamic>> _transactionsStorage;
-  final StorageService<Map<dynamic, dynamic>> _invoicesStorage;
-  final StorageService<Map<dynamic, dynamic>> _customersStorage;
-
-  final StorageService<Map<dynamic, dynamic>> _employeesStorage;
-  final StorageService<Map<dynamic, dynamic>> _attendanceStorage;
-  final StorageService<Map<dynamic, dynamic>> _salariesStorage;
-
   RestoreService({
     required BackupRepository backupRepository,
     required NotificationService notificationService,
@@ -55,6 +44,17 @@ class RestoreService {
         _employeesStorage = employeesStorage,
         _attendanceStorage = attendanceStorage,
         _salariesStorage = salariesStorage;
+
+  final BackupRepository _backupRepository;
+  final NotificationService _notificationService;
+  final StorageService<Map<dynamic, dynamic>> _productsStorage;
+  final StorageService<Map<dynamic, dynamic>> _transactionsStorage;
+  final StorageService<Map<dynamic, dynamic>> _invoicesStorage;
+  final StorageService<Map<dynamic, dynamic>> _customersStorage;
+
+  final StorageService<Map<dynamic, dynamic>> _employeesStorage;
+  final StorageService<Map<dynamic, dynamic>> _attendanceStorage;
+  final StorageService<Map<dynamic, dynamic>> _salariesStorage;
 
   Future<RestoreResult> restoreFromBackup(String backupId) async {
     Logger.info('Starting restore from backup: $backupId');
@@ -85,7 +85,7 @@ class RestoreService {
     Map<String, dynamic> data;
     try {
       data = json.decode(jsonString) as Map<String, dynamic>;
-    } catch (e) {
+    } on FormatException catch (e) {
       return RestoreResult(
         success: false,
         errors: ['Invalid backup file: $e'],
@@ -93,7 +93,7 @@ class RestoreService {
     }
 
     final errors = <String>[];
-    int restored = 0;
+    var restored = 0;
 
     final storageMap = <String, StorageService<Map<dynamic, dynamic>>>{
       'products': _productsStorage,
@@ -106,7 +106,9 @@ class RestoreService {
     };
 
     for (final entry in data.entries) {
-      if (entry.value == null) continue;
+      if (entry.value == null) {
+        continue;
+      }
 
       final storage = storageMap[entry.key];
       if (storage == null) {
@@ -127,7 +129,7 @@ class RestoreService {
             }
           }
         }
-      } catch (e, stackTrace) {
+      } on Exception catch (e, stackTrace) {
         Logger.error('Failed to restore module: ${entry.key}', e, stackTrace);
         errors.add('${entry.key}: $e');
       }
@@ -161,7 +163,6 @@ class RestoreService {
           title: 'Restore Complete',
           message: 'Restored ${result.recordsRestored} records from "${backup.name}"',
           category: NotificationCategory.backup,
-          priority: NotificationPriority.medium,
         );
       } else {
         await _backupRepository.update(
@@ -170,7 +171,7 @@ class RestoreService {
       }
 
       return result;
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Restore failed', e, stackTrace);
       await _backupRepository.update(
         backup.copyWith(status: BackupStatus.failed),

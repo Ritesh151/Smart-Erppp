@@ -1,34 +1,36 @@
-import 'package:SmartERP/core/models/product_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/products/services/product_service.dart';
-import 'package:SmartERP/modules/settings/services/settings_service.dart';
+import '../../../core/models/product_model.dart';
+import '../../../core/utils/logger.dart';
+import '../../../modules/products/services/product_service.dart';
+import '../../../modules/settings/services/settings_service.dart';
 
 class LowStockItem {
-  final ProductModel product;
-  final bool isOutOfStock;
-  final int deficit;
-
   LowStockItem({
     required this.product,
     required this.isOutOfStock,
     required this.deficit,
   });
 
+  final ProductModel product;
+  final bool isOutOfStock;
+  final int deficit;
+
   String get alertMessage {
-    if (isOutOfStock) return '${product.productName} is out of stock';
+    if (isOutOfStock) {
+      return '${product.productName} is out of stock';
+    }
     return '${product.productName} has only ${product.stockQuantity} units (min: ${product.minStockLevel})';
   }
 }
 
 class LowStockService {
-  final ProductService _productService;
-  final SettingsService _settingsService;
-
   LowStockService({
     required ProductService productService,
     required SettingsService settingsService,
   })  : _productService = productService,
         _settingsService = settingsService;
+
+  final ProductService _productService;
+  final SettingsService _settingsService;
 
   Future<List<LowStockItem>> getLowStockItems() async {
     try {
@@ -37,7 +39,9 @@ class LowStockService {
 
       final items = <LowStockItem>[];
       for (final product in allProducts) {
-        if (!product.isActive) continue;
+        if (!product.isActive) {
+          continue;
+        }
         if (product.isOutOfStock) {
           items.add(LowStockItem(
             product: product,
@@ -53,7 +57,7 @@ class LowStockService {
         }
       }
       return items;
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to get low stock items', e, stackTrace);
       return [];
     }
@@ -70,7 +74,7 @@ class LowStockService {
             deficit: p.minStockLevel,
           ))
           .toList();
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to get out of stock items', e, stackTrace);
       return [];
     }
@@ -80,7 +84,7 @@ class LowStockService {
     try {
       final items = await getLowStockItems();
       return items.where((i) => !i.isOutOfStock).length;
-    } catch (e) {
+    } on Exception catch (_) {
       return 0;
     }
   }
@@ -88,7 +92,7 @@ class LowStockService {
   Future<int> getOutOfStockCount() async {
     try {
       return await _productService.getOutOfStockCount();
-    } catch (e) {
+    } on Exception catch (_) {
       return 0;
     }
   }
@@ -97,7 +101,7 @@ class LowStockService {
     try {
       final items = await getLowStockItems();
       return items.isNotEmpty;
-    } catch (e) {
+    } on Exception catch (_) {
       return false;
     }
   }
@@ -106,7 +110,7 @@ class LowStockService {
     try {
       final items = await getLowStockItems();
       return items.length;
-    } catch (e) {
+    } on Exception catch (_) {
       return 0;
     }
   }
@@ -115,12 +119,16 @@ class LowStockService {
     try {
       final items = await getLowStockItems();
       items.sort((a, b) {
-        if (a.isOutOfStock && !b.isOutOfStock) return -1;
-        if (!a.isOutOfStock && b.isOutOfStock) return 1;
+        if (a.isOutOfStock && !b.isOutOfStock) {
+          return -1;
+        }
+        if (!a.isOutOfStock && b.isOutOfStock) {
+          return 1;
+        }
         return a.deficit.compareTo(b.deficit);
       });
       return items;
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to get critical items', e, stackTrace);
       return [];
     }
@@ -131,7 +139,5 @@ class LowStockService {
     Logger.info('Low stock threshold updated to: $newThreshold');
   }
 
-  Future<int> getEffectiveThreshold() async {
-    return await _settingsService.getLowStockThreshold();
-  }
+  Future<int> getEffectiveThreshold() => _settingsService.getLowStockThreshold();
 }

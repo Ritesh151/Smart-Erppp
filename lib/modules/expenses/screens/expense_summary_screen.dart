@@ -43,15 +43,13 @@ class _T {
 // ── Category color palette ────────────────────────────────────────────────────
 const List<Color> _kCategoryColors = [
   Color(0xFF4F6EF7),
-  Color(0xFF7C3AED),
   Color(0xFF10B981),
   Color(0xFFF59E0B),
-  Color(0xFFEF4444),
-  Color(0xFF0D9488),
+  Color(0xFF7C3AED),
   Color(0xFFEC4899),
   Color(0xFF64748B),
-  Color(0xFF8B5CF6),
-  Color(0xFF06B6D4),
+  Color(0xFF0D9488),
+  Color(0xFFEF4444),
 ];
 
 class ExpenseSummaryScreen extends StatefulWidget {

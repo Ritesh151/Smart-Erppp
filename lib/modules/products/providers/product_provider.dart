@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:SmartERP/core/constants/storage_keys.dart';
 import 'package:SmartERP/core/exceptions/app_exception.dart';
 import 'package:SmartERP/core/models/product_model.dart';
 import 'package:SmartERP/core/utils/logger.dart';
@@ -9,7 +13,13 @@ class ProductProvider extends ChangeNotifier {
   VoidCallback? onDataChanged;
 
   ProductProvider(this._service, {VoidCallback? onDataChanged})
-      : onDataChanged = onDataChanged;
+      : onDataChanged = onDataChanged {
+    if (Hive.isBoxOpen(StorageKeys.productsBox)) {
+      _productSubscription = Hive.box(StorageKeys.productsBox).watch().listen((_) {
+        _queueReload();
+      });
+    }
+  }
 
   List<ProductModel> _products = [];
   List<ProductModel> _filteredProducts = [];
@@ -22,6 +32,8 @@ class ProductProvider extends ChangeNotifier {
   StockStatus? _selectedStockStatus;
   ProductSortOption _sortOption = ProductSortOption.name;
   bool _sortAscending = true;
+  StreamSubscription<dynamic>? _productSubscription;
+  bool _reloadQueued = false;
 
   List<ProductModel> get products => _filteredProducts.isEmpty && _searchQuery.isEmpty
       ? _products
@@ -279,5 +291,20 @@ class ProductProvider extends ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  void _queueReload() {
+    if (_reloadQueued || _isLoading) return;
+    _reloadQueued = true;
+    Future.microtask(() async {
+      _reloadQueued = false;
+      await loadProducts();
+    });
+  }
+
+  @override
+  void dispose() {
+    _productSubscription?.cancel();
+    super.dispose();
   }
 }

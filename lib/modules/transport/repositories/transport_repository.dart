@@ -1,16 +1,13 @@
-import 'package:SmartERP/core/storage/storage_service.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/transport/models/transport_screen_model.dart';
+import '../../../core/storage/storage_service.dart';
+import '../../../core/utils/logger.dart';
+import '../models/transport_screen_model.dart';
 
 class TransportRepository {
-  final StorageService<Map<dynamic, dynamic>> _transportStorage;
-  final StorageService<Map<dynamic, dynamic>> _itemStorage;
-
   TransportRepository({
     required StorageService<Map<dynamic, dynamic>> transportStorage,
-    required StorageService<Map<dynamic, dynamic>> itemStorage,
-  })  : _transportStorage = transportStorage,
-        _itemStorage = itemStorage;
+  }) : _transportStorage = transportStorage;
+
+  final StorageService<Map<dynamic, dynamic>> _transportStorage;
 
   Future<List<TransportModel>> getAll() async {
     try {
@@ -19,7 +16,7 @@ class TransportRepository {
           .map((item) =>
               TransportModel.fromMap(Map<String, dynamic>.from(item)))
           .toList();
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to get all transports', e, stackTrace);
       return [];
     }
@@ -28,9 +25,11 @@ class TransportRepository {
   Future<TransportModel?> getById(String id) async {
     try {
       final data = _transportStorage.get(id);
-      if (data == null) return null;
+      if (data == null) {
+        return null;
+      }
       return TransportModel.fromMap(Map<String, dynamic>.from(data));
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to get transport by id: $id', e, stackTrace);
       return null;
     }
@@ -41,7 +40,7 @@ class TransportRepository {
       await _transportStorage.save(
           transport.transportId, transport.toMap());
       Logger.success('Transport saved: ${transport.transportId}');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to save transport', e, stackTrace);
       rethrow;
     }
@@ -52,7 +51,7 @@ class TransportRepository {
       await _transportStorage.update(
           transport.transportId, transport.toMap());
       Logger.success('Transport updated: ${transport.transportId}');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to update transport', e, stackTrace);
       rethrow;
     }
@@ -62,7 +61,7 @@ class TransportRepository {
     try {
       await _transportStorage.delete(id);
       Logger.success('Transport deleted: $id');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to delete transport', e, stackTrace);
       rethrow;
     }
@@ -72,15 +71,13 @@ class TransportRepository {
     try {
       final all = await getAll();
       final q = query.toLowerCase();
-      return all.where((t) {
-        return t.transportName.toLowerCase().contains(q) ||
-            t.destinationLocation.toLowerCase().contains(q) ||
-            t.driverName.toLowerCase().contains(q) ||
-            (t.vehicleNumber?.toLowerCase().contains(q) ?? false) ||
-            t.products
-                .any((p) => p.productName.toLowerCase().contains(q));
-      }).toList();
-    } catch (e, stackTrace) {
+      return all.where((t) =>
+          t.transportName.toLowerCase().contains(q) ||
+          t.destinationLocation.toLowerCase().contains(q) ||
+          t.driverName.toLowerCase().contains(q) ||
+          (t.vehicleNumber?.toLowerCase().contains(q) ?? false) ||
+          t.products.any((p) => p.productName.toLowerCase().contains(q))).toList();
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to search transports', e, stackTrace);
       return [];
     }

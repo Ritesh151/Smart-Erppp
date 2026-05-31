@@ -1,6 +1,13 @@
+import 'dart:io';
+
+import 'package:path_provider/path_provider.dart';
+
 Future<void> downloadInvoiceHtmlImpl({
   required String htmlContent,
   required String fileName,
 }) async {
-  // No-op for non-web platforms. File saving is handled by PdfService.
+  final directory = await getDownloadsDirectory() ??
+      await getApplicationDocumentsDirectory();
+  final file = File('${directory.path}/$fileName');
+  await file.writeAsString(htmlContent);
 }

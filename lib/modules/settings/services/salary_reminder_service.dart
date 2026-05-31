@@ -1,31 +1,24 @@
-import 'package:SmartERP/core/models/notification_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/payroll/services/payroll_service.dart';
-import 'package:SmartERP/modules/settings/services/notification_service.dart';
-import 'package:SmartERP/modules/settings/services/settings_service.dart';
+import '../../../core/models/notification_model.dart';
+import '../../../core/utils/logger.dart';
+import '../../../modules/payroll/services/payroll_service.dart';
+import '../../../modules/settings/services/notification_service.dart';
+import '../../../modules/settings/services/settings_service.dart';
 
 class SalaryReminderResult {
-  final int pendingCount;
-  final double totalPendingAmount;
-  final List<SalaryReminderItem> reminders;
-
   SalaryReminderResult({
     required this.pendingCount,
     required this.totalPendingAmount,
     required this.reminders,
   });
 
+  final int pendingCount;
+  final double totalPendingAmount;
+  final List<SalaryReminderItem> reminders;
+
   bool get hasReminders => pendingCount > 0;
 }
 
 class SalaryReminderItem {
-  final String employeeId;
-  final String employeeName;
-  final double amount;
-  final int month;
-  final int year;
-  final bool isOverdue;
-
   SalaryReminderItem({
     required this.employeeId,
     required this.employeeName,
@@ -35,6 +28,13 @@ class SalaryReminderItem {
     required this.isOverdue,
   });
 
+  final String employeeId;
+  final String employeeName;
+  final double amount;
+  final int month;
+  final int year;
+  final bool isOverdue;
+
   String get label {
     final months = ['Jan','Feb','Mar','Apr','May','Jun',
       'Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -43,11 +43,6 @@ class SalaryReminderItem {
 }
 
 class SalaryReminderService {
-  final PayrollService _payrollService;
-  final NotificationService _notificationService;
-  final SettingsService _settingsService;
-  DateTime? _lastCheckDate;
-
   SalaryReminderService({
     required PayrollService payrollService,
     required NotificationService notificationService,
@@ -56,12 +51,15 @@ class SalaryReminderService {
         _notificationService = notificationService,
         _settingsService = settingsService;
 
-  Future<bool> isEnabled() async {
-    return await _settingsService.isSalaryReminderEnabled();
-  }
+  final PayrollService _payrollService;
+  final NotificationService _notificationService;
+  final SettingsService _settingsService;
+  DateTime? _lastCheckDate;
 
-  Future<void> setEnabled(bool enabled) async {
-    await _settingsService.toggleSalaryReminder(enabled);
+  Future<bool> isEnabled() => _settingsService.isSalaryReminderEnabled();
+
+  Future<void> setEnabled({required bool enabled}) async {
+    await _settingsService.toggleSalaryReminder(enabled: enabled);
   }
 
   Future<SalaryReminderResult> checkPendingSalaries() async {
@@ -92,11 +90,10 @@ class SalaryReminderService {
       _lastCheckDate = now;
       return SalaryReminderResult(
         pendingCount: reminders.length,
-        totalPendingAmount:
-            reminders.fold(0.0, (sum, r) => sum + r.amount),
+        totalPendingAmount: reminders.fold(0, (sum, r) => sum + r.amount),
         reminders: reminders,
       );
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to check pending salaries', e, stackTrace);
       return SalaryReminderResult(
         pendingCount: 0, totalPendingAmount: 0, reminders: [],
@@ -131,7 +128,7 @@ class SalaryReminderService {
       }
 
       Logger.info('Sent ${result.pendingCount} salary reminders');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to send salary reminders', e, stackTrace);
     }
   }
@@ -156,11 +153,10 @@ class SalaryReminderService {
 
       return SalaryReminderResult(
         pendingCount: reminders.length,
-        totalPendingAmount:
-            reminders.fold(0.0, (sum, r) => sum + r.amount),
+        totalPendingAmount: reminders.fold(0, (sum, r) => sum + r.amount),
         reminders: reminders,
       );
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to get monthly salary summary', e, stackTrace);
       return SalaryReminderResult(
         pendingCount: 0, totalPendingAmount: 0, reminders: [],
@@ -170,20 +166,24 @@ class SalaryReminderService {
 
   Future<int> getPendingCount() async {
     try {
-      if (!await isEnabled()) return 0;
+      if (!await isEnabled()) {
+        return 0;
+      }
       final dashboard = await _payrollService.getDashboardData();
       return dashboard.pendingCount;
-    } catch (e) {
+    } on Exception catch (_) {
       return 0;
     }
   }
 
   Future<double> getPendingTotal() async {
     try {
-      if (!await isEnabled()) return 0;
+      if (!await isEnabled()) {
+        return 0;
+      }
       final dashboard = await _payrollService.getDashboardData();
       return dashboard.totalPending;
-    } catch (e) {
+    } on Exception catch (_) {
       return 0;
     }
   }

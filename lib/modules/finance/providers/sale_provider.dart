@@ -2,63 +2,128 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:SmartERP/core/constants/storage_keys.dart';
+import 'package:SmartERP/core/models/invoice_item_model.dart';
+import 'package:SmartERP/core/models/invoice_model.dart';
 import 'package:SmartERP/core/models/product_model.dart';
-import 'package:SmartERP/core/storage/storage_service.dart';
 import 'package:SmartERP/Models/sale_item_model.dart';
 
 class SaleRecord {
   final String saleId;
+  final String invoiceId;
   final String customerName;
   final String customerPhone;
   final String customerAddress;
   final double total;
+  final double gst;
   final List<SaleItemModel> items;
   final DateTime createdAt;
-  final String? invoiceNumber;
+  final String invoiceNumber;
+  final String paymentStatus;
+  final String invoiceStatus;
+  final bool isReturn;
 
-  SaleRecord({
+  const SaleRecord({
     required this.saleId,
+    required this.invoiceId,
     required this.customerName,
     this.customerPhone = '',
     this.customerAddress = '',
     required this.total,
+    required this.gst,
     required this.items,
     required this.createdAt,
-    this.invoiceNumber,
+    required this.invoiceNumber,
+    required this.paymentStatus,
+    required this.invoiceStatus,
+    this.isReturn = false,
   });
 
-  factory SaleRecord.fromMap(Map<String, dynamic> map) {
-    final itemsList = (map['items'] as List<dynamic>?)
-            ?.map((e) => SaleItemModel.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList() ??
-        [];
+  factory SaleRecord.fromInvoice(
+    InvoiceModel invoice,
+    List<InvoiceItemModel> invoiceItems,
+  ) {
+    final saleItems = invoiceItems.map((item) {
+      return SaleItemModel(
+        productId: item.productId,
+        productName: item.productName,
+        hsnCode: item.hsnCode,
+        quantity: item.quantity,
+        price: item.unitPrice,
+        amount: item.taxableAmount,
+        gstRate: item.taxRate,
+        gstAmount: item.taxAmount,
+        totalAmount: item.amount,
+      );
+    }).toList();
+
     return SaleRecord(
-      saleId: map['saleId'] as String? ?? map['id'] as String,
-      customerName: map['customerName'] as String? ?? '',
-      customerPhone: map['customerPhone'] as String? ?? '',
-      customerAddress: map['customerAddress'] as String? ?? '',
-      total: (map['total'] as num?)?.toDouble() ??
-          itemsList.fold<double>(0, (sum, i) => sum + i.totalAmount),
-      items: itemsList,
-      createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'] as String)
-          : DateTime.now(),
-      invoiceNumber: map['invoiceNumber'] as String?,
+      saleId: invoice.id,
+      invoiceId: invoice.id,
+      customerName: invoice.customerName,
+      customerPhone: invoice.customerPhone ?? '',
+      customerAddress: invoice.customerAddress ?? '',
+      total: invoice.status == InvoiceStatus.cancelled ? 0 : invoice.totalAmount,
+      gst: invoice.status == InvoiceStatus.cancelled ? 0 : invoice.taxAmount,
+      items: saleItems,
+      createdAt: invoice.invoiceDate,
+      invoiceNumber: invoice.invoiceNumber,
+      paymentStatus: _paymentStatus(invoice),
+      invoiceStatus: invoice.status.name,
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'saleId': saleId,
-      'customerName': customerName,
-      'customerPhone': customerPhone,
-      'customerAddress': customerAddress,
-      'total': total,
-      'items': items.map((e) => e.toJson()).toList(),
-      'createdAt': createdAt.toIso8601String(),
-      'invoiceNumber': invoiceNumber,
-    };
+  factory SaleRecord.fromReturn(Map<String, dynamic> map) {
+    final refundAmount = (map['refundAmount'] as num?)?.toDouble() ?? 0;
+    final rawItems = map['items'] as List<dynamic>? ?? const [];
+    final items = rawItems.map((entry) {
+      final item = Map<String, dynamic>.from(entry as Map);
+      final quantity = (item['quantity'] as num?)?.toDouble() ?? 0;
+      final unitPrice = (item['unitPrice'] as num?)?.toDouble() ??
+          (item['price'] as num?)?.toDouble() ??
+          0;
+      final taxRate = (item['taxRate'] as num?)?.toDouble() ??
+          (item['gstRate'] as num?)?.toDouble() ??
+          0;
+      final taxableAmount = unitPrice * quantity;
+      final gstAmount =
+          (item['gstAmount'] as num?)?.toDouble() ?? taxableAmount * taxRate / 100;
+      return SaleItemModel(
+        productId: item['productId'] as String? ?? '',
+        productName: item['productName'] as String? ?? '',
+        hsnCode: item['hsnCode'] as String?,
+        quantity: quantity,
+        price: unitPrice,
+        amount: taxableAmount,
+        gstRate: taxRate,
+        gstAmount: gstAmount,
+        totalAmount: taxableAmount + gstAmount,
+      );
+    }).toList();
+
+    return SaleRecord(
+      saleId: map['id'] as String? ?? '',
+      invoiceId: map['invoiceId'] as String? ?? '',
+      customerName: map['customerName'] as String? ?? '',
+      total: -refundAmount,
+      gst: -items.fold<double>(0, (sum, item) => sum + item.gstAmount),
+      items: items,
+      createdAt: DateTime.tryParse(
+            map['returnDate'] as String? ?? map['createdAt'] as String? ?? '',
+          ) ??
+          DateTime.now(),
+      invoiceNumber: map['invoiceNumber'] as String? ?? '',
+      paymentStatus: 'Refunded',
+      invoiceStatus: 'returned',
+      isReturn: true,
+    );
   }
+}
+
+String _paymentStatus(InvoiceModel invoice) {
+  if (invoice.status == InvoiceStatus.cancelled) return 'Cancelled';
+  if (invoice.paidAmount <= 0) return 'Unpaid';
+  if (invoice.paidAmount >= invoice.totalAmount) return 'Paid';
+  return 'Partially Paid';
 }
 
 class ProductInfo {
@@ -97,22 +162,39 @@ class ProductInfo {
   }
 }
 
-final _saleStorageProvider = Provider<StorageService<Map<dynamic, dynamic>>>((ref) {
-  return StorageService<Map<dynamic, dynamic>>(StorageKeys.salesBox);
-});
-
 final salesStreamProvider = StreamProvider<List<SaleRecord>>((ref) {
-  final storage = ref.read(_saleStorageProvider);
   final controller = StreamController<List<SaleRecord>>();
+  final subscriptions = <StreamSubscription<dynamic>>[];
 
   void emit() {
     if (controller.isClosed) return;
     try {
-      final data = storage.getAll()
-          .map((e) => SaleRecord.fromMap(Map<String, dynamic>.from(e)))
-          .toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      controller.add(data);
+      final invoiceBox = Hive.box(StorageKeys.invoicesBox);
+      final itemBox = Hive.box(StorageKeys.invoiceItemsBox);
+      final returnsBox = Hive.box(StorageKeys.returnsBox);
+      final records = <SaleRecord>[];
+
+      for (final value in invoiceBox.values) {
+        if (value is! Map) continue;
+        final invoice = InvoiceModel.fromJson(Map<String, dynamic>.from(value));
+        final items = <InvoiceItemModel>[];
+        for (final itemId in invoice.itemIds) {
+          final rawItem = itemBox.get(itemId);
+          if (rawItem is Map) {
+            items.add(InvoiceItemModel.fromJson(Map<String, dynamic>.from(rawItem)));
+          }
+        }
+        records.add(SaleRecord.fromInvoice(invoice, items));
+      }
+
+      for (final value in returnsBox.values) {
+        if (value is Map) {
+          records.add(SaleRecord.fromReturn(Map<String, dynamic>.from(value)));
+        }
+      }
+
+      records.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      controller.add(records);
     } catch (e) {
       controller.add([]);
     }
@@ -121,20 +203,25 @@ final salesStreamProvider = StreamProvider<List<SaleRecord>>((ref) {
   emit();
 
   try {
-    if (Hive.isBoxOpen(StorageKeys.salesBox)) {
-      final box = Hive.box(StorageKeys.salesBox);
-      final sub = box.watch().listen((_) => emit());
-      ref.onDispose(() {
-        sub.cancel();
-        if (!controller.isClosed) controller.close();
-      });
-      return controller.stream;
+    for (final boxName in [
+      StorageKeys.invoicesBox,
+      StorageKeys.invoiceItemsBox,
+      StorageKeys.returnsBox,
+    ]) {
+      if (Hive.isBoxOpen(boxName)) {
+        subscriptions.add(Hive.box(boxName).watch().listen((_) => emit()));
+      }
     }
   } catch (_) {}
 
-  final timer = Timer.periodic(const Duration(seconds: 5), (_) => emit());
+  final timer = subscriptions.isEmpty
+      ? Timer.periodic(const Duration(seconds: 5), (_) => emit())
+      : null;
   ref.onDispose(() {
-    timer.cancel();
+    for (final sub in subscriptions) {
+      sub.cancel();
+    }
+    timer?.cancel();
     if (!controller.isClosed) controller.close();
   });
 
@@ -142,7 +229,6 @@ final salesStreamProvider = StreamProvider<List<SaleRecord>>((ref) {
 });
 
 final productsStreamProvider = StreamProvider<List<ProductInfo>>((ref) {
-  final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.productsBox);
   final controller = StreamController<List<ProductInfo>>();
 
   void emit() {
@@ -188,5 +274,3 @@ final productsStreamProvider = StreamProvider<List<ProductInfo>>((ref) {
 
   return controller.stream;
 });
-
-

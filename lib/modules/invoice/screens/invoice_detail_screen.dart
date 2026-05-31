@@ -1069,17 +1069,33 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   // ── Business logic ────────────────────────────────────────────────────────
   Future<void> _markAsSent(BuildContext context, InvoiceModel invoice,
       InvoiceProvider provider) async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       await provider.markAsSent(invoice.id);
-      if (mounted) context.showSnackBar('Invoice marked as sent');
+      if (mounted) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Invoice marked as sent'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } catch (e) {
-      if (mounted)
-        context.showSnackBar('Failed to mark as sent: $e', isError: true);
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Failed to mark as sent: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
   Future<void> _downloadPdf(BuildContext context, InvoiceModel invoice,
       InvoiceProvider provider) async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       final items = provider.selectedInvoiceItems;
       final htmlContent =
@@ -1087,11 +1103,24 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       final fileName =
           'invoice_${invoice.invoiceNumber.replaceAll('/', '_')}.html';
       await downloadInvoiceHtml(htmlContent: htmlContent, fileName: fileName);
-      if (mounted) context.showSnackBar('Invoice downloaded successfully');
+      if (mounted) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Invoice downloaded successfully'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } catch (e) {
-      if (mounted)
-        context.showSnackBar('Failed to download invoice: $e',
-            isError: true);
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Failed to download invoice: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

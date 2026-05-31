@@ -1,12 +1,11 @@
-import 'package:SmartERP/core/models/invoice_model.dart';
-import 'package:SmartERP/core/models/transaction_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/finance/services/finance_service.dart';
-import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
-import 'package:SmartERP/modules/payroll/services/attendance_service.dart';
-import 'package:SmartERP/modules/payroll/services/employee_service.dart';
-import 'package:SmartERP/modules/products/services/product_service.dart';
-
+import '../../../core/models/invoice_model.dart';
+import '../../../core/models/transaction_model.dart';
+import '../../../core/utils/logger.dart';
+import '../../../modules/finance/services/finance_service.dart';
+import '../../../modules/invoice/services/invoice_service.dart';
+import '../../../modules/payroll/services/attendance_service.dart';
+import '../../../modules/payroll/services/employee_service.dart';
+import '../../../modules/products/services/product_service.dart';
 
 enum InsightCategory {
   revenue,
@@ -17,15 +16,6 @@ enum InsightCategory {
 }
 
 class BusinessInsight {
-  final String id;
-  final String title;
-  final String description;
-  final InsightCategory category;
-  final double? value;
-  final String? trend;
-  final bool isPositive;
-  final DateTime createdAt;
-
   BusinessInsight({
     required this.id,
     required this.title,
@@ -36,15 +26,18 @@ class BusinessInsight {
     this.isPositive = true,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
+
+  final String id;
+  final String title;
+  final String description;
+  final InsightCategory category;
+  final double? value;
+  final String? trend;
+  final bool isPositive;
+  final DateTime createdAt;
 }
 
 class AppIntelligenceService {
-  final ProductService _productService;
-  final FinanceService _financeService;
-  final InvoiceService _invoiceService;
-  final EmployeeService _employeeService;
-  final AttendanceService _attendanceService;
-
   AppIntelligenceService({
     required ProductService productService,
     required FinanceService financeService,
@@ -57,6 +50,11 @@ class AppIntelligenceService {
         _employeeService = employeeService,
         _attendanceService = attendanceService;
 
+  final ProductService _productService;
+  final FinanceService _financeService;
+  final InvoiceService _invoiceService;
+  final EmployeeService _employeeService;
+  final AttendanceService _attendanceService;
   List<BusinessInsight> _cachedInsights = [];
   DateTime _lastRefresh = DateTime(2000);
 
@@ -80,7 +78,7 @@ class AppIntelligenceService {
 
       Logger.info('Generated ${_cachedInsights.length} business insights');
       return _cachedInsights;
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to generate insights', e, stackTrace);
       return _cachedInsights;
     }
@@ -127,10 +125,9 @@ class AppIntelligenceService {
           description: '${products.length} products in stock',
           category: InsightCategory.inventory,
           value: totalValue,
-          isPositive: true,
         ));
       }
-    } catch (e) {
+    } on Exception catch (e) {
       Logger.error('Inventory analysis failed', e);
     }
 
@@ -189,7 +186,7 @@ class AppIntelligenceService {
           isPositive: netProfit >= 0,
         ));
       }
-    } catch (e) {
+    } on Exception catch (e) {
       Logger.error('Revenue analysis failed', e);
     }
 
@@ -217,7 +214,7 @@ class AppIntelligenceService {
           isPositive: false,
         ));
       }
-    } catch (e) {
+    } on Exception catch (e) {
       Logger.error('Customer analysis failed', e);
     }
 
@@ -245,7 +242,7 @@ class AppIntelligenceService {
           isPositive: avgAttendance > 15,
         ));
       }
-    } catch (e) {
+    } on Exception catch (e) {
       Logger.error('Employee analysis failed', e);
     }
 
@@ -253,9 +250,15 @@ class AppIntelligenceService {
   }
 
   String _formatAmount(double amount) {
-    if (amount >= 10000000) return '${(amount / 10000000).toStringAsFixed(2)}Cr';
-    if (amount >= 100000) return '${(amount / 100000).toStringAsFixed(2)}L';
-    if (amount >= 1000) return '${(amount / 1000).toStringAsFixed(1)}K';
+    if (amount >= 10000000) {
+      return '${(amount / 10000000).toStringAsFixed(2)}Cr';
+    }
+    if (amount >= 100000) {
+      return '${(amount / 100000).toStringAsFixed(2)}L';
+    }
+    if (amount >= 1000) {
+      return '${(amount / 1000).toStringAsFixed(1)}K';
+    }
     return amount.toStringAsFixed(0);
   }
 }

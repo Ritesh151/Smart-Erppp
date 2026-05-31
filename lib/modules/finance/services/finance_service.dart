@@ -1,4 +1,5 @@
 import 'package:SmartERP/core/models/expense_model.dart';
+import 'package:SmartERP/core/models/invoice_model.dart';
 import 'package:SmartERP/core/models/transaction_model.dart';
 import 'package:SmartERP/core/utils/logger.dart';
 import 'package:SmartERP/modules/finance/repositories/finance_repository.dart';
@@ -6,6 +7,7 @@ import 'package:SmartERP/modules/finance/services/return_service.dart';
 import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
 import 'package:SmartERP/modules/products/services/product_service.dart';
 import 'package:SmartERP/modules/payroll/services/employee_service.dart';
+import 'package:SmartERP/modules/payroll/repositories/salary_repository.dart';
 import 'package:SmartERP/modules/expenses/repositories/expense_repository.dart';
 
 class FinanceService {
@@ -13,6 +15,7 @@ class FinanceService {
   final InvoiceService invoiceService;
   final ProductService productService;
   final EmployeeService employeeService;
+  final SalaryRepository salaryRepository;
   final ExpenseRepository expenseRepository;
   final ReturnService returnService;
 
@@ -21,6 +24,7 @@ class FinanceService {
     required this.invoiceService,
     required this.productService,
     required this.employeeService,
+    required this.salaryRepository,
     required this.expenseRepository,
     required this.returnService,
   });
@@ -30,13 +34,12 @@ class FinanceService {
       final sales = await getSalesReport(startDate, endDate);
       final purchases = await getPurchaseReport(startDate, endDate);
       final allExpenses = await expenseRepository.getAll();
-      final employees = await employeeService.getAllEmployees();
       final invoices = await invoiceService.getAllInvoices();
+      final salaryHistory = await salaryRepository.getAllHistory();
 
-      final totalReturns = await returnService.getTotalReturns();
       final totalSales = sales.fold<double>(
         0, (sum, s) => sum + ((s['total'] as num?)?.toDouble() ?? 0),
-      ) - totalReturns;
+      );
 
       final totalPurchases = purchases.fold<double>(
         0, (sum, p) => sum + ((p['totalAmount'] as num?)?.toDouble() ?? 0),
@@ -46,9 +49,9 @@ class FinanceService {
         0, (sum, e) => sum + e.amount,
       );
 
-      final totalPayroll = employees.fold<double>(
-        0, (sum, e) => sum + e.salary,
-      );
+      final totalPayroll = salaryHistory
+          .where((h) => _isInRange(h.paymentDate, startDate, endDate))
+          .fold<double>(0, (sum, h) => sum + h.amount);
 
       final outstandingInvoices = invoices
           .where((inv) => inv.status.name == 'sent' || inv.status.name == 'partiallyPaid')
@@ -93,7 +96,38 @@ class FinanceService {
 
   Future<List<Map<String, dynamic>>> getSalesReport(DateTime startDate, DateTime endDate) async {
     try {
-      return financeRepository.getSalesByDateRange(startDate, endDate);
+      final invoices = await invoiceService.getAllInvoices();
+      final sales = <Map<String, dynamic>>[];
+
+      for (final invoice in invoices) {
+        if (_isInRange(invoice.invoiceDate, startDate, endDate)) {
+          sales.add(await _invoiceToSaleMap(invoice));
+        }
+      }
+
+      final returns = await returnService.getReturnsByDateRange(startDate, endDate);
+      for (final item in returns) {
+        sales.add({
+          'id': item['id'] as String? ?? '',
+          'invoiceId': item['invoiceId'] as String? ?? '',
+          'invoiceNumber': item['invoiceNumber'] as String? ?? '',
+          'customerName': item['customerName'] as String? ?? '',
+          'total': -((item['refundAmount'] as num?)?.toDouble() ?? 0),
+          'taxAmount': 0.0,
+          'status': 'returned',
+          'paymentStatus': 'Refunded',
+          'createdAt': item['returnDate'] as String? ?? item['createdAt'] as String? ?? '',
+          'items': item['items'] as List<dynamic>? ?? const [],
+          'source': 'return',
+        });
+      }
+
+      sales.sort((a, b) {
+        final ad = DateTime.tryParse(a['createdAt'] as String? ?? '');
+        final bd = DateTime.tryParse(b['createdAt'] as String? ?? '');
+        return (bd ?? DateTime(2000)).compareTo(ad ?? DateTime(2000));
+      });
+      return sales;
     } catch (e, stackTrace) {
       Logger.error('Failed to get sales report', e, stackTrace);
       return [];
@@ -111,7 +145,7 @@ class FinanceService {
 
   Future<List<Map<String, dynamic>>> getAllSales() async {
     try {
-      return financeRepository.getAllSales();
+      return getSalesReport(DateTime(2000), DateTime(2100));
     } catch (e, stackTrace) {
       Logger.error('Failed to get all sales', e, stackTrace);
       return [];
@@ -140,16 +174,8 @@ class FinanceService {
     await financeRepository.savePurchase(purchase);
   }
 
-  Future<void> updateSale(Map<String, dynamic> sale) async {
-    await financeRepository.updateSale(sale);
-  }
-
   Future<void> updatePurchase(Map<String, dynamic> purchase) async {
     await financeRepository.updatePurchase(purchase);
-  }
-
-  Future<void> deleteSale(String id) async {
-    await financeRepository.deleteSale(id);
   }
 
   Future<void> deletePurchase(String id) async {
@@ -158,9 +184,8 @@ class FinanceService {
 
   Future<double> getTotalSales() async {
     final sales = await getAllSales();
-    final totalReturns = await returnService.getTotalReturns();
     final grossSales = sales.fold<double>(0, (sum, s) => sum + ((s['total'] as num?)?.toDouble() ?? 0));
-    return grossSales - totalReturns;
+    return grossSales;
   }
 
   Future<double> getTotalPurchases() async {
@@ -188,6 +213,7 @@ class FinanceService {
       final sales = await getAllSales();
       final purchases = await getAllPurchases();
       final expenses = await getAllExpenses();
+      final salaryHistory = await salaryRepository.getAllHistory();
       final now = DateTime.now();
       final transactions = <TransactionModel>[];
 
@@ -227,11 +253,69 @@ class FinanceService {
         ));
       }
 
+      for (final salary in salaryHistory) {
+        transactions.add(TransactionModel(
+          id: salary.id,
+          type: TransactionType.expense,
+          amount: salary.amount,
+          date: salary.paymentDate,
+          description: 'Salary paid to ${salary.employeeName}',
+          referenceId: salary.salaryId,
+          category: 'Payroll',
+          createdAt: salary.createdAt,
+          updatedAt: salary.createdAt,
+        ));
+      }
+
       transactions.sort((a, b) => b.date.compareTo(a.date));
       return transactions;
     } catch (e, stackTrace) {
       Logger.error('Failed to get all transactions', e, stackTrace);
       return [];
     }
+  }
+
+  bool _isInRange(DateTime date, DateTime start, DateTime end) {
+    return !date.isBefore(start) && !date.isAfter(end);
+  }
+
+  Future<Map<String, dynamic>> _invoiceToSaleMap(InvoiceModel invoice) async {
+    final items = await invoiceService.getInvoiceItems(invoice.id);
+    final cancelled = invoice.status == InvoiceStatus.cancelled;
+    return {
+      'id': invoice.id,
+      'invoiceId': invoice.id,
+      'invoiceNumber': invoice.invoiceNumber,
+      'customerName': invoice.customerName,
+      'customerPhone': invoice.customerPhone ?? '',
+      'customerAddress': invoice.customerAddress ?? '',
+      'total': cancelled ? 0.0 : invoice.totalAmount,
+      'taxAmount': cancelled ? 0.0 : invoice.taxAmount,
+      'paidAmount': invoice.paidAmount,
+      'status': invoice.status.name,
+      'paymentStatus': _paymentStatus(invoice),
+      'createdAt': invoice.invoiceDate.toIso8601String(),
+      'items': items.map((item) {
+        return {
+          'productId': item.productId,
+          'productName': item.productName,
+          'quantity': item.quantity,
+          'price': item.unitPrice,
+          'amount': item.taxableAmount,
+          'gstRate': item.taxRate,
+          'gstAmount': item.taxAmount,
+          'totalAmount': item.amount,
+          'hsnCode': item.hsnCode,
+        };
+      }).toList(),
+      'source': 'invoice',
+    };
+  }
+
+  String _paymentStatus(InvoiceModel invoice) {
+    if (invoice.status == InvoiceStatus.cancelled) return 'Cancelled';
+    if (invoice.paidAmount <= 0) return 'Unpaid';
+    if (invoice.paidAmount >= invoice.totalAmount) return 'Paid';
+    return 'Partially Paid';
   }
 }

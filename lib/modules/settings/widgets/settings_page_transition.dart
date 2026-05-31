@@ -2,82 +2,76 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class SettingsPageTransition extends StatelessWidget {
-  final Widget child;
-  final int? delayMs;
-
   const SettingsPageTransition({
-    super.key,
     required this.child,
+    super.key,
     this.delayMs,
   });
 
+  final Widget child;
+  final int? delayMs;
+
   @override
-  Widget build(BuildContext context) {
-    return child.animate().fadeIn(
-      delay: (delayMs ?? 0).ms,
-      duration: 350.ms,
-      curve: Curves.easeOut,
-    ).slideY(
-      begin: 0.03,
-      end: 0,
-      delay: (delayMs ?? 0).ms,
-      duration: 350.ms,
-      curve: Curves.easeOutCubic,
-    );
-  }
+  Widget build(BuildContext context) => child.animate().fadeIn(
+    delay: (delayMs ?? 0).ms,
+    duration: 350.ms,
+    curve: Curves.easeOut,
+  ).slideY(
+    begin: 0.03,
+    end: 0,
+    delay: (delayMs ?? 0).ms,
+    duration: 350.ms,
+    curve: Curves.easeOutCubic,
+  );
 }
 
 class StaggeredTileList extends StatelessWidget {
+  const StaggeredTileList({
+    required this.itemCount,
+    required this.itemBuilder,
+    super.key,
+    this.baseDelayMs = 40,
+    this.staggerMs = 60,
+  });
+
   final int itemCount;
   final Widget Function(BuildContext context, int index) itemBuilder;
   final int baseDelayMs;
   final int staggerMs;
 
-  const StaggeredTileList({
-    super.key,
-    required this.itemCount,
-    required this.itemBuilder,
-    this.baseDelayMs = 40,
-    this.staggerMs = 60,
-  });
-
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(itemCount, (index) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: index < itemCount - 1 ? 8 : 0),
-          child: itemBuilder(context, index).animate().fadeIn(
-            delay: (baseDelayMs + index * staggerMs).ms,
-            duration: 300.ms,
-          ).slideX(
-            begin: 0.05,
-            end: 0,
-            delay: (baseDelayMs + index * staggerMs).ms,
-            duration: 300.ms,
-            curve: Curves.easeOutCubic,
-          ),
-        );
-      }),
-    );
-  }
+  Widget build(BuildContext context) => Column(
+    children: List.generate(itemCount, (index) => Padding(
+      padding: EdgeInsets.only(bottom: index < itemCount - 1 ? 8 : 0),
+      child: itemBuilder(context, index).animate().fadeIn(
+        delay: (baseDelayMs + index * staggerMs).ms,
+        duration: 300.ms,
+      ).slideX(
+        begin: 0.05,
+        end: 0,
+        delay: (baseDelayMs + index * staggerMs).ms,
+        duration: 300.ms,
+        curve: Curves.easeOutCubic,
+      ),
+    )),
+  );
 }
 
 class AnimatedSection extends StatefulWidget {
+  const AnimatedSection({
+    required this.title,
+    required this.child,
+    super.key,
+    this.subtitle,
+    this.icon,
+    this.initiallyExpanded = true,
+  });
+
   final String title;
   final String? subtitle;
   final IconData? icon;
   final Widget child;
   final bool initiallyExpanded;
-
-  const AnimatedSection({
-    super.key,
-    required this.title,
-    this.subtitle,
-    this.icon,
-    required this.child,
-    this.initiallyExpanded = true,
-  });
 
   @override
   State<AnimatedSection> createState() => _AnimatedSectionState();
@@ -186,26 +180,22 @@ class _AnimatedSectionState extends State<AnimatedSection>
 }
 
 class AnimatedFilterChipRow extends StatelessWidget {
+  const AnimatedFilterChipRow({required this.chips, super.key});
+
   final List<Widget> chips;
 
-  const AnimatedFilterChipRow({super.key, required this.chips});
-
   @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: List.generate(chips.length, (index) {
-          return Padding(
-            padding: EdgeInsets.only(right: index < chips.length - 1 ? 8 : 0),
-            child: chips[index].animate().fadeIn(
-              delay: (index * 50).ms,
-              duration: 250.ms,
-            ).slideY(begin: 0.2, end: 0, delay: (index * 50).ms, duration: 250.ms),
-          );
-        }),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    padding: const EdgeInsets.symmetric(horizontal: 24),
+    child: Row(
+      children: List.generate(chips.length, (index) => Padding(
+        padding: EdgeInsets.only(right: index < chips.length - 1 ? 8 : 0),
+        child: chips[index].animate().fadeIn(
+          delay: (index * 50).ms,
+          duration: 250.ms,
+        ).slideY(begin: 0.2, end: 0, delay: (index * 50).ms, duration: 250.ms),
+      )),
+    ),
+  );
 }

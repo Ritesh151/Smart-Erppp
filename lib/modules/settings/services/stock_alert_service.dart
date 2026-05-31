@@ -1,16 +1,10 @@
-import 'package:SmartERP/core/models/notification_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/settings/services/low_stock_service.dart';
-import 'package:SmartERP/modules/settings/services/notification_service.dart';
-import 'package:SmartERP/modules/settings/services/settings_service.dart';
+import '../../../core/models/notification_model.dart';
+import '../../../core/utils/logger.dart';
+import '../../../modules/settings/services/low_stock_service.dart';
+import '../../../modules/settings/services/notification_service.dart';
+import '../../../modules/settings/services/settings_service.dart';
 
 class StockAlert {
-  final String id;
-  final String title;
-  final String message;
-  final bool isCritical;
-  final DateTime createdAt;
-
   StockAlert({
     required this.id,
     required this.title,
@@ -18,13 +12,15 @@ class StockAlert {
     required this.isCritical,
     required this.createdAt,
   });
+
+  final String id;
+  final String title;
+  final String message;
+  final bool isCritical;
+  final DateTime createdAt;
 }
 
 class StockAlertService {
-  final LowStockService _lowStockService;
-  final NotificationService _notificationService;
-  final SettingsService _settingsService;
-
   StockAlertService({
     required LowStockService lowStockService,
     required NotificationService notificationService,
@@ -33,9 +29,15 @@ class StockAlertService {
         _notificationService = notificationService,
         _settingsService = settingsService;
 
+  final LowStockService _lowStockService;
+  final NotificationService _notificationService;
+  final SettingsService _settingsService;
+
   Future<List<StockAlert>> checkAndGenerateAlerts() async {
     try {
-      if (!await _settingsService.isLowStockAlertsEnabled()) return [];
+      if (!await _settingsService.isLowStockAlertsEnabled()) {
+        return [];
+      }
 
       final alerts = <StockAlert>[];
       final items = await _lowStockService.getLowStockItems();
@@ -55,7 +57,7 @@ class StockAlertService {
       }
 
       return alerts;
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to check and generate alerts', e, stackTrace);
       return [];
     }
@@ -63,7 +65,9 @@ class StockAlertService {
 
   Future<void> sendLowStockNotifications() async {
     try {
-      if (!await _settingsService.isLowStockAlertsEnabled()) return;
+      if (!await _settingsService.isLowStockAlertsEnabled()) {
+        return;
+      }
 
       final items = await _lowStockService.getLowStockItems();
       for (final item in items) {
@@ -79,7 +83,7 @@ class StockAlertService {
         );
       }
       Logger.info('Sent ${items.length} low stock notifications');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to send low stock notifications', e, stackTrace);
     }
   }
@@ -87,7 +91,7 @@ class StockAlertService {
   Future<List<StockAlert>> getDashboardAlerts() async {
     try {
       return await checkAndGenerateAlerts();
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to get dashboard alerts', e, stackTrace);
       return [];
     }
@@ -97,7 +101,7 @@ class StockAlertService {
     try {
       final alerts = await checkAndGenerateAlerts();
       return alerts.length;
-    } catch (e) {
+    } on Exception catch (_) {
       return 0;
     }
   }
@@ -106,7 +110,7 @@ class StockAlertService {
     try {
       final alerts = await checkAndGenerateAlerts();
       return alerts.where((a) => a.isCritical).length;
-    } catch (e) {
+    } on Exception catch (_) {
       return 0;
     }
   }

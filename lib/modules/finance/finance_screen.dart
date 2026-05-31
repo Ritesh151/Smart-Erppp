@@ -66,7 +66,7 @@ class _FinanceScreenState extends State<FinanceScreen>
   Widget _getFloatingActionButton() {
     if (_tabController.index == 1) {
       return FloatingActionButton(
-        onPressed: () => context.go('/purchases/add'),
+        onPressed: () => context.go('/purchases/create'),
         child: const Icon(Icons.add),
       );
     }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:SmartERP/modules/transport/models/transport_screen_model.dart';
-import 'package:SmartERP/modules/transport/repositories/transport_repository.dart';
+import '../models/transport_screen_model.dart';
+import '../repositories/transport_repository.dart';
 
 class TransportSearchService {
-  final TransportRepository _repository;
-
   TransportSearchService(this._repository);
+
+  final TransportRepository _repository;
 
   Future<List<TransportModel>> search(String query) =>
       _repository.search(query);
@@ -19,10 +19,9 @@ class TransportSearchService {
     var results = await _repository.getAll();
 
     if (dateRange != null) {
-      results = results.where((t) {
-        return t.transportDate.isAfter(dateRange.start) &&
-            t.transportDate.isBefore(dateRange.end.add(const Duration(days: 1)));
-      }).toList();
+      results = results.where((t) =>
+          t.transportDate.isAfter(dateRange.start) &&
+          t.transportDate.isBefore(dateRange.end.add(const Duration(days: 1)))).toList();
     }
 
     if (product != null && product.isNotEmpty) {

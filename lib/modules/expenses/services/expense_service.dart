@@ -68,6 +68,42 @@ class ExpenseService {
     return result;
   }
 
+  Future<ExpenseModel> updateExpense({
+    required String id,
+    required String category,
+    required String description,
+    required double amount,
+    required DateTime expenseDate,
+    String? vendor,
+    String? notes,
+  }) async {
+    final existing = await _repository.getById(id);
+    if (existing == null) throw Exception('Expense not found');
+
+    final updated = ExpenseModel(
+      id: existing.id,
+      expenseNumber: existing.expenseNumber,
+      category: category,
+      description: description,
+      amount: amount,
+      expenseDate: expenseDate,
+      vendor: vendor,
+      paymentMethod: existing.paymentMethod,
+      referenceNumber: existing.referenceNumber,
+      status: existing.status,
+      approvedBy: existing.approvedBy,
+      approvedAt: existing.approvedAt,
+      notes: notes,
+      attachments: existing.attachments,
+      createdAt: existing.createdAt,
+      updatedAt: DateTime.now(),
+    );
+
+    await _repository.save(updated);
+    Logger.success('Expense updated: ${updated.expenseNumber}');
+    return updated;
+  }
+
   Future<void> deleteExpense(String id) async {
     await _repository.delete(id);
   }

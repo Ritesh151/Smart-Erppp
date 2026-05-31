@@ -1,17 +1,10 @@
-import 'package:SmartERP/core/models/backup_model.dart';
-import 'package:SmartERP/core/models/notification_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/settings/repositories/backup_repository.dart';
-import 'package:SmartERP/modules/settings/repositories/notification_repository.dart';
+import '../../../core/models/backup_model.dart';
+import '../../../core/models/notification_model.dart';
+import '../../../core/utils/logger.dart';
+import '../../../modules/settings/repositories/backup_repository.dart';
+import '../../../modules/settings/repositories/notification_repository.dart';
 
 class NotificationFilter {
-  final NotificationCategory? category;
-  final NotificationPriority? priority;
-  final bool? isRead;
-  final DateTime? startDate;
-  final DateTime? endDate;
-  final String? keyword;
-
   NotificationFilter({
     this.category,
     this.priority,
@@ -21,23 +14,23 @@ class NotificationFilter {
     this.keyword,
   });
 
-  bool get hasActiveFilters =>
-      category != null ||
-      priority != null ||
-      isRead != null ||
-      startDate != null ||
-      endDate != null ||
-      (keyword != null && keyword!.isNotEmpty);
-}
-
-class BackupFilter {
-  final BackupType? type;
-  final BackupStatus? status;
+  final NotificationCategory? category;
+  final NotificationPriority? priority;
+  final bool? isRead;
   final DateTime? startDate;
   final DateTime? endDate;
   final String? keyword;
-  final bool? isEncrypted;
 
+  bool get hasActiveFilters =>
+    category != null ||
+    priority != null ||
+    isRead != null ||
+    startDate != null ||
+    endDate != null ||
+    (keyword != null && keyword!.isNotEmpty);
+}
+
+class BackupFilter {
   BackupFilter({
     this.type,
     this.status,
@@ -47,28 +40,35 @@ class BackupFilter {
     this.isEncrypted,
   });
 
+  final BackupType? type;
+  final BackupStatus? status;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final String? keyword;
+  final bool? isEncrypted;
+
   bool get hasActiveFilters =>
-      type != null ||
-      status != null ||
-      startDate != null ||
-      endDate != null ||
-      (keyword != null && keyword!.isNotEmpty) ||
-      isEncrypted != null;
+    type != null ||
+    status != null ||
+    startDate != null ||
+    endDate != null ||
+    (keyword != null && keyword!.isNotEmpty) ||
+    isEncrypted != null;
 }
 
 class SettingsFilterService {
-  final NotificationRepository _notificationRepository;
-  final BackupRepository _backupRepository;
-
   SettingsFilterService({
     required NotificationRepository notificationRepository,
     required BackupRepository backupRepository,
   })  : _notificationRepository = notificationRepository,
         _backupRepository = backupRepository;
 
+  final NotificationRepository _notificationRepository;
+  final BackupRepository _backupRepository;
+
   Future<List<NotificationModel>> filterNotifications(NotificationFilter filter) async {
     try {
-      List<NotificationModel> results = await _notificationRepository.getAll();
+      var results = await _notificationRepository.getAll();
 
       if (filter.category != null) {
         results = results.where((n) => n.category == filter.category).toList();
@@ -101,7 +101,7 @@ class SettingsFilterService {
 
       results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return results;
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to filter notifications', e, stackTrace);
       return [];
     }
@@ -109,7 +109,7 @@ class SettingsFilterService {
 
   Future<List<BackupModel>> filterBackups(BackupFilter filter) async {
     try {
-      List<BackupModel> results = await _backupRepository.getAll();
+      var results = await _backupRepository.getAll();
 
       if (filter.type != null) {
         results = results.where((b) => b.type == filter.type).toList();
@@ -142,7 +142,7 @@ class SettingsFilterService {
 
       results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return results;
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to filter backups', e, stackTrace);
       return [];
     }
@@ -156,7 +156,7 @@ class SettingsFilterService {
         counts[n.category] = (counts[n.category] ?? 0) + 1;
       }
       return counts;
-    } catch (e) {
+    } on Exception catch (_) {
       return {};
     }
   }
@@ -169,7 +169,7 @@ class SettingsFilterService {
         counts[b.status] = (counts[b.status] ?? 0) + 1;
       }
       return counts;
-    } catch (e) {
+    } on Exception catch (_) {
       return {};
     }
   }
@@ -182,7 +182,7 @@ class SettingsFilterService {
         counts[b.type] = (counts[b.type] ?? 0) + 1;
       }
       return counts;
-    } catch (e) {
+    } on Exception catch (_) {
       return {};
     }
   }

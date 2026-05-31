@@ -1,21 +1,19 @@
-import 'package:SmartERP/core/exceptions/app_exception.dart';
-import 'package:SmartERP/core/models/settings_model.dart';
-import 'package:SmartERP/core/storage/preferences_service.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/settings/repositories/settings_repository.dart';
+import '../../../core/exceptions/app_exception.dart';
+import '../../../core/models/settings_model.dart';
+import '../../../core/utils/logger.dart';
+import '../../../modules/settings/repositories/settings_repository.dart';
 
 class SettingsService {
-  final SettingsRepository _repository;
-
   SettingsService({
     required SettingsRepository repository,
-    required PreferencesService preferencesService,
-  })  : _repository = repository;
+  }) : _repository = repository;
+
+  final SettingsRepository _repository;
 
   Future<SettingsModel?> getSettings() async {
     try {
       return await _repository.getLatest();
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to get settings', e, stackTrace);
       return null;
     }
@@ -24,9 +22,11 @@ class SettingsService {
   Future<SettingsModel> ensureSettings() async {
     try {
       final existing = await _repository.getLatest();
-      if (existing != null) return existing;
+      if (existing != null) {
+        return existing;
+      }
       return await _createDefault();
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to ensure settings exist', e, stackTrace);
       rethrow;
     }
@@ -36,14 +36,11 @@ class SettingsService {
     try {
       final settings = SettingsModel.create(
         companyName: 'My Company',
-        dateFormat: 'dd/MM/yyyy',
-        lowStockThreshold: 10,
-        salaryReminderEnabled: true,
       );
       await _repository.save(settings);
       Logger.success('Default settings created');
       return settings;
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to create default settings', e, stackTrace);
       rethrow;
     }
@@ -55,7 +52,7 @@ class SettingsService {
       await _repository.update(updated);
       Logger.success('Settings updated');
       return updated;
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to update settings', e, stackTrace);
       throw StorageException('Failed to update settings');
     }
@@ -66,7 +63,7 @@ class SettingsService {
       final settings = await ensureSettings();
       await updateSettings(settings.copyWith(dateFormat: format));
       Logger.info('Date format updated to: $format');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to update date format', e, stackTrace);
     }
   }
@@ -78,24 +75,24 @@ class SettingsService {
         lowStockThreshold: threshold,
       ));
       Logger.info('Low stock threshold updated to: $threshold');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to update low stock threshold', e, stackTrace);
     }
   }
 
-  Future<void> toggleSalaryReminder(bool enabled) async {
+  Future<void> toggleSalaryReminder({required bool enabled}) async {
     try {
       final settings = await ensureSettings();
       await updateSettings(settings.copyWith(
         salaryReminderEnabled: enabled,
       ));
       Logger.info('Salary reminder ${enabled ? 'enabled' : 'disabled'}');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to toggle salary reminder', e, stackTrace);
     }
   }
 
-  Future<void> toggleAutoBackup(bool enabled) async {
+  Future<void> toggleAutoBackup({required bool enabled}) async {
     try {
       final settings = await ensureSettings();
       await updateSettings(settings.copyWith(
@@ -103,19 +100,19 @@ class SettingsService {
         autoBackupIntervalDays: settings.autoBackupIntervalDays,
       ));
       Logger.info('Auto backup ${enabled ? 'enabled' : 'disabled'}');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to toggle auto backup', e, stackTrace);
     }
   }
 
-  Future<void> toggleNotifications(bool enabled) async {
+  Future<void> toggleNotifications({required bool enabled}) async {
     try {
       final settings = await ensureSettings();
       await updateSettings(settings.copyWith(
         notificationsEnabled: enabled,
       ));
       Logger.info('Notifications ${enabled ? 'enabled' : 'disabled'}');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to toggle notifications', e, stackTrace);
     }
   }
@@ -124,7 +121,7 @@ class SettingsService {
     try {
       final settings = await getSettings();
       return settings?.salaryReminderEnabled ?? true;
-    } catch (e) {
+    } on Exception catch (_) {
       return true;
     }
   }
@@ -133,7 +130,7 @@ class SettingsService {
     try {
       final settings = await getSettings();
       return settings?.lowStockAlertsEnabled ?? true;
-    } catch (e) {
+    } on Exception catch (_) {
       return true;
     }
   }
@@ -142,7 +139,7 @@ class SettingsService {
     try {
       final settings = await getSettings();
       return settings?.defaultSalaryPaymentMode ?? 'Cash';
-    } catch (e) {
+    } on Exception catch (_) {
       return 'Cash';
     }
   }
@@ -151,7 +148,7 @@ class SettingsService {
     try {
       final settings = await getSettings();
       return settings?.lowStockThreshold ?? 10;
-    } catch (e) {
+    } on Exception catch (_) {
       return 10;
     }
   }
@@ -160,19 +157,19 @@ class SettingsService {
     try {
       final settings = await getSettings();
       return settings?.dateFormat ?? 'dd/MM/yyyy';
-    } catch (e) {
+    } on Exception catch (_) {
       return 'dd/MM/yyyy';
     }
   }
 
-  Future<void> toggleLowStockAlerts(bool enabled) async {
+  Future<void> toggleLowStockAlerts({required bool enabled}) async {
     try {
       final settings = await ensureSettings();
       await updateSettings(settings.copyWith(
         lowStockAlertsEnabled: enabled,
       ));
       Logger.info('Low stock alerts ${enabled ? 'enabled' : 'disabled'}');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to toggle low stock alerts', e, stackTrace);
     }
   }
@@ -184,7 +181,7 @@ class SettingsService {
         defaultSalaryPaymentMode: mode,
       ));
       Logger.info('Default salary payment mode updated to: $mode');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to update default salary payment mode', e, stackTrace);
     }
   }
@@ -206,7 +203,7 @@ class SettingsService {
         taxId: taxId ?? settings.taxId,
       ));
       Logger.success('Company info updated');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to update company info', e, stackTrace);
       throw StorageException('Failed to update company info');
     }
@@ -220,7 +217,7 @@ class SettingsService {
       }
       await _createDefault();
       Logger.info('Settings reset to defaults');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to reset settings', e, stackTrace);
       throw StorageException('Failed to reset settings');
     }

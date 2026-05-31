@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:SmartERP/core/models/notification_model.dart';
-import 'package:SmartERP/core/widgets/app_card.dart';
+
+import '../../../core/models/notification_model.dart';
+import '../../../core/widgets/app_card.dart';
 
 class NotificationCardWidget extends StatelessWidget {
-  final NotificationModel notification;
-  final VoidCallback? onTap;
-  final VoidCallback? onDelete;
-
   const NotificationCardWidget({
-    super.key,
     required this.notification,
+    super.key,
     this.onTap,
     this.onDelete,
   });
+
+  final NotificationModel notification;
+  final VoidCallback? onTap;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +143,9 @@ class NotificationCardWidget extends StatelessWidget {
   }
 
   Widget _buildPriorityBadge(BuildContext context) {
-    if (!notification.isHighPriority) return const SizedBox();
+    if (!notification.isHighPriority) {
+      return const SizedBox();
+    }
 
     final color = notification.priority == NotificationPriority.critical
         ? Colors.red

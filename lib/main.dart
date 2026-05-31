@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Provider, ChangeNotifierProvider, Consumer;
 import 'package:hive_flutter/hive_flutter.dart';
@@ -78,17 +81,63 @@ import 'package:SmartERP/modules/settings/services/settings_filter_service.dart'
 import 'package:SmartERP/modules/settings/providers/settings_provider.dart';
 import 'package:SmartERP/modules/settings/providers/notification_provider.dart';
 import 'package:SmartERP/modules/settings/providers/preferences_provider.dart';
+import 'package:SmartERP/modules/purchase/repositories/purchase_entry_repository.dart';
+import 'package:SmartERP/modules/purchase/services/purchase_entry_service.dart';
+import 'package:SmartERP/modules/purchase/providers/purchase_entry_provider.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.dumpErrorToConsole(details);
+    if (kDebugMode) {
+      final exception = details.exception;
+      Logger.error('FLUTTER ERROR: ${details.exceptionAsString()}', exception, details.stack);
+    }
+  };
 
-  try {
-    await _initializeApp();
-    runApp(const SmartERPApp());
-  } catch (e, stackTrace) {
-    Logger.error('Failed to initialize app', e, stackTrace);
-    runApp(const ErrorApp());
-  }
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    Logger.error('BUILD ERROR: ${details.exceptionAsString()}', details.exception, details.stack);
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text(
+                  'Build Error',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  details.exceptionAsString(),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  };
+
+  runZonedGuarded<Future<void>>(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    try {
+      await _initializeApp();
+      runApp(const SmartERPApp());
+    } catch (e, stackTrace) {
+      Logger.error('Failed to initialize app', e, stackTrace);
+      runApp(ErrorApp(message: e.toString()));
+    }
+  }, (error, stackTrace) {
+    Logger.error('UNHANDLED ASYNC ERROR', error, stackTrace);
+    runApp(ErrorApp(message: error.toString()));
+  });
 }
 
 Future<void> _initializeApp() async {
@@ -236,11 +285,26 @@ class SmartERPApp extends StatefulWidget {
 
 class _SmartERPAppState extends State<SmartERPApp> {
   AppRouter? _appRouter;
+  Future<PreferencesService>? _preferencesFuture;
+  PreferencesService? _preferencesService;
+
+  @override
+  void initState() {
+    super.initState();
+    _preferencesFuture = PreferencesService.getInstance().then((service) {
+      _preferencesService = service;
+      return service;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_preferencesService != null) {
+      return _buildApp(_preferencesService!);
+    }
+
     return FutureBuilder<PreferencesService>(
-      future: PreferencesService.getInstance(),
+      future: _preferencesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const MaterialApp(
@@ -253,23 +317,27 @@ class _SmartERPAppState extends State<SmartERPApp> {
           );
         }
 
-        if (snapshot.hasError) {
+        if (snapshot.hasError || snapshot.data == null) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             home: Scaffold(
               body: Center(
-                child: Text('Error: ${snapshot.error}'),
+                child: Text('Initialization Error: ${snapshot.error ?? 'Unknown error'}'),
               ),
             ),
           );
         }
 
+        _preferencesService = snapshot.data;
+        return _buildApp(_preferencesService!);
+      },
+    );
+  }
 
-        final preferencesService = snapshot.data!;
-
-        return MultiProvider(
-          providers: [
-            Provider<PreferencesService>.value(value: preferencesService),
+  Widget _buildApp(PreferencesService preferencesService) {
+    return MultiProvider(
+      providers: [
+        Provider<PreferencesService>.value(value: preferencesService),
             Provider<AuthService>(
               create: (_) => AuthService(preferencesService),
             ),
@@ -309,11 +377,9 @@ class _SmartERPAppState extends State<SmartERPApp> {
             // Finance Module Services & State
             Provider<FinanceRepository>(
               create: (_) {
-                final sales = StorageService<Map<dynamic, dynamic>>(StorageKeys.salesBox)..init();
                 final purchases = StorageService<Map<dynamic, dynamic>>(StorageKeys.purchaseBox)..init();
                 final expenses = StorageService<Map<dynamic, dynamic>>(StorageKeys.expensesBox)..init();
                 return FinanceRepository(
-                  salesStorage: sales,
                   purchaseStorage: purchases,
                   expensesStorage: expenses,
                 );
@@ -377,7 +443,6 @@ class _SmartERPAppState extends State<SmartERPApp> {
               create: (context) => InvoiceService(
                 invoiceRepository: context.read<InvoiceRepository>(),
                 productRepository: context.read<ProductRepository>(),
-                financeRepository: context.read<FinanceRepository>(),
               ),
             ),
             Provider<PaymentService>(
@@ -400,6 +465,12 @@ class _SmartERPAppState extends State<SmartERPApp> {
               create: (context) {
                 final provider = InvoiceProvider(service: context.read<InvoiceService>());
                 provider.onDataChanged = () {
+                  try {
+                    context.read<ProductProvider>().loadProducts();
+                  } catch (_) {}
+                  try {
+                    context.read<FinanceProvider>().loadTransactions();
+                  } catch (_) {}
                   try {
                     context.read<DashboardProvider>().refresh();
                   } catch (_) {}
@@ -449,7 +520,6 @@ class _SmartERPAppState extends State<SmartERPApp> {
               create: (context) => ReturnService(
                 invoiceRepository: context.read<InvoiceRepository>(),
                 productRepository: context.read<ProductRepository>(),
-                financeRepository: context.read<FinanceRepository>(),
               ),
             ),
             Provider<FinanceService>(
@@ -458,6 +528,7 @@ class _SmartERPAppState extends State<SmartERPApp> {
                 invoiceService: context.read<InvoiceService>(),
                 productService: context.read<ProductService>(),
                 employeeService: context.read<EmployeeService>(),
+                salaryRepository: context.read<SalaryRepository>(),
                 expenseRepository: context.read<ExpenseRepository>(),
                 returnService: context.read<ReturnService>(),
               ),
@@ -474,6 +545,39 @@ class _SmartERPAppState extends State<SmartERPApp> {
                 return provider;
               },
             ),
+            // Purchase Module Services & State
+            Provider<PurchaseEntryRepository>(
+              create: (_) {
+                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.purchaseBox)..init();
+                return PurchaseEntryRepository(storage);
+              },
+            ),
+            Provider<PurchaseEntryService>(
+              create: (context) => PurchaseEntryService(
+                repository: context.read<PurchaseEntryRepository>(),
+                productRepository: context.read<ProductRepository>(),
+              ),
+            ),
+            ChangeNotifierProvider<PurchaseEntryProvider>(
+              create: (context) {
+                final provider = PurchaseEntryProvider(
+                  service: context.read<PurchaseEntryService>(),
+                );
+                provider.onDataChanged = () {
+                  try {
+                    context.read<FinanceProvider>().loadTransactions();
+                  } catch (_) {}
+                  try {
+                    context.read<DashboardProvider>().refresh();
+                  } catch (_) {}
+                  try {
+                    context.read<ProductProvider>().loadProducts();
+                  } catch (_) {}
+                };
+                return provider;
+              },
+            ),
+
             ChangeNotifierProvider<DashboardProvider>(
               create: (context) => DashboardProvider(
                 invoiceService: context.read<InvoiceService>(),
@@ -620,7 +724,6 @@ class _SmartERPAppState extends State<SmartERPApp> {
             Provider<SettingsService>(
               create: (context) => SettingsService(
                 repository: context.read<SettingsRepository>(),
-                preferencesService: context.read<PreferencesService>(),
               ),
             ),
             Provider<NotificationService>(
@@ -773,13 +876,13 @@ class _SmartERPAppState extends State<SmartERPApp> {
             },
           ),
         );
-      },
-    );
   }
 }
 
 class ErrorApp extends StatelessWidget {
-  const ErrorApp({super.key});
+  final String? message;
+
+  const ErrorApp({super.key, this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -787,35 +890,46 @@ class ErrorApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Failed to initialize application',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: Colors.red,
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Please restart the application',
-                style: TextStyle(fontSize: 14),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  main();
-                },
-                child: const Text('Retry'),
-              ),
-            ],
+                const SizedBox(height: 16),
+                const Text(
+                  'Failed to initialize application',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (message != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    message!,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+                const SizedBox(height: 8),
+                const Text(
+                  'Please restart the application',
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    main();
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

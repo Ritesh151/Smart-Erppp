@@ -51,16 +51,14 @@ class _T {
 
 // ── Category metadata ─────────────────────────────────────────────────────────
 const Map<String, IconData> _kCategoryIcons = {
-  'Food & Beverage' : Icons.restaurant_rounded,
-  'Transport'       : Icons.directions_car_rounded,
-  'Utilities'       : Icons.bolt_rounded,
-  'Office Supplies' : Icons.work_rounded,
-  'Marketing'       : Icons.campaign_rounded,
-  'Salaries'        : Icons.people_rounded,
-  'Rent'            : Icons.home_rounded,
-  'Maintenance'     : Icons.build_rounded,
-  'Travel'          : Icons.flight_rounded,
-  'Miscellaneous'   : Icons.category_rounded,
+  'Raw Materials'    : Icons.inventory_2_rounded,
+  'Transportation'   : Icons.local_shipping_rounded,
+  'Utilities'        : Icons.bolt_rounded,
+  'Salaries'         : Icons.people_rounded,
+  'Maintenance'      : Icons.build_rounded,
+  'Office Supplies'  : Icons.work_rounded,
+  'Marketing'        : Icons.campaign_rounded,
+  'Other'            : Icons.category_rounded,
 };
 
 const List<Color> _kCategoryColors = [
@@ -72,8 +70,6 @@ const List<Color> _kCategoryColors = [
   Color(0xFF64748B),
   Color(0xFF0D9488),
   Color(0xFFEF4444),
-  Color(0xFF06B6D4),
-  Color(0xFF8B5CF6),
 ];
 
 Color _categoryColor(String category) {
@@ -634,10 +630,145 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       itemCount : provider.expenses.length,
       itemBuilder: (ctx, i) {
         final expense = provider.expenses[i];
-        return _ExpenseTile(expense: expense, isMobile: isMobile)
-            .animate()
-            .fadeIn(delay: (i * 35).ms, duration: 220.ms)
-            .slideY(begin: 0.06, end: 0);
+        return Dismissible(
+          key: ValueKey(expense.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            margin: const EdgeInsets.only(bottom: 10),
+            decoration: BoxDecoration(
+              color: _T.danger,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.delete_rounded, color: _T.white, size: 22),
+                SizedBox(height: 2),
+                Text('Delete',
+                    style: TextStyle(
+                        color: _T.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+          confirmDismiss: (_) async {
+            final confirmed = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => Dialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                elevation: 0,
+                backgroundColor: _T.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: _T.danger.withOpacity(0.10),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                            Icons.delete_forever_rounded,
+                            color: _T.danger,
+                            size: 28),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'Delete Expense?',
+                        style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: _T.textDark),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'This action cannot be undone.',
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: _T.textMuted),
+                      ),
+                      const SizedBox(height: 22),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () =>
+                                  Navigator.of(ctx).pop(false),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12),
+                                side: const BorderSide(
+                                    color: _T.divider),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(11)),
+                              ),
+                              child: const Text('Cancel',
+                                  style: TextStyle(
+                                      color: _T.textMid,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13)),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: _T.danger,
+                                borderRadius:
+                                    BorderRadius.circular(11),
+                              ),
+                              child: TextButton(
+                                onPressed: () =>
+                                    Navigator.of(ctx).pop(true),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(11)),
+                                ),
+                                child: const Text('Delete',
+                                    style: TextStyle(
+                                        color: _T.white,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+            if (confirmed == true) {
+              await provider.deleteExpense(expense.id);
+              if (context.mounted) {
+                context.showSnackBar('Expense deleted');
+              }
+            }
+            return false;
+          },
+          child: _ExpenseTile(
+            expense: expense,
+            isMobile: isMobile,
+            onTap: () =>
+                context.push('/expenses/${expense.id}'),
+          )
+              .animate()
+              .fadeIn(delay: (i * 35).ms, duration: 220.ms)
+              .slideY(begin: 0.06, end: 0),
+        );
       },
     );
   }
@@ -824,7 +955,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 class _ExpenseTile extends StatefulWidget {
   final ExpenseModel expense;
   final bool isMobile;
-  const _ExpenseTile({required this.expense, required this.isMobile});
+  final VoidCallback? onTap;
+
+  const _ExpenseTile({
+    required this.expense,
+    required this.isMobile,
+    this.onTap,
+  });
 
   @override
   State<_ExpenseTile> createState() => _ExpenseTileState();
@@ -854,7 +991,9 @@ class _ExpenseTileState extends State<_ExpenseTile> {
     final color    = _categoryColor(expense.category);
     final icon     = _categoryIcon(expense.category);
 
-    return MouseRegion(
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: MouseRegion(
       cursor : SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit : (_) => setState(() => _hovered = false),
@@ -995,6 +1134,7 @@ class _ExpenseTileState extends State<_ExpenseTile> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

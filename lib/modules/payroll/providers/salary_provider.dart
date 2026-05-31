@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:SmartERP/core/constants/storage_keys.dart';
 import 'package:SmartERP/core/models/salary_model.dart';
 import 'package:SmartERP/core/models/salary_history_model.dart';
 import 'package:SmartERP/modules/payroll/services/salary_service.dart';
@@ -26,7 +30,23 @@ class SalaryProvider extends ChangeNotifier {
 
   double get totalPending => totalPayable - totalPaid;
 
-  SalaryProvider(this._service);
+  StreamSubscription<dynamic>? _salarySubscription;
+  StreamSubscription<dynamic>? _historySubscription;
+  bool _reloadQueued = false;
+
+  SalaryProvider(this._service) {
+    if (Hive.isBoxOpen(StorageKeys.salaryBox)) {
+      _salarySubscription = Hive.box(StorageKeys.salaryBox).watch().listen((_) {
+        _queueReload();
+      });
+    }
+    if (Hive.isBoxOpen(StorageKeys.salaryHistoryBox)) {
+      _historySubscription =
+          Hive.box(StorageKeys.salaryHistoryBox).watch().listen((_) {
+        _queueReload();
+      });
+    }
+  }
 
   Future<void> loadSalaries() async {
     _isLoading = true;
@@ -68,5 +88,26 @@ class SalaryProvider extends ChangeNotifier {
       _error = e.toString();
       notifyListeners();
     }
+  }
+
+  void _queueReload() {
+    if (_reloadQueued || _isLoading) return;
+    _reloadQueued = true;
+    Future.microtask(() async {
+      _reloadQueued = false;
+      if (_currentMonth != null && _currentYear != null) {
+        await loadSalariesForMonth(_currentMonth!, _currentYear!);
+      } else {
+        await loadSalaries();
+      }
+      await loadHistory();
+    });
+  }
+
+  @override
+  void dispose() {
+    _salarySubscription?.cancel();
+    _historySubscription?.cancel();
+    super.dispose();
   }
 }

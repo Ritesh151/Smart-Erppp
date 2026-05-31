@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -255,6 +257,42 @@ final reportDateRangeProvider =
 
 final reportFilterProvider = _reportRangeStateProvider;
 
+final _reportsDataVersionProvider = StreamProvider<int>((ref) {
+  final controller = StreamController<int>();
+  final subscriptions = <StreamSubscription<dynamic>>[];
+  var version = 0;
+
+  void emit() {
+    if (!controller.isClosed) {
+      controller.add(++version);
+    }
+  }
+
+  for (final boxName in [
+    StorageKeys.invoicesBox,
+    StorageKeys.invoiceItemsBox,
+    StorageKeys.returnsBox,
+    StorageKeys.purchaseBox,
+    StorageKeys.expensesBox,
+    StorageKeys.productsBox,
+    StorageKeys.salaryBox,
+    StorageKeys.salaryHistoryBox,
+  ]) {
+    if (Hive.isBoxOpen(boxName)) {
+      subscriptions.add(Hive.box(boxName).watch().listen((_) => emit()));
+    }
+  }
+
+  emit();
+  ref.onDispose(() {
+    for (final sub in subscriptions) {
+      sub.cancel();
+    }
+    if (!controller.isClosed) controller.close();
+  });
+  return controller.stream;
+});
+
 // ---- Helpers ----
 
 DateTimeRange? _getRange(Ref ref, ReportType type) {
@@ -290,9 +328,27 @@ SalaryModel? _parseSalary(Map<String, dynamic> map) {
   }
 }
 
+double _returnGstAmount(Map<String, dynamic> returnMap) {
+  final items = returnMap['items'] as List<dynamic>? ?? const [];
+  return items.fold<double>(0, (sum, entry) {
+    final item = Map<String, dynamic>.from(entry as Map);
+    final explicitGst = (item['gstAmount'] as num?)?.toDouble();
+    if (explicitGst != null) return sum + explicitGst;
+    final quantity = (item['quantity'] as num?)?.toDouble() ?? 0;
+    final unitPrice = (item['unitPrice'] as num?)?.toDouble() ??
+        (item['price'] as num?)?.toDouble() ??
+        0;
+    final gstRate = (item['taxRate'] as num?)?.toDouble() ??
+        (item['gstRate'] as num?)?.toDouble() ??
+        0;
+    return sum + (unitPrice * quantity * gstRate / 100);
+  });
+}
+
 // ---- Sales Report Providers ----
 
 final salesReportEntriesProvider = Provider<List<SalesReportEntry>>((ref) {
+  ref.watch(_reportsDataVersionProvider);
   final range = _getRange(ref, ReportType.sales);
 
   try {
@@ -306,10 +362,29 @@ final salesReportEntriesProvider = Provider<List<SalesReportEntry>>((ref) {
               invoiceNumber: inv.invoiceNumber,
               customerName: inv.customerName,
               createdAt: inv.invoiceDate,
-              total: inv.totalAmount,
-              gstAmount: inv.taxAmount,
+              total: inv.status == InvoiceStatus.cancelled ? 0 : inv.totalAmount,
+              gstAmount: inv.status == InvoiceStatus.cancelled ? 0 : inv.taxAmount,
             ))
         .toList();
+
+    final returnsBox = Hive.box(StorageKeys.returnsBox);
+    for (final e in returnsBox.values) {
+      if (e is! Map) continue;
+      final map = Map<String, dynamic>.from(e);
+      final date = DateTime.tryParse(
+        map['returnDate'] as String? ?? map['createdAt'] as String? ?? '',
+      );
+      if (date == null || !_isInRange(date, range)) continue;
+      final refundAmount = (map['refundAmount'] as num?)?.toDouble() ?? 0;
+      invoices.add(SalesReportEntry(
+        saleId: map['id'] as String? ?? '',
+        invoiceNumber: map['invoiceNumber'] as String? ?? '',
+        customerName: map['customerName'] as String? ?? '',
+        createdAt: date,
+        total: -refundAmount,
+        gstAmount: -_returnGstAmount(map),
+      ));
+    }
 
     invoices.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return invoices;
@@ -341,6 +416,7 @@ final salesReportSummaryProvider = Provider<SalesReportSummary>((ref) {
 // ---- Purchase Report Providers ----
 
 final filteredPurchasesReportProvider = Provider<List<PurchaseReportEntry>>((ref) {
+  ref.watch(_reportsDataVersionProvider);
   final range = _getRange(ref, ReportType.purchase);
 
   try {
@@ -391,6 +467,7 @@ final purchaseReportSummaryProvider = Provider<PurchaseReportSummary>((ref) {
 // ---- Profit/Loss Report Provider ----
 
 final profitLossReportProvider = Provider<ProfitLossReportData>((ref) {
+  ref.watch(_reportsDataVersionProvider);
   final range = _getRange(ref, ReportType.profitLoss);
 
   double totalSales = 0;
@@ -403,7 +480,21 @@ final profitLossReportProvider = Provider<ProfitLossReportData>((ref) {
     for (final e in invBox.values) {
       final inv = _parseInvoice(Map<String, dynamic>.from(e as Map));
       if (inv != null && _isInRange(inv.invoiceDate, range)) {
-        totalSales += inv.totalAmount;
+        totalSales += inv.status == InvoiceStatus.cancelled ? 0 : inv.totalAmount;
+      }
+    }
+  } catch (_) {}
+
+  try {
+    final returnsBox = Hive.box(StorageKeys.returnsBox);
+    for (final e in returnsBox.values) {
+      if (e is! Map) continue;
+      final map = Map<String, dynamic>.from(e);
+      final date = DateTime.tryParse(
+        map['returnDate'] as String? ?? map['createdAt'] as String? ?? '',
+      );
+      if (date != null && _isInRange(date, range)) {
+        totalSales -= (map['refundAmount'] as num?)?.toDouble() ?? 0;
       }
     }
   } catch (_) {}
@@ -433,14 +524,12 @@ final profitLossReportProvider = Provider<ProfitLossReportData>((ref) {
   } catch (_) {}
 
   try {
-    final salBox = Hive.box(StorageKeys.salaryBox);
+    final salBox = Hive.box(StorageKeys.salaryHistoryBox);
     for (final e in salBox.values) {
-      final sal = _parseSalary(Map<String, dynamic>.from(e as Map));
-      if (sal != null) {
-        final salDate = DateTime(sal.year, sal.month, 1);
-        if (_isInRange(salDate, range)) {
-          totalSalary += sal.netSalary;
-        }
+      final map = Map<String, dynamic>.from(e as Map);
+      final date = DateTime.tryParse(map['paymentDate'] as String? ?? '');
+      if (date != null && _isInRange(date, range)) {
+        totalSalary += (map['amount'] as num?)?.toDouble() ?? 0;
       }
     }
   } catch (_) {}
@@ -461,7 +550,8 @@ final profitLossReportProvider = Provider<ProfitLossReportData>((ref) {
 // ---- GST Report Provider ----
 
 final gstReportSummaryProvider = Provider<GstReportSummary>((ref) {
-  final range = _getRange(ref, ReportType.expense);
+  ref.watch(_reportsDataVersionProvider);
+  final range = _getRange(ref, ReportType.sales);
 
   double outputCgst = 0;
   double outputSgst = 0;
@@ -476,9 +566,26 @@ final gstReportSummaryProvider = Provider<GstReportSummary>((ref) {
     for (final e in invBox.values) {
       final inv = _parseInvoice(Map<String, dynamic>.from(e as Map));
       if (inv != null && _isInRange(inv.invoiceDate, range)) {
+        if (inv.status == InvoiceStatus.cancelled) continue;
         final half = inv.taxAmount / 2;
         outputCgst += half;
         outputSgst += half;
+      }
+    }
+  } catch (_) {}
+
+  try {
+    final returnsBox = Hive.box(StorageKeys.returnsBox);
+    for (final e in returnsBox.values) {
+      if (e is! Map) continue;
+      final map = Map<String, dynamic>.from(e);
+      final date = DateTime.tryParse(
+        map['returnDate'] as String? ?? map['createdAt'] as String? ?? '',
+      );
+      if (date != null && _isInRange(date, range)) {
+        final half = _returnGstAmount(map) / 2;
+        outputCgst -= half;
+        outputSgst -= half;
       }
     }
   } catch (_) {}

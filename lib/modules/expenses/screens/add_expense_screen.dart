@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:SmartERP/core/extensions/context_extensions.dart';
+import 'package:SmartERP/core/models/expense_model.dart';
 import 'package:SmartERP/modules/expenses/providers/expense_provider.dart';
 
 // ── Shared brand tokens (aligned with dashboard_screen.dart) ─────────────────
@@ -92,7 +93,11 @@ class _T {
 }
 
 class AddExpenseScreen extends StatefulWidget {
-  const AddExpenseScreen({super.key});
+  final ExpenseModel? expense;
+
+  const AddExpenseScreen({super.key, this.expense});
+
+  bool get isEditing => expense != null;
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -107,18 +112,35 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   String   _category = ExpenseProvider.categories.first;
   DateTime _date      = DateTime.now();
 
+  bool get _isEditing => widget.isEditing;
+
+  @override
+  void initState() {
+    super.initState();
+    _amountCtrl = TextEditingController(
+        text: _isEditing ? widget.expense!.amount.toString() : null);
+    _descCtrl   = TextEditingController(
+        text: _isEditing ? widget.expense!.description : null);
+    _vendorCtrl = TextEditingController(
+        text: _isEditing ? widget.expense!.vendor ?? '' : null);
+    _notesCtrl  = TextEditingController(
+        text: _isEditing ? widget.expense!.notes ?? '' : null);
+    if (_isEditing) {
+      _category = widget.expense!.category;
+      _date = widget.expense!.expenseDate;
+    }
+  }
+
   // Category icon map for visual richness
   static const Map<String, IconData> _categoryIcons = {
-    'Food & Beverage'  : Icons.restaurant_rounded,
-    'Transport'        : Icons.directions_car_rounded,
+    'Raw Materials'    : Icons.inventory_2_rounded,
+    'Transportation'   : Icons.local_shipping_rounded,
     'Utilities'        : Icons.bolt_rounded,
+    'Salaries'         : Icons.people_rounded,
+    'Maintenance'      : Icons.build_rounded,
     'Office Supplies'  : Icons.work_rounded,
     'Marketing'        : Icons.campaign_rounded,
-    'Salaries'         : Icons.people_rounded,
-    'Rent'             : Icons.home_rounded,
-    'Maintenance'      : Icons.build_rounded,
-    'Travel'           : Icons.flight_rounded,
-    'Miscellaneous'    : Icons.category_rounded,
+    'Other'            : Icons.category_rounded,
   };
 
   static const List<Color> _categoryColors = [
@@ -130,8 +152,6 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     Color(0xFF64748B),
     Color(0xFF0D9488),
     Color(0xFFEF4444),
-    Color(0xFF06B6D4),
-    Color(0xFF8B5CF6),
   ];
 
   Color get _selectedCategoryColor {
@@ -141,15 +161,6 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   IconData get _selectedCategoryIcon =>
       _categoryIcons[_category] ?? Icons.category_rounded;
-
-  @override
-  void initState() {
-    super.initState();
-    _amountCtrl = TextEditingController();
-    _descCtrl   = TextEditingController();
-    _vendorCtrl = TextEditingController();
-    _notesCtrl  = TextEditingController();
-  }
 
   @override
   void dispose() {
@@ -169,15 +180,32 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     }
 
     try {
-      await context.read<ExpenseProvider>().addExpense(
-        category   : _category,
-        description: _descCtrl.text.trim(),
-        amount     : parsedAmount,
-        expenseDate: _date,
-        vendor     : _vendorCtrl.text.trim().isEmpty ? null : _vendorCtrl.text.trim(),
-        notes      : _notesCtrl.text.trim().isEmpty  ? null : _notesCtrl.text.trim(),
-      );
-      if (mounted) _showSuccessDialog();
+      final provider = context.read<ExpenseProvider>();
+      if (_isEditing) {
+        await provider.updateExpense(
+          id         : widget.expense!.id,
+          category   : _category,
+          description: _descCtrl.text.trim(),
+          amount     : parsedAmount,
+          expenseDate: _date,
+          vendor     : _vendorCtrl.text.trim().isEmpty ? null : _vendorCtrl.text.trim(),
+          notes      : _notesCtrl.text.trim().isEmpty  ? null : _notesCtrl.text.trim(),
+        );
+        if (mounted) {
+          context.showSnackBar('Expense updated successfully');
+          context.pop();
+        }
+      } else {
+        await provider.addExpense(
+          category   : _category,
+          description: _descCtrl.text.trim(),
+          amount     : parsedAmount,
+          expenseDate: _date,
+          vendor     : _vendorCtrl.text.trim().isEmpty ? null : _vendorCtrl.text.trim(),
+          notes      : _notesCtrl.text.trim().isEmpty  ? null : _notesCtrl.text.trim(),
+        );
+        if (mounted) _showSuccessDialog();
+      }
     } catch (e) {
       if (mounted) _showSnack('Failed to save expense: $e');
     }
@@ -499,7 +527,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                               color: _T.white,
                                             ),
                                           )
-                                        : const Row(
+                                        : Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: [
@@ -510,7 +538,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                               ),
                                               SizedBox(width: 7),
                                               Text(
-                                                'Save Expense',
+                                                _isEditing
+                                                    ? 'Update Expense'
+                                                    : 'Save Expense',
                                                 style: TextStyle(
                                                   color     : _T.white,
                                                   fontWeight: FontWeight.w700,
@@ -567,20 +597,22 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Add New Expense',
-                style: TextStyle(
-                  fontSize    : isMobile ? 20 : 24,
-                  fontWeight  : FontWeight.w800,
-                  color       : _T.textDark,
-                  letterSpacing: -0.4,
+                Text(
+                  _isEditing ? 'Edit Expense' : 'Add New Expense',
+                  style: TextStyle(
+                    fontSize    : isMobile ? 20 : 24,
+                    fontWeight  : FontWeight.w800,
+                    color       : _T.textDark,
+                    letterSpacing: -0.4,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                'Record a business expense to your ledger.',
-                style: TextStyle(fontSize: 12, color: _T.textMuted),
-              ),
+                const SizedBox(height: 2),
+                Text(
+                  _isEditing
+                      ? 'Update the details of this expense.'
+                      : 'Record a business expense to your ledger.',
+                  style: const TextStyle(fontSize: 12, color: _T.textMuted),
+                ),
             ],
           ),
         ),

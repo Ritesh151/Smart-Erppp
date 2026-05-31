@@ -1,15 +1,15 @@
-import 'package:SmartERP/modules/transport/models/transport_screen_model.dart';
-import 'package:SmartERP/modules/transport/repositories/transport_repository.dart';
-import 'package:SmartERP/modules/products/repositories/product_repository.dart';
+import '../../products/repositories/product_repository.dart';
+import '../models/transport_screen_model.dart';
+import '../repositories/transport_repository.dart';
 
 class TransportService {
-  final TransportRepository transportRepository;
-  final ProductRepository productRepository;
-
   TransportService({
     required this.transportRepository,
     required this.productRepository,
   });
+
+  final TransportRepository transportRepository;
+  final ProductRepository productRepository;
 
   Future<List<TransportModel>> getAllTransports() =>
       transportRepository.getAll();

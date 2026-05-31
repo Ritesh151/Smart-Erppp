@@ -2,20 +2,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:SmartERP/modules/transport/models/transport_screen_model.dart';
-import 'package:SmartERP/modules/transport/providers/transport_screen_provider.dart';
-import 'package:SmartERP/core/utils/date_helper.dart';
-import 'package:SmartERP/core/utils/currency_formatter.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
-import 'package:SmartERP/core/widgets/product_selector_dialog.dart';
-import 'package:SmartERP/local_db/hive_boxes.dart';
-import 'package:SmartERP/local_db/models/local_invoice.dart';
+import '../../core/utils/currency_formatter.dart';
+import '../../core/utils/date_helper.dart';
+import '../../core/widgets/app_scaffold.dart';
+import '../../core/widgets/product_selector_dialog.dart';
+import '../../local_db/hive_boxes.dart';
+import '../../local_db/models/local_invoice.dart';
+import 'models/transport_screen_model.dart';
+import 'providers/transport_screen_provider.dart';
 
 class AddTransportScreen extends ConsumerStatefulWidget {
+  const AddTransportScreen({super.key, this.transportId, this.invoiceId});
+
   final String? transportId;
   final String? invoiceId;
-
-  const AddTransportScreen({super.key, this.transportId, this.invoiceId});
 
   @override
   ConsumerState<AddTransportScreen> createState() =>
@@ -75,10 +75,14 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
   Future<void> _loadInvoiceData(String invoiceId) async {
     final box = HiveBoxes.invoicesBox();
     final raw = box.get(invoiceId);
-    if (raw == null || raw is! Map) return;
+    if (raw == null) {
+      return;
+    }
 
     final invoice = LocalInvoice.fromMap(Map<String, dynamic>.from(raw));
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       // Also default Transport Name to Customer Name if empty
@@ -87,26 +91,27 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
       }
 
       // Map invoice items to transport product line items
-      _selectedProducts = invoice.items.map((item) {
-        return ProductLineItem(
-          productId: item.productId,
-          productName: item.productName,
-          hsnCode: '', // HSN not directly tracked in LocalInvoiceItem
-          unitPrice: item.price,
-          quantity: item.quantity,
-          unit: 'PCS', // Default unit since invoice item doesn't explicitly have it
-        );
-      }).toList();
+      _selectedProducts = invoice.items.map((item) =>
+          ProductLineItem(
+            productId: item.productId,
+            productName: item.productName,
+            unitPrice: item.price,
+            quantity: item.quantity,
+          )).toList();
     });
   }
 
   Future<void> _loadTransport() async {
     final transportId = widget.transportId;
-    if (transportId == null) return;
+    if (transportId == null) {
+      return;
+    }
 
     final transport =
         await ref.read(transportServiceProvider).getTransport(transportId);
-    if (!mounted || transport == null) return;
+    if (!mounted || transport == null) {
+      return;
+    }
 
     setState(() {
       _existingTransport = transport;
@@ -147,7 +152,9 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
   }
 
   Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
     
     if (_selectedProducts.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -194,7 +201,6 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
         vehicleNumber: _vehicleNumberController.text.trim().isEmpty
             ? null
             : _vehicleNumberController.text.trim(),
-        transportCompany: null,
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
@@ -203,14 +209,16 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
       );
 
       final notifier = ref.read(transportNotifierProvider.notifier);
-      final bool ok = _existingTransport != null
+      final ok = _existingTransport != null
           ? await notifier.updateTransport(
               _existingTransport!.transportId,
               transport,
             )
           : await notifier.addTransport(transport);
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       if (ok) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -232,8 +240,10 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
           backgroundColor: Colors.red,
         ),
       );
-    } catch (e) {
-      if (!mounted) return;
+    } on Exception catch (e) {
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -241,7 +251,9 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
         ),
       );
     } finally {
-      if (mounted) setState(() => _isSaving = false);
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
@@ -251,7 +263,6 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
       title: _existingTransport != null
           ? 'Edit Transport'
           : 'Add Transport',
-      showBackButton: true,
       body: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -454,10 +465,10 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _transportNameController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Transport Name *',
                           hintText: 'e.g., TRN for Ahmedabad',
-                          prefixIcon: const Icon(Icons.local_shipping_outlined),
+                          prefixIcon: Icon(Icons.local_shipping_outlined),
                         ),
                         validator: (value) {
                           if (value?.isEmpty ?? true) {
@@ -469,10 +480,10 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _vehicleNumberController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Vehicle Number *',
                           hintText: 'e.g., GJ01AB1234',
-                          prefixIcon: const Icon(Icons.directions_car),
+                          prefixIcon: Icon(Icons.directions_car),
                         ),
                         validator: (value) {
                           if (value?.isEmpty ?? true) {
@@ -485,10 +496,10 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
 
                       TextFormField(
                         controller: _driverNameController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Driver Name *',
                           hintText: 'e.g., Rajesh',
-                          prefixIcon: const Icon(Icons.person_outline),
+                          prefixIcon: Icon(Icons.person_outline),
                         ),
                         validator: (value) {
                           if (value?.isEmpty ?? true) {
@@ -501,10 +512,10 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
                       TextFormField(
                         controller: _destinationController,
                         readOnly: widget.invoiceId != null,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Destination *',
                           hintText: 'e.g., Ahmedabad',
-                          prefixIcon: const Icon(Icons.location_on_outlined),
+                          prefixIcon: Icon(Icons.location_on_outlined),
                         ),
                         validator: (value) {
                           if (value?.isEmpty ?? true) {
@@ -517,16 +528,15 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
 
                       DropdownButtonFormField<TransportType>(
                         value: _selectedTransportType,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Transport Type *',
-                          prefixIcon: const Icon(Icons.local_shipping),
+                          prefixIcon: Icon(Icons.local_shipping),
                         ),
-                        items: TransportType.values.map((type) {
-                          return DropdownMenuItem<TransportType>(
-                            value: type,
-                            child: Text(type.displayName),
-                          );
-                        }).toList(),
+                        items: TransportType.values.map((type) =>
+                            DropdownMenuItem<TransportType>(
+                              value: type,
+                              child: Text(type.displayName),
+                            )).toList(),
                         onChanged: (value) {
                           setState(() => _selectedTransportType = value);
                         },
@@ -546,16 +556,15 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
                       const SizedBox(height: 12),
                       DropdownButtonFormField<ExportStatus>(
                         value: _selectedStatus,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Status *',
-                          prefixIcon: const Icon(Icons.info_outline),
+                          prefixIcon: Icon(Icons.info_outline),
                         ),
-                        items: ExportStatus.values.map((status) {
-                          return DropdownMenuItem<ExportStatus>(
-                            value: status,
-                            child: Text(status.displayName),
-                          );
-                        }).toList(),
+                        items: ExportStatus.values.map((status) =>
+                            DropdownMenuItem<ExportStatus>(
+                              value: status,
+                              child: Text(status.displayName),
+                            )).toList(),
                         onChanged: (value) {
                           setState(() => _selectedStatus = value);
                         },
@@ -573,11 +582,11 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _notesController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Notes / Remarks',
                           hintText:
                               'Add any additional information about this transport',
-                          prefixIcon: const Icon(Icons.note),
+                          prefixIcon: Icon(Icons.note),
                           alignLabelWithHint: true,
                         ),
                         maxLines: 4,
@@ -634,20 +643,17 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-      ),
-    );
-  }
+  Widget _buildSectionTitle(String title) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+      );
 
-  Widget _buildDatePickerField(BuildContext context) {
-    return InkWell(
+  Widget _buildDatePickerField(BuildContext context) => InkWell(
       onTap: () async {
         final date = await showDatePicker(
           context: context,
@@ -675,5 +681,4 @@ class _AddTransportScreenState extends ConsumerState<AddTransportScreen> {
         ),
       ),
     );
-  }
 }

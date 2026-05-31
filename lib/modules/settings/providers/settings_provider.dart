@@ -104,9 +104,9 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> toggleSalaryReminder(bool enabled) async {
+  Future<void> toggleSalaryReminder({required bool enabled}) async {
     try {
-      await _service.toggleSalaryReminder(enabled);
+      await _service.toggleSalaryReminder(enabled: enabled);
       _settings = await _service.getSettings();
       notifyListeners();
     } catch (e, stackTrace) {
@@ -116,9 +116,9 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> toggleAutoBackup(bool enabled) async {
+  Future<void> toggleAutoBackup({required bool enabled}) async {
     try {
-      await _service.toggleAutoBackup(enabled);
+      await _service.toggleAutoBackup(enabled: enabled);
       _settings = await _service.getSettings();
       notifyListeners();
     } catch (e, stackTrace) {
@@ -128,9 +128,9 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> toggleNotifications(bool enabled) async {
+  Future<void> toggleNotifications({required bool enabled}) async {
     try {
-      await _service.toggleNotifications(enabled);
+      await _service.toggleNotifications(enabled: enabled);
       _settings = await _service.getSettings();
       notifyListeners();
     } catch (e, stackTrace) {
@@ -140,9 +140,9 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> toggleLowStockAlerts(bool enabled) async {
+  Future<void> toggleLowStockAlerts({required bool enabled}) async {
     try {
-      await _service.toggleLowStockAlerts(enabled);
+      await _service.toggleLowStockAlerts(enabled: enabled);
       _settings = await _service.getSettings();
       notifyListeners();
     } catch (e, stackTrace) {

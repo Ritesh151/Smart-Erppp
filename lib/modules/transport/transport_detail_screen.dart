@@ -2,20 +2,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:SmartERP/modules/transport/models/transport_screen_model.dart';
-import 'package:SmartERP/modules/transport/providers/transport_screen_provider.dart';
-import 'package:SmartERP/core/utils/date_helper.dart';
-import 'package:SmartERP/core/widgets/app_scaffold.dart';
-import 'package:SmartERP/core/widgets/loading_widget.dart';
-import 'package:SmartERP/core/widgets/empty_state_widget.dart';
+import '../../core/utils/date_helper.dart';
+import '../../core/widgets/app_scaffold.dart';
+import '../../core/widgets/empty_state_widget.dart';
+import '../../core/widgets/loading_widget.dart';
+import 'models/transport_screen_model.dart';
+import 'providers/transport_screen_provider.dart';
 
 class TransportDetailScreen extends ConsumerStatefulWidget {
-  final String transportId;
-
   const TransportDetailScreen({
     super.key,
     required this.transportId,
   });
+
+  final String transportId;
 
   @override
   ConsumerState<TransportDetailScreen> createState() =>
@@ -29,7 +29,6 @@ class _TransportDetailScreenState extends ConsumerState<TransportDetailScreen> {
 
     return AppScaffold(
       title: 'Shipment Details',
-      showBackButton: true,
       body: transportsAsync.when(
         loading: () => const LoadingWidget(),
         error: (error, stack) => Center(
@@ -58,8 +57,8 @@ class _TransportDetailScreenState extends ConsumerState<TransportDetailScreen> {
     );
   }
 
-  Widget _buildDetailView(BuildContext context, TransportModel transport) {
-    return SingleChildScrollView(
+  Widget _buildDetailView(BuildContext context, TransportModel transport) =>
+      SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -358,18 +357,17 @@ class _TransportDetailScreenState extends ConsumerState<TransportDetailScreen> {
                     runSpacing: 8,
                     children: ExportStatus.values
                         .where((s) => s != transport.status)
-                        .map((status) {
-                      return ElevatedButton(
-                        onPressed: () =>
-                            _updateStatus(context, transport.transportId, status),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              status.statusColor.withOpacity(0.2),
-                          foregroundColor: status.statusColor,
-                        ),
-                        child: Text(status.displayName),
-                      );
-                    }).toList(),
+                        .map((status) =>
+                            ElevatedButton(
+                              onPressed: () =>
+                                  _updateStatus(context, transport.transportId, status),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    status.statusColor.withOpacity(0.2),
+                                foregroundColor: status.statusColor,
+                              ),
+                              child: Text(status.displayName),
+                            )).toList(),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -414,32 +412,30 @@ class _TransportDetailScreenState extends ConsumerState<TransportDetailScreen> {
         ),
       ),
     );
-  }
 
   Widget _buildSection(
     BuildContext context,
     String title,
     List<Widget> children,
-  ) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 12),
-            ...children,
-          ],
+  ) =>
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              ...children,
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 
   Widget _buildInfoRow(
     BuildContext context,
@@ -447,37 +443,36 @@ class _TransportDetailScreenState extends ConsumerState<TransportDetailScreen> {
     String value,
     IconData icon,
     Color iconColor,
-  ) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: iconColor, size: 20),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall
-                    ?.copyWith(color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w500),
-              ),
-            ],
+  ) =>
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: iconColor, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelSmall
+                      ?.copyWith(color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      );
 
   Future<void> _updateStatus(
     BuildContext context,

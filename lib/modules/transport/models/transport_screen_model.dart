@@ -61,13 +61,6 @@ enum TransportType {
 }
 
 class ProductLineItem {
-  final String productId;
-  final String productName;
-  final String hsnCode;
-  final double unitPrice;
-  final double quantity;
-  final String unit;
-
   const ProductLineItem({
     required this.productId,
     required this.productName,
@@ -77,29 +70,33 @@ class ProductLineItem {
     this.unit = 'PCS',
   });
 
+  factory ProductLineItem.fromMap(Map<String, dynamic> map) =>
+      ProductLineItem(
+        productId: map['productId'] as String? ?? '',
+        productName: map['productName'] as String? ?? '',
+        hsnCode: map['hsnCode'] as String? ?? '',
+        unitPrice: (map['unitPrice'] as num?)?.toDouble() ?? 0,
+        quantity: (map['quantity'] as num?)?.toDouble() ?? 0,
+        unit: map['unit'] as String? ?? 'PCS',
+      );
+
+  final String productId;
+  final String productName;
+  final String hsnCode;
+  final double unitPrice;
+  final double quantity;
+  final String unit;
+
   double get totalAmount => unitPrice * quantity;
 
-  Map<String, dynamic> toMap() {
-    return {
-      'productId': productId,
-      'productName': productName,
-      'hsnCode': hsnCode,
-      'unitPrice': unitPrice,
-      'quantity': quantity,
-      'unit': unit,
-    };
-  }
-
-  factory ProductLineItem.fromMap(Map<String, dynamic> map) {
-    return ProductLineItem(
-      productId: map['productId'] as String? ?? '',
-      productName: map['productName'] as String? ?? '',
-      hsnCode: map['hsnCode'] as String? ?? '',
-      unitPrice: (map['unitPrice'] as num?)?.toDouble() ?? 0,
-      quantity: (map['quantity'] as num?)?.toDouble() ?? 0,
-      unit: map['unit'] as String? ?? 'PCS',
-    );
-  }
+  Map<String, dynamic> toMap() => {
+        'productId': productId,
+        'productName': productName,
+        'hsnCode': hsnCode,
+        'unitPrice': unitPrice,
+        'quantity': quantity,
+        'unit': unit,
+      };
 
   ProductLineItem copyWith({
     String? productId,
@@ -108,36 +105,18 @@ class ProductLineItem {
     double? unitPrice,
     double? quantity,
     String? unit,
-  }) {
-    return ProductLineItem(
-      productId: productId ?? this.productId,
-      productName: productName ?? this.productName,
-      hsnCode: hsnCode ?? this.hsnCode,
-      unitPrice: unitPrice ?? this.unitPrice,
-      quantity: quantity ?? this.quantity,
-      unit: unit ?? this.unit,
-    );
-  }
+  }) =>
+      ProductLineItem(
+        productId: productId ?? this.productId,
+        productName: productName ?? this.productName,
+        hsnCode: hsnCode ?? this.hsnCode,
+        unitPrice: unitPrice ?? this.unitPrice,
+        quantity: quantity ?? this.quantity,
+        unit: unit ?? this.unit,
+      );
 }
 
 class TransportModel {
-  final String transportId;
-  final String? transportNumber;
-  final String transportName;
-  final String driverName;
-  final List<ProductLineItem> products;
-  final String sourceLocation;
-  final String destinationLocation;
-  final ExportStatus status;
-  final DateTime transportDate;
-  final TransportType transportType;
-  final String? vehicleNumber;
-  final String? transportCompany;
-  final String? invoiceId;
-  final String? notes;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
   const TransportModel({
     required this.transportId,
     this.transportNumber,
@@ -157,98 +136,32 @@ class TransportModel {
     required this.updatedAt,
   });
 
-  double get totalQuantity =>
-      products.fold<double>(0, (sum, p) => sum + p.quantity);
-
-  bool get isEditable =>
-      status != ExportStatus.delivered && status != ExportStatus.cancelled;
-
-  Map<String, dynamic> toMap() {
-    return {
-      'transportId': transportId,
-      'transportNumber': transportNumber,
-      'transportName': transportName,
-      'driverName': driverName,
-      'products': products.map((p) => p.toMap()).toList(),
-      'sourceLocation': sourceLocation,
-      'destinationLocation': destinationLocation,
-      'status': status.index,
-      'transportDate': transportDate.toIso8601String(),
-      'transportType': transportType.index,
-      'vehicleNumber': vehicleNumber,
-      'transportCompany': transportCompany,
-      'invoiceId': invoiceId,
-      'notes': notes,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-    };
-  }
-
-  factory TransportModel.fromMap(Map<String, dynamic> map) {
-    return TransportModel(
-      transportId: map['transportId'] as String? ?? '',
-      transportNumber: map['transportNumber'] as String?,
-      transportName: map['transportName'] as String? ?? '',
-      driverName: map['driverName'] as String? ?? '',
-      products: (map['products'] as List<dynamic>?)
-              ?.map((p) => ProductLineItem.fromMap(Map<String, dynamic>.from(p as Map)))
-              .toList() ??
-          [],
-      sourceLocation: map['sourceLocation'] as String? ?? '',
-      destinationLocation: map['destinationLocation'] as String? ?? '',
-      status: ExportStatus.values[map['status'] as int? ?? 0],
-      transportDate: DateTime.tryParse(map['transportDate'] as String? ?? '') ??
-          DateTime.now(),
-      transportType:
-          TransportType.values[map['transportType'] as int? ?? 0],
-      vehicleNumber: map['vehicleNumber'] as String?,
-      transportCompany: map['transportCompany'] as String?,
-      invoiceId: map['invoiceId'] as String?,
-      notes: map['notes'] as String?,
-      createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ??
-          DateTime.now(),
-      updatedAt: DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
-          DateTime.now(),
-    );
-  }
-
-  TransportModel copyWith({
-    String? transportId,
-    String? transportNumber,
-    String? transportName,
-    String? driverName,
-    List<ProductLineItem>? products,
-    String? sourceLocation,
-    String? destinationLocation,
-    ExportStatus? status,
-    DateTime? transportDate,
-    TransportType? transportType,
-    String? vehicleNumber,
-    String? transportCompany,
-    String? invoiceId,
-    String? notes,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return TransportModel(
-      transportId: transportId ?? this.transportId,
-      transportNumber: transportNumber ?? this.transportNumber,
-      transportName: transportName ?? this.transportName,
-      driverName: driverName ?? this.driverName,
-      products: products ?? this.products,
-      sourceLocation: sourceLocation ?? this.sourceLocation,
-      destinationLocation: destinationLocation ?? this.destinationLocation,
-      status: status ?? this.status,
-      transportDate: transportDate ?? this.transportDate,
-      transportType: transportType ?? this.transportType,
-      vehicleNumber: vehicleNumber ?? this.vehicleNumber,
-      transportCompany: transportCompany ?? this.transportCompany,
-      invoiceId: invoiceId ?? this.invoiceId,
-      notes: notes ?? this.notes,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
+  factory TransportModel.fromMap(Map<String, dynamic> map) =>
+      TransportModel(
+        transportId: map['transportId'] as String? ?? '',
+        transportNumber: map['transportNumber'] as String?,
+        transportName: map['transportName'] as String? ?? '',
+        driverName: map['driverName'] as String? ?? '',
+        products: (map['products'] as List<dynamic>?)
+                ?.map((p) => ProductLineItem.fromMap(Map<String, dynamic>.from(p as Map)))
+                .toList() ??
+            [],
+        sourceLocation: map['sourceLocation'] as String? ?? '',
+        destinationLocation: map['destinationLocation'] as String? ?? '',
+        status: ExportStatus.values[map['status'] as int? ?? 0],
+        transportDate: DateTime.tryParse(map['transportDate'] as String? ?? '') ??
+            DateTime.now(),
+        transportType:
+            TransportType.values[map['transportType'] as int? ?? 0],
+        vehicleNumber: map['vehicleNumber'] as String?,
+        transportCompany: map['transportCompany'] as String?,
+        invoiceId: map['invoiceId'] as String?,
+        notes: map['notes'] as String?,
+        createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+            DateTime.now(),
+        updatedAt: DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
+            DateTime.now(),
+      );
 
   factory TransportModel.create({
     required String transportName,
@@ -284,4 +197,83 @@ class TransportModel {
       updatedAt: now,
     );
   }
+
+  final String transportId;
+  final String? transportNumber;
+  final String transportName;
+  final String driverName;
+  final List<ProductLineItem> products;
+  final String sourceLocation;
+  final String destinationLocation;
+  final ExportStatus status;
+  final DateTime transportDate;
+  final TransportType transportType;
+  final String? vehicleNumber;
+  final String? transportCompany;
+  final String? invoiceId;
+  final String? notes;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  double get totalQuantity =>
+      products.fold<double>(0, (sum, p) => sum + p.quantity);
+
+  bool get isEditable =>
+      status != ExportStatus.delivered && status != ExportStatus.cancelled;
+
+  Map<String, dynamic> toMap() => {
+        'transportId': transportId,
+        'transportNumber': transportNumber,
+        'transportName': transportName,
+        'driverName': driverName,
+        'products': products.map((p) => p.toMap()).toList(),
+        'sourceLocation': sourceLocation,
+        'destinationLocation': destinationLocation,
+        'status': status.index,
+        'transportDate': transportDate.toIso8601String(),
+        'transportType': transportType.index,
+        'vehicleNumber': vehicleNumber,
+        'transportCompany': transportCompany,
+        'invoiceId': invoiceId,
+        'notes': notes,
+        'createdAt': createdAt.toIso8601String(),
+        'updatedAt': updatedAt.toIso8601String(),
+      };
+
+  TransportModel copyWith({
+    String? transportId,
+    String? transportNumber,
+    String? transportName,
+    String? driverName,
+    List<ProductLineItem>? products,
+    String? sourceLocation,
+    String? destinationLocation,
+    ExportStatus? status,
+    DateTime? transportDate,
+    TransportType? transportType,
+    String? vehicleNumber,
+    String? transportCompany,
+    String? invoiceId,
+    String? notes,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) =>
+      TransportModel(
+        transportId: transportId ?? this.transportId,
+        transportNumber: transportNumber ?? this.transportNumber,
+        transportName: transportName ?? this.transportName,
+        driverName: driverName ?? this.driverName,
+        products: products ?? this.products,
+        sourceLocation: sourceLocation ?? this.sourceLocation,
+        destinationLocation: destinationLocation ?? this.destinationLocation,
+        status: status ?? this.status,
+        transportDate: transportDate ?? this.transportDate,
+        transportType: transportType ?? this.transportType,
+        vehicleNumber: vehicleNumber ?? this.vehicleNumber,
+        transportCompany: transportCompany ?? this.transportCompany,
+        invoiceId: invoiceId ?? this.invoiceId,
+        notes: notes ?? this.notes,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
 }

@@ -2,25 +2,17 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/finance/services/finance_service.dart';
-import 'package:SmartERP/modules/invoice/services/customer_service.dart';
-import 'package:SmartERP/modules/invoice/services/invoice_service.dart';
-import 'package:SmartERP/modules/payroll/services/attendance_service.dart';
-import 'package:SmartERP/modules/payroll/services/employee_service.dart';
-import 'package:SmartERP/modules/payroll/services/salary_service.dart';
-import 'package:SmartERP/modules/products/services/product_service.dart';
 
+import '../../../core/utils/logger.dart';
+import '../../../modules/finance/services/finance_service.dart';
+import '../../../modules/invoice/services/customer_service.dart';
+import '../../../modules/invoice/services/invoice_service.dart';
+import '../../../modules/payroll/services/attendance_service.dart';
+import '../../../modules/payroll/services/employee_service.dart';
+import '../../../modules/payroll/services/salary_service.dart';
+import '../../../modules/products/services/product_service.dart';
 
 class DataExportService {
-  final ProductService _productService;
-  final FinanceService _financeService;
-  final InvoiceService _invoiceService;
-  final CustomerService _customerService;
-  final EmployeeService _employeeService;
-  final AttendanceService _attendanceService;
-  final SalaryService _salaryService;
-
   DataExportService({
     required ProductService productService,
     required FinanceService financeService,
@@ -36,6 +28,14 @@ class DataExportService {
         _employeeService = employeeService,
         _attendanceService = attendanceService,
         _salaryService = salaryService;
+
+  final ProductService _productService;
+  final FinanceService _financeService;
+  final InvoiceService _invoiceService;
+  final CustomerService _customerService;
+  final EmployeeService _employeeService;
+  final AttendanceService _attendanceService;
+  final SalaryService _salaryService;
 
   Future<String> exportModule(String module) async {
     final data = await _collectModuleData(module);
@@ -94,12 +94,12 @@ class DataExportService {
   }
 
   List<String> get _allModules => [
-        'products',
-        'transactions',
-        'invoices',
-        'customers',
-        'employees',
-        'attendance',
-        'salaries',
-      ];
+    'products',
+    'transactions',
+    'invoices',
+    'customers',
+    'employees',
+    'attendance',
+    'salaries',
+  ];
 }

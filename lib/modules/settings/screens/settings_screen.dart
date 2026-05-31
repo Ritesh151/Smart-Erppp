@@ -18,11 +18,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   PackageInfo? _packageInfo;
   final _thresholdController = TextEditingController();
 
-  static const Color _textMuted   = Color(0xFF6B7280);
   static const Color _textLight   = Color(0xFF9CA3AF);
   static const Color _danger      = Color(0xFFEF4444);
-  static const Color _surface     = Color(0xFFFFFFFF);
-  static const Color _divider     = Color(0xFFE5E7EB);
 
   @override
   void initState() {
@@ -215,7 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 Switch(
                   value: provider.lowStockAlertsEnabled,
-                  onChanged: (value) => provider.toggleLowStockAlerts(value),
+                  onChanged: (value) => provider.toggleLowStockAlerts(enabled: value),
                 ),
               ],
             ),
@@ -288,7 +285,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 Switch(
                   value: provider.salaryReminderEnabled,
-                  onChanged: (value) => provider.toggleSalaryReminder(value),
+                  onChanged: (value) => provider.toggleSalaryReminder(enabled: value),
                 ),
               ],
             ),

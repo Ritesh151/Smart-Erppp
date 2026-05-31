@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
-import 'package:SmartERP/core/models/vehicle_model.dart';
-import 'package:SmartERP/modules/transport/services/vehicle_service.dart';
+import '../../../core/models/vehicle_model.dart';
+import '../services/vehicle_service.dart';
 
 class VehicleProvider extends ChangeNotifier {
+  VehicleProvider(this._service);
+
   final VehicleService _service;
 
   List<VehicleModel> _vehicles = [];
@@ -13,8 +15,6 @@ class VehicleProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  VehicleProvider(this._service);
-
   Future<void> loadVehicles() async {
     _isLoading = true;
     _error = null;
@@ -22,7 +22,7 @@ class VehicleProvider extends ChangeNotifier {
 
     try {
       _vehicles = await _service.getAllVehicles();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = e.toString();
     } finally {
       _isLoading = false;
@@ -35,7 +35,7 @@ class VehicleProvider extends ChangeNotifier {
       await _service.saveVehicle(vehicle);
       await loadVehicles();
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _error = e.toString();
       notifyListeners();
       return false;
@@ -47,7 +47,7 @@ class VehicleProvider extends ChangeNotifier {
       await _service.updateVehicle(vehicle);
       await loadVehicles();
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _error = e.toString();
       notifyListeners();
       return false;
@@ -59,7 +59,7 @@ class VehicleProvider extends ChangeNotifier {
       await _service.deleteVehicle(id);
       await loadVehicles();
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _error = e.toString();
       notifyListeners();
       return false;

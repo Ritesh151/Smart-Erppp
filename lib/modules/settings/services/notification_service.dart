@@ -1,17 +1,17 @@
-import 'package:SmartERP/core/models/notification_model.dart';
-import 'package:SmartERP/core/utils/logger.dart';
-import 'package:SmartERP/modules/settings/repositories/notification_repository.dart';
+import '../../../core/models/notification_model.dart';
+import '../../../core/utils/logger.dart';
+import '../../../modules/settings/repositories/notification_repository.dart';
 
 class NotificationService {
-  final NotificationRepository _repository;
-
   NotificationService({required NotificationRepository repository})
       : _repository = repository;
+
+  final NotificationRepository _repository;
 
   Future<List<NotificationModel>> getAll() async {
     try {
       return await _repository.getAll();
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to get notifications', e, stackTrace);
       return [];
     }
@@ -20,7 +20,7 @@ class NotificationService {
   Future<int> getUnreadCount() async {
     try {
       return await _repository.getUnreadCount();
-    } catch (e) {
+    } on Exception catch (_) {
       return 0;
     }
   }
@@ -28,7 +28,7 @@ class NotificationService {
   Future<List<NotificationModel>> getRecent(int limit) async {
     try {
       return await _repository.getRecent(limit);
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to get recent notifications', e, stackTrace);
       return [];
     }
@@ -55,7 +55,7 @@ class NotificationService {
       );
       await _repository.save(notification);
       Logger.info('Notification created: $title');
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to create notification', e, stackTrace);
     }
   }
@@ -63,7 +63,7 @@ class NotificationService {
   Future<void> markAsRead(String id) async {
     try {
       await _repository.markAsRead(id);
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to mark notification as read', e, stackTrace);
     }
   }
@@ -71,7 +71,7 @@ class NotificationService {
   Future<void> markAllAsRead() async {
     try {
       await _repository.markAllAsRead();
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to mark all as read', e, stackTrace);
     }
   }
@@ -79,7 +79,7 @@ class NotificationService {
   Future<void> deleteNotification(String id) async {
     try {
       await _repository.delete(id);
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to delete notification', e, stackTrace);
     }
   }
@@ -87,7 +87,7 @@ class NotificationService {
   Future<void> deleteAll() async {
     try {
       await _repository.deleteAll();
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to delete all notifications', e, stackTrace);
     }
   }
@@ -95,7 +95,7 @@ class NotificationService {
   Future<List<NotificationModel>> getByCategory(NotificationCategory category) async {
     try {
       return await _repository.getByCategory(category);
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       Logger.error('Failed to get notifications by category', e, stackTrace);
       return [];
     }
@@ -116,7 +116,6 @@ class NotificationService {
       title: 'Salary Reminder',
       message: '$employeeName has pending salary of ₹${amount.toStringAsFixed(0)}',
       category: NotificationCategory.salaryReminder,
-      priority: NotificationPriority.medium,
       referenceType: 'salary',
     );
   }
@@ -131,8 +130,6 @@ class NotificationService {
       referenceType: 'invoice',
     );
   }
-
-
 
   Future<void> notifySystem(String title, String message) async {
     await createNotification(

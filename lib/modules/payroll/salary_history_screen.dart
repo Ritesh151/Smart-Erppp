@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:SmartERP/Providers/payroll_provider.dart';
+import 'package:SmartERP/core/models/salary_history_model.dart';
 import 'package:SmartERP/core/utils/currency_formatter.dart';
 import 'package:SmartERP/core/utils/date_helper.dart';
 import 'package:SmartERP/core/widgets/app_scaffold.dart';
@@ -15,8 +16,7 @@ class SalaryHistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final paymentsAsync = ref
-        .watch(salaryPaymentsStreamProvider);
+    final paymentsAsync = ref.watch(salaryHistoryStreamProvider);
     final employees = ref.watch(employeesStreamProvider).asData?.value ?? [];
     final employee =
         employees.where((e) => e.employeeId == employeeId).firstOrNull;
@@ -47,12 +47,15 @@ class SalaryHistoryScreen extends ConsumerWidget {
                 margin: EdgeInsets.zero,
                 child: ListTile(
                   title: Text(
-                      '${_monthName(p.month)} ${p.year}',
+                      p.employeeName,
                       style: const TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: Text(
-                      '${p.paymentMode.toUpperCase()} · ${DateHelper.display(p.paymentDate)}'),
+                    '${p.paymentMethod.displayName} · ${DateHelper.display(p.paymentDate)}\n'
+                    'Paid · ${p.id}',
+                  ),
+                  isThreeLine: true,
                   trailing: Text(
-                    CurrencyFormatter.format(p.netPaid),
+                    CurrencyFormatter.format(p.amount),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -62,13 +65,5 @@ class SalaryHistoryScreen extends ConsumerWidget {
         },
       ),
     );
-  }
-
-  String _monthName(int m) {
-    const names = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return names[m];
   }
 }

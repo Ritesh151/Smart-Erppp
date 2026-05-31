@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
-import 'package:SmartERP/modules/settings/services/app_intelligence_service.dart';
+
+import '../../../modules/settings/services/app_intelligence_service.dart';
 
 class SmartSuggestionWidget extends StatefulWidget {
-  final int maxSuggestions;
-  final VoidCallback? onNavigate;
-
   const SmartSuggestionWidget({
     super.key,
     this.maxSuggestions = 3,
     this.onNavigate,
   });
+
+  final int maxSuggestions;
+  final VoidCallback? onNavigate;
 
   @override
   State<SmartSuggestionWidget> createState() => _SmartSuggestionWidgetState();
@@ -47,7 +48,9 @@ class _SmartSuggestionWidgetState extends State<SmartSuggestionWidget> {
       );
     }
 
-    if (_insights.isEmpty) return const SizedBox.shrink();
+    if (_insights.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     final theme = Theme.of(context);
 
@@ -80,15 +83,15 @@ class _SmartSuggestionWidgetState extends State<SmartSuggestionWidget> {
 }
 
 class _SuggestionTile extends StatelessWidget {
-  final BusinessInsight insight;
-  final int index;
-  final VoidCallback? onNavigate;
-
   const _SuggestionTile({
     required this.insight,
     required this.index,
     this.onNavigate,
   });
+
+  final BusinessInsight insight;
+  final int index;
+  final VoidCallback? onNavigate;
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +151,5 @@ class _SuggestionTile extends StatelessWidget {
     }
   }
 
-  Color _bgColor(ThemeData theme) {
-    return insight.isPositive ? Colors.green : Colors.orange;
-  }
+  Color _bgColor(ThemeData theme) => insight.isPositive ? Colors.green : Colors.orange;
 }

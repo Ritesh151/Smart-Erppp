@@ -40,9 +40,9 @@ class PreferencesProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateSidebarCollapsed(bool collapsed) async {
+  Future<void> updateSidebarCollapsed({required bool collapsed}) async {
     try {
-      await _service.updateSidebarCollapsed(collapsed);
+      await _service.updateSidebarCollapsed(collapsed: collapsed);
       _sidebarCollapsed = collapsed;
       notifyListeners();
     } catch (e, stackTrace) {
@@ -50,9 +50,9 @@ class PreferencesProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateNotificationsEnabled(bool enabled) async {
+  Future<void> updateNotificationsEnabled({required bool enabled}) async {
     try {
-      await _service.updateNotificationsEnabled(enabled);
+      await _service.updateNotificationsEnabled(enabled: enabled);
       _notificationsEnabled = enabled;
       notifyListeners();
     } catch (e, stackTrace) {
