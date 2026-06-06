@@ -350,9 +350,7 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
             // Product Module Services & State
             Provider<ProductRepository>(
               create: (_) {
-                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.productsBox);
-                storage.init();
-                return ProductRepository(storage);
+                return ProductRepository(StorageService<Map<dynamic, dynamic>>(StorageKeys.productsBox));
               },
             ),
             Provider<ProductService>(
@@ -377,11 +375,9 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
             // Finance Module Services & State
             Provider<FinanceRepository>(
               create: (_) {
-                final purchases = StorageService<Map<dynamic, dynamic>>(StorageKeys.purchaseBox)..init();
-                final expenses = StorageService<Map<dynamic, dynamic>>(StorageKeys.expensesBox)..init();
                 return FinanceRepository(
-                  purchaseStorage: purchases,
-                  expensesStorage: expenses,
+                  purchaseStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.purchaseBox),
+                  expensesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.expensesBox),
                 );
               },
             ),
@@ -389,8 +385,7 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
             // Expense Module Services & State
             Provider<ExpenseRepository>(
               create: (_) {
-                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.expensesBox)..init();
-                return ExpenseRepository(storage);
+                return ExpenseRepository(StorageService<Map<dynamic, dynamic>>(StorageKeys.expensesBox));
               },
             ),
             Provider<ExpenseService>(
@@ -412,28 +407,20 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
             // Invoice Module Services & State
             Provider<CustomerRepository>(
               create: (_) {
-                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.customersBox);
-                // Initialize storage asynchronously
-                storage.init().catchError((e) => Logger.error('Failed to init customers storage', e));
-                return CustomerRepository(storage);
+                return CustomerRepository(StorageService<Map<dynamic, dynamic>>(StorageKeys.customersBox));
               },
             ),
             Provider<InvoiceRepository>(
               create: (_) {
-                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.invoicesBox);
-                final itemStorage = StorageService<Map<dynamic, dynamic>>(StorageKeys.invoiceItemsBox);
-                // Initialize storage asynchronously
-                storage.init().catchError((e) => Logger.error('Failed to init invoices storage', e));
-                itemStorage.init().catchError((e) => Logger.error('Failed to init invoice items storage', e));
-                return InvoiceRepository(invoiceStorage: storage, itemStorage: itemStorage);
+                return InvoiceRepository(
+                  invoiceStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.invoicesBox),
+                  itemStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.invoiceItemsBox),
+                );
               },
             ),
             Provider<PaymentRepository>(
               create: (_) {
-                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.paymentsBox);
-                // Initialize storage asynchronously
-                storage.init().catchError((e) => Logger.error('Failed to init payments storage', e));
-                return PaymentRepository(storage);
+                return PaymentRepository(StorageService<Map<dynamic, dynamic>>(StorageKeys.paymentsBox));
               },
             ),
             Provider<CustomerService>(
@@ -494,21 +481,20 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
             // Payroll Module Services & State
             Provider<EmployeeRepository>(
               create: (_) {
-                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.employeesBox)..init();
-                return EmployeeRepository(storage);
+                return EmployeeRepository(StorageService<Map<dynamic, dynamic>>(StorageKeys.employeesBox));
               },
             ),
             Provider<AttendanceRepository>(
               create: (_) {
-                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.attendanceBox)..init();
-                return AttendanceRepository(storage);
+                return AttendanceRepository(StorageService<Map<dynamic, dynamic>>(StorageKeys.attendanceBox));
               },
             ),
             Provider<SalaryRepository>(
               create: (_) {
-                final salaryStorage = StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryBox)..init();
-                final historyStorage = StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryHistoryBox)..init();
-                return SalaryRepository(salaryStorage: salaryStorage, historyStorage: historyStorage);
+                return SalaryRepository(
+                  salaryStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryBox),
+                  historyStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryHistoryBox),
+                );
               },
             ),
             Provider<EmployeeService>(
@@ -548,8 +534,7 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
             // Purchase Module Services & State
             Provider<PurchaseEntryRepository>(
               create: (_) {
-                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.purchaseBox)..init();
-                return PurchaseEntryRepository(storage);
+                return PurchaseEntryRepository(StorageService<Map<dynamic, dynamic>>(StorageKeys.purchaseBox));
               },
             ),
             Provider<PurchaseEntryService>(
@@ -635,29 +620,31 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
             // Reports Module Services & State
             Provider<ReportRepository>(
               create: (_) {
-                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.reportsBox)..init();
-                return ReportRepository(storage: storage);
+                return ReportRepository(storage: StorageService<Map<dynamic, dynamic>>(StorageKeys.reportsBox));
               },
             ),
             Provider<SalesReportRepository>(
               create: (_) {
-                final sales = StorageService<Map<dynamic, dynamic>>(StorageKeys.salesReportsBox)..init();
-                final purchase = StorageService<Map<dynamic, dynamic>>(StorageKeys.purchaseReportsBox)..init();
-                return SalesReportRepository(salesStorage: sales, purchaseStorage: purchase);
+                return SalesReportRepository(
+                  salesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salesReportsBox),
+                  purchaseStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.purchaseReportsBox),
+                );
               },
             ),
             Provider<ExpenseReportRepository>(
               create: (_) {
-                final expense = StorageService<Map<dynamic, dynamic>>(StorageKeys.expenseReportsBox)..init();
-                final stock = StorageService<Map<dynamic, dynamic>>(StorageKeys.stockReportsBox)..init();
-                return ExpenseReportRepository(expenseStorage: expense, stockStorage: stock);
+                return ExpenseReportRepository(
+                  expenseStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.expenseReportsBox),
+                  stockStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.stockReportsBox),
+                );
               },
             ),
             Provider<PayrollReportRepository>(
               create: (_) {
-                final profitLoss = StorageService<Map<dynamic, dynamic>>(StorageKeys.profitLossReportsBox)..init();
-                final payroll = StorageService<Map<dynamic, dynamic>>(StorageKeys.payrollReportsBox)..init();
-                return PayrollReportRepository(profitLossStorage: profitLoss, payrollStorage: payroll);
+                return PayrollReportRepository(
+                  profitLossStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.profitLossReportsBox),
+                  payrollStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.payrollReportsBox),
+                );
               },
             ),
             Provider<ReportService>(
@@ -703,20 +690,17 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
             // Settings Module Repositories
             Provider<SettingsRepository>(
               create: (_) {
-                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.settingsConfigBox)..init();
-                return SettingsRepository(storage: storage);
+                return SettingsRepository(storage: StorageService<Map<dynamic, dynamic>>(StorageKeys.settingsConfigBox));
               },
             ),
             Provider<NotificationRepository>(
               create: (_) {
-                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.notificationBox)..init();
-                return NotificationRepository(storage: storage);
+                return NotificationRepository(storage: StorageService<Map<dynamic, dynamic>>(StorageKeys.notificationBox));
               },
             ),
             Provider<BackupRepository>(
               create: (_) {
-                final storage = StorageService<Map<dynamic, dynamic>>(StorageKeys.backupBox)..init();
-                return BackupRepository(storage: storage);
+                return BackupRepository(storage: StorageService<Map<dynamic, dynamic>>(StorageKeys.backupBox));
               },
             ),
 
@@ -783,13 +767,13 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
               create: (context) => RestoreService(
                 backupRepository: context.read<BackupRepository>(),
                 notificationService: context.read<NotificationService>(),
-                productsStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.productsBox)..init(),
-                transactionsStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salesBox)..init(),
-                invoicesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.invoicesBox)..init(),
-                customersStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.customersBox)..init(),
-                employeesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.employeesBox)..init(),
-                attendanceStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.attendanceBox)..init(),
-                salariesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryBox)..init(),
+                productsStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.productsBox),
+                transactionsStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salesBox),
+                invoicesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.invoicesBox),
+                customersStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.customersBox),
+                employeesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.employeesBox),
+                attendanceStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.attendanceBox),
+                salariesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryBox),
               ),
             ),
             Provider<DataExportService>(
@@ -805,13 +789,13 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
             ),
             Provider<DataImportService>(
               create: (context) => DataImportService(
-                productsStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.productsBox)..init(),
-                transactionsStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salesBox)..init(),
-                invoicesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.invoicesBox)..init(),
-                customersStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.customersBox)..init(),
-                employeesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.employeesBox)..init(),
-                attendanceStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.attendanceBox)..init(),
-                salariesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryBox)..init(),
+                productsStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.productsBox),
+                transactionsStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salesBox),
+                invoicesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.invoicesBox),
+                customersStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.customersBox),
+                employeesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.employeesBox),
+                attendanceStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.attendanceBox),
+                salariesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryBox),
               ),
             ),
             Provider<AppIntelligenceService>(

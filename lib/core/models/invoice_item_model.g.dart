@@ -28,13 +28,14 @@ class InvoiceItemModelAdapter extends TypeAdapter<InvoiceItemModel> {
       taxRate: fields[8] as double,
       discountRate: fields[9] as double,
       amount: fields[10] as double,
+      imagePath: fields[11] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, InvoiceItemModel obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -56,7 +57,9 @@ class InvoiceItemModelAdapter extends TypeAdapter<InvoiceItemModel> {
       ..writeByte(9)
       ..write(obj.discountRate)
       ..writeByte(10)
-      ..write(obj.amount);
+      ..write(obj.amount)
+      ..writeByte(11)
+      ..write(obj.imagePath);
   }
 
   @override

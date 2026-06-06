@@ -6,7 +6,7 @@ import 'package:siddhivinayak_enterprise/modules/payroll/repositories/attendance
 import 'package:siddhivinayak_enterprise/modules/payroll/services/attendance_service.dart';
 
 final _attendanceStorageProvider = Provider<StorageService<Map<dynamic, dynamic>>>((ref) {
-  return StorageService<Map<dynamic, dynamic>>(StorageKeys.attendanceBox)..init();
+  return StorageService<Map<dynamic, dynamic>>(StorageKeys.attendanceBox);
 });
 
 final _attendanceRepoProvider = Provider<AttendanceRepository>((ref) {

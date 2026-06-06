@@ -38,6 +38,9 @@ class InvoiceItemModel extends HiveObject {
   @HiveField(10)
   final double amount;
 
+  @HiveField(11)
+  final String? imagePath;
+
   InvoiceItemModel({
     required this.id,
     required this.productId,
@@ -50,6 +53,7 @@ class InvoiceItemModel extends HiveObject {
     required this.taxRate,
     required this.discountRate,
     required this.amount,
+    this.imagePath,
   });
 
   factory InvoiceItemModel.create({
@@ -62,6 +66,7 @@ class InvoiceItemModel extends HiveObject {
     required double unitPrice,
     double taxRate = 0,
     double discountRate = 0,
+    String? imagePath,
   }) {
     final subtotal = unitPrice * quantity;
     final discountAmount = subtotal * (discountRate / 100);
@@ -79,6 +84,7 @@ class InvoiceItemModel extends HiveObject {
       taxRate: taxRate,
       discountRate: discountRate,
       amount: amount,
+      imagePath: imagePath,
     );
   }
 
@@ -95,6 +101,7 @@ class InvoiceItemModel extends HiveObject {
       taxRate: (json['taxRate'] as num).toDouble(),
       discountRate: (json['discountRate'] as num).toDouble(),
       amount: (json['amount'] as num).toDouble(),
+      imagePath: json['imagePath'] as String?,
     );
   }
 
@@ -111,6 +118,7 @@ class InvoiceItemModel extends HiveObject {
       'taxRate': taxRate,
       'discountRate': discountRate,
       'amount': amount,
+      'imagePath': imagePath,
     };
   }
 
@@ -126,6 +134,7 @@ class InvoiceItemModel extends HiveObject {
     double? taxRate,
     double? discountRate,
     double? amount,
+    String? imagePath,
   }) {
     return InvoiceItemModel(
       id: id ?? this.id,
@@ -139,6 +148,7 @@ class InvoiceItemModel extends HiveObject {
       taxRate: taxRate ?? this.taxRate,
       discountRate: discountRate ?? this.discountRate,
       amount: amount ?? this.amount,
+      imagePath: imagePath ?? this.imagePath,
     );
   }
 

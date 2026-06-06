@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:siddhivinayak_enterprise/core/exceptions/app_exception.dart';
 import 'package:siddhivinayak_enterprise/core/models/invoice_item_model.dart';
@@ -38,6 +40,17 @@ class InvoiceProvider extends ChangeNotifier {
   double _editingDiscount = 0;
   String _editingNotes = '';
   String _editingTerms = '';
+  String _editingBankName = 'Indian Bank';
+  String _editingBranchName = 'Usmanpura';
+  String _editingIfscCode = 'IDIB000A666';
+  String _editingAccountNumber = '7648102905';
+
+  int _editingPaymentDays = 0;
+  int _editingPaymentMonths = 0;
+  String _editingPaymentTermDescription = '';
+  String _editingCustomPaymentNotes = '';
+
+  List<InternalCharge> _editingInternalCharges = [];
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -50,8 +63,11 @@ class InvoiceProvider extends ChangeNotifier {
   double get editingTaxAmount =>
       _editingItems.fold(0.0, (sum, item) => sum + item.taxAmount);
 
+  double get editingInternalChargesTotal =>
+      _editingInternalCharges.fold(0.0, (sum, c) => sum + c.chargeAmount);
+
   double get editingTotalAmount =>
-      editingSubtotal + editingTaxAmount - _editingDiscount;
+      editingSubtotal + editingTaxAmount + editingInternalChargesTotal - _editingDiscount;
 
   double get editingCgstAmount => editingTaxAmount / 2;
   double get editingSgstAmount => editingTaxAmount / 2;
@@ -104,9 +120,19 @@ class InvoiceProvider extends ChangeNotifier {
   DateTime get editingInvoiceDate => _editingInvoiceDate;
   DateTime get editingDueDate => _editingDueDate;
   List<InvoiceItemModel> get editingItems => _editingItems;
+  List<InternalCharge> get editingInternalCharges => _editingInternalCharges;
   double get editingDiscount => _editingDiscount;
   String get editingNotes => _editingNotes;
   String get editingTerms => _editingTerms;
+  String get editingBankName => _editingBankName;
+  String get editingBranchName => _editingBranchName;
+  String get editingIfscCode => _editingIfscCode;
+  String get editingAccountNumber => _editingAccountNumber;
+
+  int get editingPaymentDays => _editingPaymentDays;
+  int get editingPaymentMonths => _editingPaymentMonths;
+  String get editingPaymentTermDescription => _editingPaymentTermDescription;
+  String get editingCustomPaymentNotes => _editingCustomPaymentNotes;
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -115,7 +141,9 @@ class InvoiceProvider extends ChangeNotifier {
 
   bool get isFormValid =>
       _editingCustomerName.trim().isNotEmpty &&
-      _editingItems.isNotEmpty;
+      _editingItems.isNotEmpty &&
+      _editingBankName.trim().isNotEmpty &&
+      _editingAccountNumber.trim().isNotEmpty;
 
   int get totalInvoices => _invoices.length;
   int get draftCount =>
@@ -185,6 +213,10 @@ class InvoiceProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
+      final internalChargesJson = _editingInternalCharges.isNotEmpty
+          ? jsonEncode(_editingInternalCharges.map((c) => c.toJson()).toList())
+          : null;
+
       final invoice = await _service.createInvoice(
         customerId: _editingCustomerId,
         customerName: _editingCustomerName,
@@ -209,6 +241,19 @@ class InvoiceProvider extends ChangeNotifier {
         notes: _editingNotes.isNotEmpty ? _editingNotes : null,
         termsAndConditions:
             _editingTerms.isNotEmpty ? _editingTerms : null,
+        bankName: _editingBankName.isNotEmpty ? _editingBankName : null,
+        branchName: _editingBranchName.isNotEmpty ? _editingBranchName : null,
+        ifscCode: _editingIfscCode.isNotEmpty ? _editingIfscCode : null,
+        accountNumber: _editingAccountNumber.isNotEmpty ? _editingAccountNumber : null,
+        paymentDays: _editingPaymentDays,
+        paymentMonths: _editingPaymentMonths,
+        paymentTermDescription: _editingPaymentTermDescription.isNotEmpty
+            ? _editingPaymentTermDescription
+            : null,
+        customPaymentNotes: _editingCustomPaymentNotes.isNotEmpty
+            ? _editingCustomPaymentNotes
+            : null,
+        internalChargesJson: internalChargesJson,
       );
 
       _invoices.add(invoice);
@@ -240,6 +285,10 @@ class InvoiceProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
+      final internalChargesJson = _editingInternalCharges.isNotEmpty
+          ? jsonEncode(_editingInternalCharges.map((c) => c.toJson()).toList())
+          : null;
+
       final invoice = await _service.createInvoice(
         customerId: _editingCustomerId,
         customerName: _editingCustomerName,
@@ -264,6 +313,19 @@ class InvoiceProvider extends ChangeNotifier {
         notes: _editingNotes.isNotEmpty ? _editingNotes : null,
         termsAndConditions:
             _editingTerms.isNotEmpty ? _editingTerms : null,
+        bankName: _editingBankName.isNotEmpty ? _editingBankName : null,
+        branchName: _editingBranchName.isNotEmpty ? _editingBranchName : null,
+        ifscCode: _editingIfscCode.isNotEmpty ? _editingIfscCode : null,
+        accountNumber: _editingAccountNumber.isNotEmpty ? _editingAccountNumber : null,
+        paymentDays: _editingPaymentDays,
+        paymentMonths: _editingPaymentMonths,
+        paymentTermDescription: _editingPaymentTermDescription.isNotEmpty
+            ? _editingPaymentTermDescription
+            : null,
+        customPaymentNotes: _editingCustomPaymentNotes.isNotEmpty
+            ? _editingCustomPaymentNotes
+            : null,
+        internalChargesJson: internalChargesJson,
       );
 
       _invoices.add(invoice);
@@ -294,6 +356,10 @@ class InvoiceProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
+      final internalChargesJson = _editingInternalCharges.isNotEmpty
+          ? jsonEncode(_editingInternalCharges.map((c) => c.toJson()).toList())
+          : null;
+
       final updatedInvoice = await _service.updateInvoice(
         id: id,
         customerId: _editingCustomerId,
@@ -319,6 +385,19 @@ class InvoiceProvider extends ChangeNotifier {
         notes: _editingNotes.isNotEmpty ? _editingNotes : null,
         termsAndConditions:
             _editingTerms.isNotEmpty ? _editingTerms : null,
+        bankName: _editingBankName.isNotEmpty ? _editingBankName : null,
+        branchName: _editingBranchName.isNotEmpty ? _editingBranchName : null,
+        ifscCode: _editingIfscCode.isNotEmpty ? _editingIfscCode : null,
+        accountNumber: _editingAccountNumber.isNotEmpty ? _editingAccountNumber : null,
+        paymentDays: _editingPaymentDays,
+        paymentMonths: _editingPaymentMonths,
+        paymentTermDescription: _editingPaymentTermDescription.isNotEmpty
+            ? _editingPaymentTermDescription
+            : null,
+        customPaymentNotes: _editingCustomPaymentNotes.isNotEmpty
+            ? _editingCustomPaymentNotes
+            : null,
+        internalChargesJson: internalChargesJson,
       );
 
       final index = _invoices.indexWhere((i) => i.id == id);
@@ -539,6 +618,15 @@ class InvoiceProvider extends ChangeNotifier {
     _editingDiscount = 0;
     _editingNotes = '';
     _editingTerms = '';
+    _editingBankName = 'Indian Bank';
+    _editingBranchName = 'Usmanpura';
+    _editingIfscCode = 'IDIB000A666';
+    _editingAccountNumber = '7648102905';
+    _editingPaymentDays = 0;
+    _editingPaymentMonths = 0;
+    _editingPaymentTermDescription = '';
+    _editingCustomPaymentNotes = '';
+    _editingInternalCharges = [];
     notifyListeners();
   }
 
@@ -574,6 +662,7 @@ class InvoiceProvider extends ChangeNotifier {
 
   void setEditingInvoiceDate(DateTime value) {
     _editingInvoiceDate = value;
+    _recalculateDueDateFromPaymentTerms();
     notifyListeners();
   }
 
@@ -592,6 +681,7 @@ class InvoiceProvider extends ChangeNotifier {
     required double unitPrice,
     double taxRate = 0,
     double discountRate = 0,
+    String? imagePath,
   }) {
     final existingIndex = _editingItems.indexWhere(
       (i) => i.productId == productId && productId.isNotEmpty,
@@ -619,6 +709,7 @@ class InvoiceProvider extends ChangeNotifier {
         unitPrice: unitPrice,
         taxRate: taxRate,
         discountRate: discountRate,
+        imagePath: imagePath,
       );
       _editingItems.add(item);
     }
@@ -671,6 +762,114 @@ class InvoiceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setEditingBankName(String value) {
+    _editingBankName = value;
+    notifyListeners();
+  }
+
+  void setEditingBranchName(String value) {
+    _editingBranchName = value;
+    notifyListeners();
+  }
+
+  void setEditingIfscCode(String value) {
+    _editingIfscCode = value;
+    notifyListeners();
+  }
+
+  void setEditingAccountNumber(String value) {
+    _editingAccountNumber = value;
+    notifyListeners();
+  }
+
+  void setEditingPaymentDays(int value) {
+    _editingPaymentDays = value;
+    _recalculateDueDateFromPaymentTerms();
+    _generatePaymentTermDescription();
+    notifyListeners();
+  }
+
+  void setEditingPaymentMonths(int value) {
+    _editingPaymentMonths = value;
+    _recalculateDueDateFromPaymentTerms();
+    _generatePaymentTermDescription();
+    notifyListeners();
+  }
+
+  void setEditingCustomPaymentNotes(String value) {
+    _editingCustomPaymentNotes = value;
+    _generatePaymentTermDescription();
+    notifyListeners();
+  }
+
+  void addInternalCharge(String chargeName, double chargeAmount, String? chargeDescription) {
+    if (chargeName.trim().isEmpty) return;
+    if (chargeAmount < 0) return;
+    if (chargeAmount.isNaN || chargeAmount.isInfinite) return;
+    _editingInternalCharges.add(InternalCharge(
+      chargeName: chargeName.trim(),
+      chargeAmount: chargeAmount,
+      chargeDescription: chargeDescription?.trim(),
+    ));
+    notifyListeners();
+  }
+
+  void removeInternalCharge(int index) {
+    if (index >= 0 && index < _editingInternalCharges.length) {
+      _editingInternalCharges.removeAt(index);
+      notifyListeners();
+    }
+  }
+
+  void updateInternalCharge(int index, String chargeName, double chargeAmount, String? chargeDescription) {
+    if (index >= 0 && index < _editingInternalCharges.length) {
+      if (chargeAmount < 0 || chargeAmount.isNaN || chargeAmount.isInfinite) return;
+      _editingInternalCharges[index] = InternalCharge(
+        chargeName: chargeName.trim(),
+        chargeAmount: chargeAmount,
+        chargeDescription: chargeDescription?.trim(),
+      );
+      notifyListeners();
+    }
+  }
+
+  void _recalculateDueDateFromPaymentTerms() {
+    if (_editingPaymentDays < 0 || _editingPaymentMonths < 0) return;
+    var dueDate = DateTime(
+      _editingInvoiceDate.year,
+      _editingInvoiceDate.month + _editingPaymentMonths,
+      _editingInvoiceDate.day,
+    );
+    final lastDay = DateTime(dueDate.year, dueDate.month + 1, 0).day;
+    if (dueDate.day > lastDay) {
+      dueDate = DateTime(dueDate.year, dueDate.month, lastDay);
+    }
+    dueDate = dueDate.add(Duration(days: _editingPaymentDays));
+    if (!dueDate.isBefore(_editingInvoiceDate)) {
+      _editingDueDate = dueDate;
+    }
+  }
+
+  void _generatePaymentTermDescription() {
+    final parts = <String>[];
+    if (_editingPaymentMonths > 0) {
+      parts.add('${_editingPaymentMonths} month${_editingPaymentMonths > 1 ? 's' : ''}');
+    }
+    if (_editingPaymentDays > 0) {
+      parts.add('${_editingPaymentDays} day${_editingPaymentDays > 1 ? 's' : ''}');
+    }
+    if (parts.isEmpty) {
+      _editingPaymentTermDescription = '';
+      return;
+    }
+    final joined = parts.join(' and ');
+    var desc = 'Payment is due within $joined from the invoice date.';
+    if (_editingCustomPaymentNotes.trim().isNotEmpty) {
+      desc += ' Additional agreed payment conditions apply.';
+    }
+    _editingPaymentTermDescription = desc;
+  }
+
   void populateEditingFromInvoice(InvoiceModel invoice,
       {List<InvoiceItemModel>? items}) {
     _editingCustomerId = invoice.customerId;
@@ -685,6 +884,15 @@ class InvoiceProvider extends ChangeNotifier {
     _editingDiscount = invoice.discountAmount;
     _editingNotes = invoice.notes ?? '';
     _editingTerms = invoice.termsAndConditions ?? '';
+    _editingBankName = invoice.bankName ?? 'Indian Bank';
+    _editingBranchName = invoice.branchName ?? 'Usmanpura';
+    _editingIfscCode = invoice.ifscCode ?? 'IDIB000A666';
+    _editingAccountNumber = invoice.accountNumber ?? '7648102905';
+    _editingPaymentDays = invoice.paymentDays;
+    _editingPaymentMonths = invoice.paymentMonths;
+    _editingPaymentTermDescription = invoice.paymentTermDescription ?? '';
+    _editingCustomPaymentNotes = invoice.customPaymentNotes ?? '';
+    _editingInternalCharges = invoice.internalCharges;
     notifyListeners();
   }
 

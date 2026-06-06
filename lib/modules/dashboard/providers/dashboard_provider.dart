@@ -20,6 +20,7 @@ class DashboardProvider extends ChangeNotifier {
         _productService = productService,
         _financeService = financeService {
     _subscribeToSourceBoxes();
+    _startAutoRefresh();
   }
 
   final InvoiceService _invoiceService;
@@ -43,6 +44,11 @@ class DashboardProvider extends ChangeNotifier {
   List<ProductModel> _products = [];
   final List<StreamSubscription<dynamic>> _sourceSubscriptions = [];
   bool _refreshQueued = false;
+  Timer? _autoRefreshTimer;
+
+  List<InvoiceModel> _dueTodayInvoices = [];
+  List<InvoiceModel> _dueIn3DaysInvoices = [];
+  List<InvoiceModel> _dueIn7DaysInvoices = [];
 
   double get totalSales => _totalSales;
   double get overdueAmount => _overdueAmount;
@@ -59,6 +65,9 @@ class DashboardProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   List<InvoiceModel> get invoices => _invoices;
   List<ProductModel> get products => _products;
+  List<InvoiceModel> get dueTodayInvoices => _dueTodayInvoices;
+  List<InvoiceModel> get dueIn3DaysInvoices => _dueIn3DaysInvoices;
+  List<InvoiceModel> get dueIn7DaysInvoices => _dueIn7DaysInvoices;
 
   double get overdueProgress =>
       _overdueCount > 0 || _dueSoonCount > 0 || _paidThisMonthCount > 0
@@ -124,6 +133,12 @@ class DashboardProvider extends ChangeNotifier {
     }
   }
 
+  void _startAutoRefresh() {
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      refresh();
+    });
+  }
+
   void _queueRefresh() {
     if (_refreshQueued || _isLoading) return;
     _refreshQueued = true;
@@ -135,6 +150,7 @@ class DashboardProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _autoRefreshTimer?.cancel();
     for (final sub in _sourceSubscriptions) {
       sub.cancel();
     }
@@ -158,6 +174,10 @@ class DashboardProvider extends ChangeNotifier {
     double paidThisMonthTotal = 0;
     int paidThisMonthTotalCount = 0;
 
+    final dueToday = <InvoiceModel>[];
+    final dueIn3Days = <InvoiceModel>[];
+    final dueIn7Days = <InvoiceModel>[];
+
     for (final inv in invoices) {
       if (inv.status != InvoiceStatus.cancelled) {
         final isOverdue = inv.status == InvoiceStatus.overdue ||
@@ -166,11 +186,19 @@ class DashboardProvider extends ChangeNotifier {
         if (isOverdue) {
           overdueTotal += inv.balanceAmount;
           overdueTotalCount++;
-        } else if (inv.status != InvoiceStatus.paid &&
-            inv.dueDate.isAfter(now) &&
-            inv.dueDate.isBefore(now.add(const Duration(days: 7)))) {
-          dueSoonTotal += inv.balanceAmount;
-          dueSoonTotalCount++;
+        } else if (inv.status != InvoiceStatus.paid) {
+          final diff = inv.dueDate.difference(now).inDays;
+          if (diff == 0) {
+            dueToday.add(inv);
+          } else if (diff <= 3) {
+            dueIn3Days.add(inv);
+          } else if (diff <= 7) {
+            dueIn7Days.add(inv);
+          }
+          if (diff >= 0 && diff < 7) {
+            dueSoonTotal += inv.balanceAmount;
+            dueSoonTotalCount++;
+          }
         }
       }
 
@@ -189,6 +217,9 @@ class DashboardProvider extends ChangeNotifier {
     _dueSoonCount = dueSoonTotalCount;
     _paidThisMonthAmount = paidThisMonthTotal;
     _paidThisMonthCount = paidThisMonthTotalCount;
+    _dueTodayInvoices = dueToday;
+    _dueIn3DaysInvoices = dueIn3Days;
+    _dueIn7DaysInvoices = dueIn7Days;
 
     _totalInventoryValue = 0;
     _lowStockCount = 0;

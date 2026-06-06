@@ -12,17 +12,13 @@ class PdfService {
   static const String companyPhone = '9974884444';
   static const String companyEmail = 'siddhivinayak0330@gmail.com';
   static const String companyGstin = '24BCTPC3372F1ZO';
-  static const String bankName = 'Indian Bank';
-  static const String bankBranch = 'Usmanpura';
-  static const String bankIfsc = 'IDIB000A666';
-  static const String bankAccount = '7648102905';
 
   Future<String> saveHtmlToFile({
     required InvoiceModel invoice,
     required List<InvoiceItemModel> items,
   }) async {
     try {
-      final html = generateInvoiceHtml(invoice: invoice, items: items);
+      final html = await generateInvoiceHtml(invoice: invoice, items: items);
       final directory = await getTemporaryDirectory();
       final file = File(
         '${directory.path}/invoice_${invoice.invoiceNumber.replaceAll('/', '_')}.html',
@@ -36,16 +32,17 @@ class PdfService {
     }
   }
 
-  String generateInvoiceHtml({
+  Future<String> generateInvoiceHtml({
     required InvoiceModel invoice,
     required List<InvoiceItemModel> items,
-  }) {
+  }) async {
     final subtotal = invoice.subtotal;
     final totalTax = invoice.taxAmount;
     final cgst = totalTax / 2;
     final sgst = totalTax / 2;
     const igst = 0.0;
     final discount = invoice.discountAmount;
+    final internalChargesTotal = invoice.internalChargesTotal;
     final grandTotal = invoice.totalAmount;
     final roundedGrandTotal = grandTotal.roundToDouble();
     final roundOff = roundedGrandTotal - grandTotal;
@@ -53,17 +50,54 @@ class PdfService {
     final invoiceDate = _formatDateFull(invoice.invoiceDate);
     final amountInWords = _numberToWordsIndian(roundedGrandTotal.toInt());
 
+    final imageHtml = <String>[];
+    for (final item in items) {
+      String imgTag;
+      if (item.imagePath != null && item.imagePath!.trim().isNotEmpty) {
+        try {
+          final file = File(item.imagePath!);
+          if (await file.exists()) {
+            final bytes = await file.readAsBytes();
+            final base64 = _base64Encode(bytes);
+            final ext = item.imagePath!.split('.').last.toLowerCase();
+            final mime = ext == 'png' ? 'image/png' : 'image/jpeg';
+            imgTag =
+                '<img src="data:$mime;base64,$base64" class="prod-img" alt="${_escapeHtml(item.productName)}" />';
+          } else {
+            imgTag = _placeholderImage();
+          }
+        } catch (_) {
+          imgTag = _placeholderImage();
+        }
+      } else {
+        imgTag = _placeholderImage();
+      }
+      imageHtml.add(imgTag);
+    }
+
+    String getTerms() {
+      final terms = invoice.termsAndConditions;
+      if (terms != null && terms.trim().isNotEmpty) {
+        final lines = terms.split('\n').where((l) => l.trim().isNotEmpty);
+        return lines.map((l) => '› ${_escapeHtml(l.trim())}').join(' &nbsp;\n');
+      }
+      return '';
+    }
+
+    final termsContent = getTerms();
+
     final itemsRows = items.asMap().entries.map((entry) {
       final idx = entry.key + 1;
       final item = entry.value;
+      final img = imageHtml[idx - 1];
       return '''
         <tr>
           <td class="num">$idx</td>
+          <td class="td-img-col">$img</td>
           <td>
             <div class="td-desc">${_escapeHtml(item.productName)}</div>
-            ${item.hsnCode != null ? '<div class="td-hsn">HSN Code: ${_escapeHtml(item.hsnCode!)}</div>' : ''}
+            ${item.hsnCode != null ? '<div class="td-hsn">HSN: ${_escapeHtml(item.hsnCode!)}</div>' : ''}
           </td>
-          <td>${_escapeHtml(item.hsnCode ?? '-')}</td>
           <td class="right">${item.quantity.toInt()}</td>
           <td class="right">₹${_formatNumber(item.unitPrice)}</td>
           <td class="right">₹${_formatNumber(item.amount)}</td>
@@ -107,7 +141,7 @@ class PdfService {
 
     .invoice {
       background: var(--white);
-      max-width: 820px;
+      max-width: 900px;
       margin: 0 auto;
       border: 1px solid var(--border);
       border-radius: 4px;
@@ -244,14 +278,15 @@ class PdfService {
       color: var(--white);
     }
     table.items thead th {
-      padding: 11px 16px;
+      padding: 11px 12px;
       font-size: .62rem;
       letter-spacing: 1.8px;
       text-transform: uppercase;
       font-weight: 700;
       text-align: left;
     }
-    table.items thead th.num { text-align: center; width: 44px; }
+    table.items thead th.num { text-align: center; width: 36px; }
+    table.items thead th.img-col { width: 68px; text-align: center; }
     table.items thead th.right { text-align: right; }
 
     table.items tbody tr {
@@ -261,21 +296,45 @@ class PdfService {
       background: var(--accent-lite);
     }
     table.items tbody td {
-      padding: 12px 16px;
+      padding: 10px 12px;
       color: var(--ink);
-      vertical-align: top;
+      vertical-align: middle;
     }
     table.items tbody td.num { text-align: center; color: var(--muted); }
     table.items tbody td.right { text-align: right; }
     table.items tbody td .td-desc { font-weight: 600; }
     table.items tbody td .td-hsn { font-size: .72rem; color: var(--light-muted); margin-top: 2px; }
 
+    .prod-img {
+      width: 56px;
+      height: 56px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      display: block;
+      background: var(--bg);
+    }
+    .prod-placeholder {
+      width: 56px;
+      height: 56px;
+      border-radius: 4px;
+      border: 1px dashed var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      color: var(--light-muted);
+      font-size: .5rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
     table.items tfoot tr {
       background: var(--accent-lite);
       border-top: 2px solid var(--accent);
     }
     table.items tfoot td {
-      padding: 10px 16px;
+      padding: 10px 12px;
       font-weight: 700;
       font-size: .85rem;
     }
@@ -478,8 +537,8 @@ class PdfService {
       <thead>
         <tr>
           <th class="num">SR</th>
+          <th class="img-col">Image</th>
           <th>Product Description</th>
-          <th>HSN</th>
           <th class="right">QTY</th>
           <th class="right">Rate</th>
           <th class="right">Amount</th>
@@ -490,9 +549,10 @@ class PdfService {
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="3"></td>
-          <td class="right"><strong>Total</strong></td>
+          <td colspan="2"></td>
+          <td><strong>Total</strong></td>
           <td class="right">$totalQty</td>
+          <td class="right">₹${_formatNumber(subtotal)}</td>
           <td class="right">₹${_formatNumber(subtotal)}</td>
         </tr>
       </tfoot>
@@ -502,6 +562,10 @@ class PdfService {
   <div class="amount-words">
     Amount in Words: &nbsp;<span>Rupees ${_escapeHtml(amountInWords)} Only</span>
   </div>
+
+  ${_buildInternalChargesHtml(invoice)}
+
+  ${_buildPaymentTermsHtml(invoice)}
 
   <div class="bottom-grid">
     <div class="bg-block">
@@ -528,19 +592,19 @@ class PdfService {
       <p class="bg-title">Bank Details</p>
       <div class="bank-row">
         <span class="br-label">Bank</span>
-        <span class="br-val">$bankName</span>
+        <span class="br-val">${_escapeHtml(invoice.bankName ?? 'Indian Bank')}</span>
       </div>
       <div class="bank-row">
         <span class="br-label">Branch</span>
-        <span class="br-val">$bankBranch</span>
+        <span class="br-val">${_escapeHtml(invoice.branchName ?? 'Usmanpura')}</span>
       </div>
       <div class="bank-row">
         <span class="br-label">IFSC</span>
-        <span class="br-val">$bankIfsc</span>
+        <span class="br-val">${_escapeHtml(invoice.ifscCode ?? 'IDIB000A666')}</span>
       </div>
       <div class="bank-row">
         <span class="br-label">A/C No.</span>
-        <span class="br-val">$bankAccount</span>
+        <span class="br-val">${_escapeHtml(invoice.accountNumber ?? '7648102905')}</span>
       </div>
     </div>
 
@@ -554,12 +618,17 @@ class PdfService {
         <span class="sr-label">CGST @ 9%</span>
         <span class="sr-val">₹${_formatNumber(cgst)}</span>
       </div>
-      <div class="sum-row">
-        <span class="sr-label">SGST @ 9%</span>
-        <span class="sr-val">₹${_formatNumber(sgst)}</span>
-      </div>
-      <div class="sum-row">
-        <span class="sr-label">Grand Total</span>
+       <div class="sum-row">
+          <span class="sr-label">SGST @ 9%</span>
+          <span class="sr-val">₹${_formatNumber(sgst)}</span>
+        </div>
+        ${internalChargesTotal > 0 ? '''
+        <div class="sum-row">
+          <span class="sr-label">Internal Charges</span>
+          <span class="sr-val">₹${_formatNumber(internalChargesTotal)}</span>
+        </div>''' : ''}
+        <div class="sum-row">
+          <span class="sr-label">Grand Total</span>
         <span class="sr-val">₹${_formatNumber(roundedGrandTotal)}</span>
       </div>
     </div>
@@ -568,10 +637,7 @@ class PdfService {
   <div class="footer">
     <div class="footer-terms">
       <p class="ft-head">Terms &amp; Conditions</p>
-      › Goods once sold will not be taken back or exchanged. &nbsp;
-      › Goods despatched at buyer's risk. &nbsp;
-      › 18% interest will be charged on overdue payment. &nbsp;
-      › Subject to Ahmedabad jurisdiction.
+      ${termsContent.isNotEmpty ? termsContent : '› Goods once sold will not be taken back or exchanged. &nbsp;› Goods despatched at buyer\'s risk. &nbsp;› 18% interest will be charged on overdue payment. &nbsp;› Subject to Ahmedabad jurisdiction.'}
     </div>
     <div class="footer-sign">
       <p class="fs-for">For, $companyName · GSTIN: $companyGstin</p>
@@ -587,6 +653,34 @@ class PdfService {
 
 </body>
 </html>''';
+  }
+
+  String _placeholderImage() {
+    return '<div class="prod-placeholder">No<br>Image</div>';
+  }
+
+  String _base64Encode(List<int> bytes) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    final buffer = StringBuffer();
+    for (var i = 0; i < bytes.length; i += 3) {
+      final b1 = bytes[i];
+      final b2 = i + 1 < bytes.length ? bytes[i + 1] : 0;
+      final b3 = i + 2 < bytes.length ? bytes[i + 2] : 0;
+      final triple = (b1 << 16) | (b2 << 8) | b3;
+      buffer.write(chars[(triple >> 18) & 0x3F]);
+      buffer.write(chars[(triple >> 12) & 0x3F]);
+      if (i + 1 < bytes.length) {
+        buffer.write(chars[(triple >> 6) & 0x3F]);
+      } else {
+        buffer.write('=');
+      }
+      if (i + 2 < bytes.length) {
+        buffer.write(chars[triple & 0x3F]);
+      } else {
+        buffer.write('=');
+      }
+    }
+    return buffer.toString();
   }
 
   String _formatNumber(double amount) {
@@ -628,6 +722,72 @@ class PdfService {
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
+  }
+
+  String _buildInternalChargesHtml(InvoiceModel invoice) {
+    final charges = invoice.internalCharges;
+    if (charges.isEmpty) return '';
+
+    final rows = charges.map((c) {
+      final desc = c.chargeDescription != null && c.chargeDescription!.trim().isNotEmpty
+          ? '<p style="font-size:0.78rem;color:var(--muted);margin-top:2px;">${_escapeHtml(c.chargeDescription!)}</p>'
+          : '';
+      return '''
+        <div class="ic-row">
+          <div>
+            <span class="ic-name">${_escapeHtml(c.chargeName)}</span>$desc
+          </div>
+          <span class="ic-amount">₹${_formatNumber(c.chargeAmount)}</span>
+        </div>''';
+    }).join('\n');
+
+    return '''
+  <div style="padding: 14px 24px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); border-top: 1px dashed var(--border);">
+    <p style="font-size:0.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:8px;">Additional Charges</p>
+    $rows
+    <style>
+      .ic-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 6px 0;
+        border-bottom: 1px dotted var(--border);
+        font-size: .82rem;
+      }
+      .ic-row:last-child { border-bottom: none; }
+      .ic-name { font-weight: 600; color: var(--ink); }
+      .ic-amount { font-weight: 700; color: var(--ink); white-space: nowrap; }
+    </style>
+  </div>''';
+  }
+
+  String _buildPaymentTermsHtml(InvoiceModel invoice) {
+    final hasPaymentTerms = invoice.paymentDays > 0 || invoice.paymentMonths > 0;
+    final hasDescription = invoice.paymentTermDescription != null &&
+        invoice.paymentTermDescription!.trim().isNotEmpty;
+    final hasCustomNotes = invoice.customPaymentNotes != null &&
+        invoice.customPaymentNotes!.trim().isNotEmpty;
+    if (!hasPaymentTerms && !hasCustomNotes) return '';
+
+    final buf = StringBuffer();
+    buf.write('''
+  <div style="padding: 14px 24px; border-left: 1px solid var(--border); border-right: 1px solid var(--border);">
+    <p style="font-size:0.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:8px;">Payment Terms</p>''');
+
+    if (hasDescription) {
+      buf.write('''
+    <p style="font-size:0.82rem;color:var(--ink);line-height:1.6;margin-bottom:${hasCustomNotes ? '8' : '0'}px;">${_escapeHtml(invoice.paymentTermDescription!)}</p>''');
+    }
+
+    if (hasCustomNotes) {
+      buf.write('''
+    <p style="font-size:0.68rem;font-weight:700;color:var(--muted);margin-top:${hasDescription ? '6' : '0'}px;margin-bottom:4px;">Additional Payment Conditions:</p>
+    <p style="font-size:0.82rem;color:var(--ink);line-height:1.5;">${_escapeHtml(invoice.customPaymentNotes!)}</p>''');
+    }
+
+    buf.write('''
+  </div>''');
+    return buf.toString();
   }
 
   String _numberToWordsIndian(int number) {

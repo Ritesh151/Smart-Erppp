@@ -1,6 +1,48 @@
+import 'dart:convert';
+
 import 'package:hive/hive.dart';
 
 part 'invoice_model.g.dart';
+
+class InternalCharge {
+  final String chargeName;
+  final double chargeAmount;
+  final String? chargeDescription;
+
+  const InternalCharge({
+    required this.chargeName,
+    required this.chargeAmount,
+    this.chargeDescription,
+  });
+
+  factory InternalCharge.fromJson(Map<String, dynamic> json) {
+    return InternalCharge(
+      chargeName: json['chargeName'] as String? ?? '',
+      chargeAmount: (json['chargeAmount'] as num?)?.toDouble() ?? 0,
+      chargeDescription: json['chargeDescription'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'chargeName': chargeName,
+      'chargeAmount': chargeAmount,
+      'chargeDescription': chargeDescription,
+    };
+  }
+
+  InternalCharge copyWith({
+    String? chargeName,
+    double? chargeAmount,
+    String? chargeDescription,
+  }) {
+    return InternalCharge(
+      chargeName: chargeName ?? this.chargeName,
+      chargeAmount: chargeAmount ?? this.chargeAmount,
+      chargeDescription: chargeDescription ?? this.chargeDescription,
+    );
+  }
+}
 
 @HiveType(typeId: 3)
 class InvoiceModel extends HiveObject {
@@ -67,6 +109,33 @@ class InvoiceModel extends HiveObject {
   @HiveField(20)
   final DateTime updatedAt;
 
+  @HiveField(21)
+  final String? bankName;
+
+  @HiveField(22)
+  final String? branchName;
+
+  @HiveField(23)
+  final String? ifscCode;
+
+  @HiveField(24)
+  final String? accountNumber;
+
+  @HiveField(25)
+  final int paymentDays;
+
+  @HiveField(26)
+  final int paymentMonths;
+
+  @HiveField(27)
+  final String? paymentTermDescription;
+
+  @HiveField(28)
+  final String? customPaymentNotes;
+
+  @HiveField(29)
+  final String? internalChargesJson;
+
   InvoiceModel({
     required this.id,
     required this.invoiceNumber,
@@ -89,6 +158,15 @@ class InvoiceModel extends HiveObject {
     this.termsAndConditions,
     required this.createdAt,
     required this.updatedAt,
+    this.bankName,
+    this.branchName,
+    this.ifscCode,
+    this.accountNumber,
+    this.paymentDays = 0,
+    this.paymentMonths = 0,
+    this.paymentTermDescription,
+    this.customPaymentNotes,
+    this.internalChargesJson,
   });
 
   factory InvoiceModel.fromJson(Map<String, dynamic> json) {
@@ -117,6 +195,15 @@ class InvoiceModel extends HiveObject {
       termsAndConditions: json['termsAndConditions'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      bankName: json['bankName'] as String?,
+      branchName: json['branchName'] as String?,
+      ifscCode: json['ifscCode'] as String?,
+      accountNumber: json['accountNumber'] as String?,
+      paymentDays: (json['paymentDays'] as num?)?.toInt() ?? 0,
+      paymentMonths: (json['paymentMonths'] as num?)?.toInt() ?? 0,
+      paymentTermDescription: json['paymentTermDescription'] as String?,
+      customPaymentNotes: json['customPaymentNotes'] as String?,
+      internalChargesJson: json['internalChargesJson'] as String?,
     );
   }
 
@@ -143,6 +230,15 @@ class InvoiceModel extends HiveObject {
       'termsAndConditions': termsAndConditions,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'bankName': bankName,
+      'branchName': branchName,
+      'ifscCode': ifscCode,
+      'accountNumber': accountNumber,
+      'paymentDays': paymentDays,
+      'paymentMonths': paymentMonths,
+      'paymentTermDescription': paymentTermDescription,
+      'customPaymentNotes': customPaymentNotes,
+      'internalChargesJson': internalChargesJson,
     };
   }
 
@@ -168,6 +264,15 @@ class InvoiceModel extends HiveObject {
     String? termsAndConditions,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? bankName,
+    String? branchName,
+    String? ifscCode,
+    String? accountNumber,
+    int? paymentDays,
+    int? paymentMonths,
+    String? paymentTermDescription,
+    String? customPaymentNotes,
+    String? internalChargesJson,
   }) {
     return InvoiceModel(
       id: id ?? this.id,
@@ -191,6 +296,15 @@ class InvoiceModel extends HiveObject {
       termsAndConditions: termsAndConditions ?? this.termsAndConditions,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      bankName: bankName ?? this.bankName,
+      branchName: branchName ?? this.branchName,
+      ifscCode: ifscCode ?? this.ifscCode,
+      accountNumber: accountNumber ?? this.accountNumber,
+      paymentDays: paymentDays ?? this.paymentDays,
+      paymentMonths: paymentMonths ?? this.paymentMonths,
+      paymentTermDescription: paymentTermDescription ?? this.paymentTermDescription,
+      customPaymentNotes: customPaymentNotes ?? this.customPaymentNotes,
+      internalChargesJson: internalChargesJson ?? this.internalChargesJson,
     );
   }
 
@@ -212,6 +326,19 @@ class InvoiceModel extends HiveObject {
   }
 
   double get grandTotalRounded => totalAmount + roundOff;
+
+  List<InternalCharge> get internalCharges {
+    if (internalChargesJson == null || internalChargesJson!.isEmpty) return [];
+    try {
+      final list = jsonDecode(internalChargesJson!) as List;
+      return list.map((e) => InternalCharge.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  double get internalChargesTotal =>
+      internalCharges.fold(0.0, (sum, c) => sum + c.chargeAmount);
 }
 
 @HiveType(typeId: 7)

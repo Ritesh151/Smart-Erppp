@@ -38,13 +38,22 @@ class InvoiceModelAdapter extends TypeAdapter<InvoiceModel> {
       termsAndConditions: fields[18] as String?,
       createdAt: fields[19] as DateTime,
       updatedAt: fields[20] as DateTime,
+      bankName: fields[21] as String?,
+      branchName: fields[22] as String?,
+      ifscCode: fields[23] as String?,
+      accountNumber: fields[24] as String?,
+      paymentDays: fields[25] as int? ?? 0,
+      paymentMonths: fields[26] as int? ?? 0,
+      paymentTermDescription: fields[27] as String?,
+      customPaymentNotes: fields[28] as String?,
+      internalChargesJson: fields[29] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, InvoiceModel obj) {
     writer
-      ..writeByte(21)
+      ..writeByte(30)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -86,7 +95,25 @@ class InvoiceModelAdapter extends TypeAdapter<InvoiceModel> {
       ..writeByte(19)
       ..write(obj.createdAt)
       ..writeByte(20)
-      ..write(obj.updatedAt);
+      ..write(obj.updatedAt)
+      ..writeByte(21)
+      ..write(obj.bankName)
+      ..writeByte(22)
+      ..write(obj.branchName)
+      ..writeByte(23)
+      ..write(obj.ifscCode)
+      ..writeByte(24)
+      ..write(obj.accountNumber)
+      ..writeByte(25)
+      ..write(obj.paymentDays)
+      ..writeByte(26)
+      ..write(obj.paymentMonths)
+      ..writeByte(27)
+      ..write(obj.paymentTermDescription)
+      ..writeByte(28)
+      ..write(obj.customPaymentNotes)
+      ..writeByte(29)
+      ..write(obj.internalChargesJson);
   }
 
   @override

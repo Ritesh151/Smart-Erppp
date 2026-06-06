@@ -35,15 +35,15 @@ extension SalaryHistoryCompat on SalaryHistoryModel {
 
 // Repository providers
 final _employeeStorageProvider = Provider<StorageService<Map<dynamic, dynamic>>>((ref) {
-  return StorageService<Map<dynamic, dynamic>>(StorageKeys.employeesBox)..init();
+  return StorageService<Map<dynamic, dynamic>>(StorageKeys.employeesBox);
 });
 
 final _salaryStorageProvider = Provider<StorageService<Map<dynamic, dynamic>>>((ref) {
-  return StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryBox)..init();
+  return StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryBox);
 });
 
 final _salaryHistoryStorageProvider = Provider<StorageService<Map<dynamic, dynamic>>>((ref) {
-  return StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryHistoryBox)..init();
+  return StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryHistoryBox);
 });
 
 final _employeeRepoProvider = Provider<EmployeeRepository>((ref) {

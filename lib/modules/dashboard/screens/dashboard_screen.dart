@@ -7,6 +7,7 @@ import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart
 import 'package:siddhivinayak_enterprise/core/extensions/date_extensions.dart';
 import 'package:siddhivinayak_enterprise/core/routes/app_routes.dart';
 import 'package:siddhivinayak_enterprise/core/theme/theme_extensions.dart';
+import 'package:siddhivinayak_enterprise/core/models/invoice_model.dart';
 import 'package:siddhivinayak_enterprise/core/models/product_model.dart';
 import 'package:siddhivinayak_enterprise/core/models/transaction_model.dart';
 import 'package:siddhivinayak_enterprise/modules/dashboard/providers/dashboard_provider.dart';
@@ -137,6 +138,8 @@ class DashboardScreen extends StatelessWidget {
               _buildQuickAccessSection(context),
               SizedBox(height: context.isMobile ? 16 : 24),
               _buildPaymentDueMonitoring(context, appTheme),
+              SizedBox(height: context.isMobile ? 16 : 24),
+              _buildDueDateAlerts(context),
               SizedBox(height: context.isMobile ? 16 : 24),
               if (context.isDesktop)
                 Row(
@@ -589,6 +592,243 @@ class DashboardScreen extends StatelessWidget {
     if (context.isMobile) return itemWidth > 140 ? 1.1 : 0.9;
     if (context.isTablet) return 1.2;
     return 1.3;
+  }
+
+  // ── Real-time due date alerts ──────────────────────────────────────────────
+  Widget _buildDueDateAlerts(BuildContext context) {
+    final dueToday = context.select<DashboardProvider, List<InvoiceModel>>((p) => p.dueTodayInvoices);
+    final dueIn3 = context.select<DashboardProvider, List<InvoiceModel>>((p) => p.dueIn3DaysInvoices);
+    final dueIn7 = context.select<DashboardProvider, List<InvoiceModel>>((p) => p.dueIn7DaysInvoices);
+    final now = DateTime.now();
+
+    final sections = <Widget>[];
+
+    if (dueToday.isNotEmpty) {
+      sections.add(_buildAlertCard(
+        context,
+        icon: Icons.notifications_active_rounded,
+        title: 'Due Today',
+        invoices: dueToday,
+        color: const Color(0xFFEF4444),
+        description: 'Payment is due today for the following invoices',
+      ));
+    }
+
+    if (dueIn3.isNotEmpty) {
+      sections.add(_buildAlertCard(
+        context,
+        icon: Icons.warning_amber_rounded,
+        title: 'Due Within 3 Days',
+        invoices: dueIn3,
+        color: const Color(0xFFF59E0B),
+        description: 'Payment due within 3 days',
+      ));
+    }
+
+    if (dueIn7.isNotEmpty) {
+      sections.add(_buildAlertCard(
+        context,
+        icon: Icons.schedule_rounded,
+        title: 'Due Within 7 Days',
+        invoices: dueIn7,
+        color: const Color(0xFF4F6EF7),
+        description: 'Upcoming payment due dates',
+      ));
+    }
+
+    if (sections.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildSectionHeader(
+          context,
+          title: 'Due Date Alerts',
+          subtitle: 'Real-time payment reminders based on payment terms',
+          icon: Icons.notifications_rounded,
+        ),
+        SizedBox(height: context.isMobile ? 10 : 14),
+        ...sections,
+      ],
+    );
+  }
+
+  Widget _buildAlertCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required List<InvoiceModel> invoices,
+    required Color color,
+    required String description,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(context.isMobile ? 14 : 16),
+      decoration: BoxDecoration(
+        color: _T.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        color: _T.textDark,
+                      ),
+                    ),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: _T.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${invoices.length} invoice${invoices.length > 1 ? 's' : ''}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...invoices.take(3).map((inv) {
+            final diff = inv.dueDate.difference(DateTime.now()).inDays;
+            final countdown = diff == 0
+                ? 'Today'
+                : diff == 1
+                    ? 'Tomorrow'
+                    : 'In $diff days';
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: _T.divider.withOpacity(0.5)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          inv.customerName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            color: _T.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          inv.invoiceNumber,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: _T.textLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: diff == 0
+                          ? const Color(0xFFFEF2F2)
+                          : color.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      countdown,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: diff == 0 ? const Color(0xFFEF4444) : color,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '₹${inv.balanceAmount.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      color: _T.textDark,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          if (invoices.length > 3) ...[
+            const SizedBox(height: 6),
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => context.go('/invoices'),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Text(
+                      '+${invoices.length - 3} more',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: color,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.arrow_forward_rounded,
+                        size: 12, color: color),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   // ── Payment due monitoring ────────────────────────────────────────────────

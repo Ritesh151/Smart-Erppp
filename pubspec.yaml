@@ -42,6 +42,10 @@ dependencies:
   google_fonts: ^6.1.0
   package_info_plus: ^8.0.0
 
+  # File & Export
+  file_picker: ^8.0.0
+  pdf: ^3.10.8
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

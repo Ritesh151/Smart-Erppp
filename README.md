@@ -1,8 +1,8 @@
-# SmartERP - Enterprise Resource Planning System
+# Siddhivinayak Enterprise - Enterprise Resource Planning System
 
 ## 🎯 Overview
 
-SmartERP is a production-grade, enterprise-level Flutter ERP frontend application designed for comprehensive business management. Built with clean architecture principles, SOLID design patterns, and scalable infrastructure.
+Siddhivinayak Enterprise is a production-grade, enterprise-level Flutter ERP frontend application designed for comprehensive business management. Built with clean architecture principles, SOLID design patterns, and scalable infrastructure.
 
 ## ✨ Features
 
@@ -163,7 +163,7 @@ lib/
 
 1. **Clone the repository**
    ```bash
-   cd SmartERP
+   cd smarterp
    ```
 
 2. **Install dependencies**
@@ -358,7 +358,7 @@ This is a production-grade enterprise application. Follow the established patter
 
 ## 📄 License
 
-Proprietary - SmartERP
+Proprietary - Siddhivinayak Enterprise
 
 ## 👨‍💻 Developer
 

@@ -6,36 +6,22 @@ class StorageService<T> {
   final String boxName;
   Box<dynamic>? _box;
 
-  StorageService(this.boxName);
+  StorageService(this.boxName) {
+    _init();
+  }
 
-  Future<void> init() async {
-    try {
-      if (Hive.isBoxOpen(boxName)) {
-        // Reuse any already-open box. Some parts of the app open boxes without
-        // a generic type (Box<dynamic>), and Hive will throw if we try to reopen
-        // the same box with a different generic type.
-        _box = Hive.box(boxName);
-        Logger.debug('Using existing box: $boxName');
-      } else {
-        // Open without a generic type for compatibility with boxes opened elsewhere.
-        _box = await Hive.openBox(boxName);
-        Logger.info('Storage box initialized: $boxName');
-      }
-    } catch (e, stackTrace) {
-      Logger.error('Failed to initialize storage box: $boxName', e, stackTrace);
-      throw StorageException('Failed to initialize storage: $boxName');
+  void _init() {
+    if (Hive.isBoxOpen(boxName)) {
+      _box = Hive.box(boxName);
+      Logger.debug('Using existing box: $boxName');
+    } else {
+      throw StorageException('Storage box not initialized: $boxName');
     }
   }
 
   Box<dynamic> get box {
-    // Some call sites trigger `init()` without awaiting it (e.g. in Provider `create`),
-    // but boxes are already opened globally during app startup. To keep the flow
-    // stable and avoid "Storage box not initialized" race conditions, attach to
-    // the open box lazily on first access.
     if (_box == null) {
-      if (Hive.isBoxOpen(boxName)) {
-        _box = Hive.box(boxName);
-      }
+      _init();
     }
     if (_box == null || !_box!.isOpen) {
       throw StorageException('Storage box not initialized: $boxName');

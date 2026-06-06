@@ -17,7 +17,7 @@ final transportStatusFilterProvider = StateProvider<ExportStatus?>((ref) => null
 
 // Core service providers (Riverpod-scoped, separate from Provider package DI)
 final _transportStorageProvider = Provider<StorageService<Map<dynamic, dynamic>>>((ref) {
-  final s = StorageService<Map<dynamic, dynamic>>(StorageKeys.transportBox)..init();
+  final s = StorageService<Map<dynamic, dynamic>>(StorageKeys.transportBox);
   return s;
 });
 
@@ -33,7 +33,7 @@ final transportServiceProvider = Provider<TransportService>((ref) =>
     ));
 
 final _productRepoProvider = Provider<ProductRepository>((ref) {
-  final s = StorageService<Map<dynamic, dynamic>>(StorageKeys.productsBox)..init();
+  final s = StorageService<Map<dynamic, dynamic>>(StorageKeys.productsBox);
   return ProductRepository(s);
 });
 
@@ -46,8 +46,8 @@ final transportStatusServiceProvider = Provider<TransportStatusService>((ref) =>
 
 final _financeRepoProvider = Provider<FinanceRepository>((ref) =>
     FinanceRepository(
-      purchaseStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.purchaseBox)..init(),
-      expensesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.expensesBox)..init(),
+      purchaseStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.purchaseBox),
+      expensesStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.expensesBox),
     ));
 
 // Transport list stream

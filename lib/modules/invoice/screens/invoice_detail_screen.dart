@@ -8,11 +8,10 @@ import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart
 import 'package:siddhivinayak_enterprise/core/extensions/date_extensions.dart';
 import 'package:siddhivinayak_enterprise/core/models/invoice_model.dart';
 import 'package:siddhivinayak_enterprise/core/models/payment_model.dart';
-import 'package:siddhivinayak_enterprise/core/utils/download_helper.dart';
 import 'package:siddhivinayak_enterprise/core/widgets/app_button.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/providers/invoice_provider.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/providers/payment_provider.dart';
-import 'package:siddhivinayak_enterprise/modules/invoice/services/pdf_service.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/services/invoice_export_service.dart';
 
 class _T {
   static const gradientStart = Color(0xFF4F6EF7);
@@ -58,7 +57,7 @@ class InvoiceDetailScreen extends StatefulWidget {
 }
 
 class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
-  final _pdfService = PdfService();
+  final _exportService = InvoiceExportService();
 
   @override
   void initState() {
@@ -129,6 +128,26 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                   .animate()
                                   .fadeIn(delay: 140.ms, duration: 280.ms)
                                   .slideY(begin: 0.08, end: 0),
+                              const SizedBox(height: 18),
+                              _buildBankDetailsCard(invoice)
+                                  .animate()
+                                  .fadeIn(delay: 150.ms, duration: 280.ms)
+                                  .slideY(begin: 0.08, end: 0),
+                              const SizedBox(height: 18),
+                              _buildNotesTermsCard(invoice)
+                                  .animate()
+                                  .fadeIn(delay: 160.ms, duration: 280.ms)
+                                  .slideY(begin: 0.08, end: 0),
+                              const SizedBox(height: 18),
+                              _buildPaymentTermsCard(invoice)
+                                  .animate()
+                                  .fadeIn(delay: 170.ms, duration: 280.ms)
+                                  .slideY(begin: 0.08, end: 0),
+                              const SizedBox(height: 18),
+                              _buildInternalChargesCard(invoice)
+                                  .animate()
+                                  .fadeIn(delay: 175.ms, duration: 280.ms)
+                                  .slideY(begin: 0.08, end: 0),
                             ],
                           ),
                         ),
@@ -155,6 +174,26 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                         _buildTotalsCard(invoice)
                             .animate()
                             .fadeIn(delay: 140.ms, duration: 280.ms)
+                            .slideY(begin: 0.08, end: 0),
+                        const SizedBox(height: 18),
+                        _buildBankDetailsCard(invoice)
+                            .animate()
+                            .fadeIn(delay: 150.ms, duration: 280.ms)
+                            .slideY(begin: 0.08, end: 0),
+                        const SizedBox(height: 18),
+                        _buildNotesTermsCard(invoice)
+                            .animate()
+                            .fadeIn(delay: 160.ms, duration: 280.ms)
+                            .slideY(begin: 0.08, end: 0),
+                        const SizedBox(height: 18),
+                        _buildPaymentTermsCard(invoice)
+                            .animate()
+                            .fadeIn(delay: 170.ms, duration: 280.ms)
+                            .slideY(begin: 0.08, end: 0),
+                        const SizedBox(height: 18),
+                        _buildInternalChargesCard(invoice)
+                            .animate()
+                            .fadeIn(delay: 175.ms, duration: 280.ms)
                             .slideY(begin: 0.08, end: 0),
                       ],
                     ),
@@ -658,6 +697,15 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                 _buildTotalRow(
                     'SGST @ 9%', '₹${sgst.toStringAsFixed(2)}'),
                 const SizedBox(height: 10),
+                if (invoice.internalChargesTotal > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _buildTotalRow(
+                      'Internal Charges',
+                      '₹${invoice.internalChargesTotal.toStringAsFixed(2)}',
+                      valueColor: const Color(0xFFF59E0B),
+                    ),
+                  ),
                 _buildTotalRow(
                   'Discount',
                   '-₹${invoice.discountAmount.toStringAsFixed(2)}',
@@ -800,6 +848,409 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     );
   }
 
+  // ── Bank Details card ─────────────────────────────────────────────────────
+  Widget _buildBankDetailsCard(InvoiceModel invoice) {
+    final hasBankDetails = invoice.bankName != null &&
+        invoice.bankName!.trim().isNotEmpty;
+    if (!hasBankDetails) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _T.card(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(
+            title: 'Bank Details',
+            subtitle: 'Payment transfer information',
+            icon: Icons.account_balance_rounded,
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _T.divider),
+            ),
+            child: Column(
+              children: [
+                _buildBankDetailRow('Bank', invoice.bankName ?? ''),
+                const SizedBox(height: 10),
+                _buildBankDetailRow('Branch', invoice.branchName ?? ''),
+                const SizedBox(height: 10),
+                _buildBankDetailRow('IFSC Code', invoice.ifscCode ?? ''),
+                const SizedBox(height: 10),
+                _buildBankDetailRow('Account No.', invoice.accountNumber ?? ''),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBankDetailRow(String label, String value) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 110,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: _T.textMuted,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              color: _T.textDark,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Notes & Terms card ────────────────────────────────────────────────────
+  Widget _buildNotesTermsCard(InvoiceModel invoice) {
+    final hasNotes = invoice.notes != null && invoice.notes!.trim().isNotEmpty;
+    final hasTerms = invoice.termsAndConditions != null &&
+        invoice.termsAndConditions!.trim().isNotEmpty;
+    if (!hasNotes && !hasTerms) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _T.card(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(
+            title: 'Notes & Terms',
+            subtitle: 'Additional invoice information',
+            icon: Icons.description_rounded,
+          ),
+          if (hasNotes) ...[
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _T.divider),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Notes',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: _T.textMuted,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    invoice.notes!,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: _T.textDark,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (hasTerms) ...[
+            SizedBox(height: hasNotes ? 14 : 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _T.divider),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Terms & Conditions',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: _T.textMuted,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    invoice.termsAndConditions!,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: _T.textDark,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── Payment Terms card ────────────────────────────────────────────────────
+  Widget _buildPaymentTermsCard(InvoiceModel invoice) {
+    final hasPaymentTerms = invoice.paymentDays > 0 || invoice.paymentMonths > 0;
+    final hasDescription = invoice.paymentTermDescription != null &&
+        invoice.paymentTermDescription!.trim().isNotEmpty;
+    final hasCustomNotes = invoice.customPaymentNotes != null &&
+        invoice.customPaymentNotes!.trim().isNotEmpty;
+    if (!hasPaymentTerms && !hasCustomNotes) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _T.card(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(
+            title: 'Payment Terms',
+            subtitle: 'Payment due conditions',
+            icon: Icons.payment_rounded,
+          ),
+          if (hasDescription) ...[
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    _T.gradientStart.withOpacity(0.05),
+                    _T.gradientEnd.withOpacity(0.03),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: _T.gradientStart.withOpacity(0.12)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      gradient: _T.brandGradient,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.schedule_rounded,
+                        color: Colors.white, size: 16),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'PAYMENT TERMS',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: _T.textMuted,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          invoice.paymentTermDescription!,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: _T.textDark,
+                            height: 1.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (hasCustomNotes) ...[
+            SizedBox(height: hasDescription ? 14 : 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _T.warning.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _T.warning.withOpacity(0.15)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.article_outlined,
+                          size: 14, color: _T.warning),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Additional Payment Conditions',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: _T.textMuted,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    invoice.customPaymentNotes!,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: _T.textDark,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _T.divider),
+            ),
+            child: const Text(
+              'Kindly ensure payment is completed within the agreed payment period to avoid delays and maintain uninterrupted business transactions.',
+              style: TextStyle(
+                fontSize: 12,
+                color: _T.textMuted,
+                height: 1.5,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Internal Charges card ─────────────────────────────────────────────────
+  Widget _buildInternalChargesCard(InvoiceModel invoice) {
+    final charges = invoice.internalCharges;
+    if (charges.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _T.card(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(
+            title: 'Additional Charges',
+            subtitle: 'Internal charges applied',
+            icon: Icons.monetization_on_rounded,
+          ),
+          const SizedBox(height: 20),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _T.divider),
+            ),
+            child: Column(
+              children: charges.map((charge) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    border: charges.last == charge
+                        ? null
+                        : const Border(
+                            bottom: BorderSide(color: _T.divider, width: 0.8)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: _T.warning.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: const Icon(Icons.receipt_rounded,
+                            size: 15, color: _T.warning),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              charge.chargeName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: _T.textDark,
+                              ),
+                            ),
+                            if (charge.chargeDescription != null &&
+                                charge.chargeDescription!.trim().isNotEmpty)
+                              Text(
+                                charge.chargeDescription!,
+                                style: const TextStyle(
+                                    fontSize: 11, color: _T.textMuted),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '₹${charge.chargeAmount.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          color: _T.textDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Action panel ──────────────────────────────────────────────────────────
   Widget _buildActionPanel(
       BuildContext context, InvoiceModel invoice, InvoiceProvider provider) {
@@ -843,10 +1294,17 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                     ),
                   _ActionBtn(
                     label: 'Download PDF',
+                    icon: Icons.picture_as_pdf_rounded,
+                    color: _T.danger,
+                    outlined: true,
+                    onTap: () => _exportPdf(context, invoice, provider),
+                  ),
+                  _ActionBtn(
+                    label: 'Download Invoice',
                     icon: Icons.download_rounded,
                     color: _T.gradientStart,
                     outlined: true,
-                    onTap: () => _downloadPdf(context, invoice, provider),
+                    onTap: () => _exportHtml(context, invoice, provider),
                   ),
                   if (invoice.status == InvoiceStatus.draft ||
                       invoice.status == InvoiceStatus.sent)
@@ -1093,35 +1551,22 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     }
   }
 
-  Future<void> _downloadPdf(BuildContext context, InvoiceModel invoice,
+  Future<void> _exportPdf(BuildContext context, InvoiceModel invoice,
       InvoiceProvider provider) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final items = provider.selectedInvoiceItems;
-      final htmlContent =
-          _pdfService.generateInvoiceHtml(invoice: invoice, items: items);
-      final fileName =
-          'invoice_${invoice.invoiceNumber.replaceAll('/', '_')}.html';
-      await downloadInvoiceHtml(htmlContent: htmlContent, fileName: fileName);
-      if (mounted) {
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text('Invoice downloaded successfully'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text('Failed to download invoice: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
+    await _exportService.exportAsPdf(
+      context: context,
+      invoice: invoice,
+      items: provider.selectedInvoiceItems,
+    );
+  }
+
+  Future<void> _exportHtml(BuildContext context, InvoiceModel invoice,
+      InvoiceProvider provider) async {
+    await _exportService.exportAsHtml(
+      context: context,
+      invoice: invoice,
+      items: provider.selectedInvoiceItems,
+    );
   }
 
   void _showRecordPaymentDialog(BuildContext context, InvoiceModel invoice,

@@ -50,6 +50,15 @@ class InvoiceService {
     double totalAmount = 0,
     String? notes,
     String? termsAndConditions,
+    String? bankName,
+    String? branchName,
+    String? ifscCode,
+    String? accountNumber,
+    int paymentDays = 0,
+    int paymentMonths = 0,
+    String? paymentTermDescription,
+    String? customPaymentNotes,
+    String? internalChargesJson,
   }) async {
     try {
       if (customerName.trim().isEmpty) {
@@ -94,6 +103,15 @@ class InvoiceService {
         termsAndConditions: termsAndConditions?.trim(),
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        bankName: bankName?.trim(),
+        branchName: branchName?.trim(),
+        ifscCode: ifscCode?.trim(),
+        accountNumber: accountNumber?.trim(),
+        paymentDays: paymentDays,
+        paymentMonths: paymentMonths,
+        paymentTermDescription: paymentTermDescription?.trim(),
+        customPaymentNotes: customPaymentNotes?.trim(),
+        internalChargesJson: internalChargesJson,
       );
 
       await _invoiceRepository.save(invoice);
@@ -122,6 +140,15 @@ class InvoiceService {
     double totalAmount = 0,
     String? notes,
     String? termsAndConditions,
+    String? bankName,
+    String? branchName,
+    String? ifscCode,
+    String? accountNumber,
+    int paymentDays = 0,
+    int paymentMonths = 0,
+    String? paymentTermDescription,
+    String? customPaymentNotes,
+    String? internalChargesJson,
   }) async {
     try {
       final existingInvoice = await _invoiceRepository.getById(id);
@@ -170,6 +197,15 @@ class InvoiceService {
         notes: notes?.trim(),
         termsAndConditions: termsAndConditions?.trim(),
         updatedAt: DateTime.now(),
+        bankName: bankName?.trim(),
+        branchName: branchName?.trim(),
+        ifscCode: ifscCode?.trim(),
+        accountNumber: accountNumber?.trim(),
+        paymentDays: paymentDays,
+        paymentMonths: paymentMonths,
+        paymentTermDescription: paymentTermDescription?.trim(),
+        customPaymentNotes: customPaymentNotes?.trim(),
+        internalChargesJson: internalChargesJson,
       );
 
       await _invoiceRepository.update(updatedInvoice);
