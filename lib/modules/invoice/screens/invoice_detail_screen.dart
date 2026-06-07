@@ -12,6 +12,7 @@ import 'package:siddhivinayak_enterprise/core/widgets/app_button.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/providers/invoice_provider.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/providers/payment_provider.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/services/invoice_export_service.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/widgets/whatsapp_send_button.dart';
 
 class _T {
   static const gradientStart = Color(0xFF4F6EF7);
@@ -1291,6 +1292,15 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                       color: _T.success,
                       onTap: () => _showRecordPaymentDialog(
                           context, invoice, provider),
+                    ),
+                  if (invoice.customerPhone != null &&
+                      invoice.customerPhone!.trim().isNotEmpty)
+                    SizedBox(
+                      height: 48,
+                      child: WhatsAppSendButton(
+                        invoice: invoice,
+                        items: provider.selectedInvoiceItems,
+                      ),
                     ),
                   _ActionBtn(
                     label: 'Download PDF',

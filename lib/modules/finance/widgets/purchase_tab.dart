@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
 import 'package:siddhivinayak_enterprise/core/utils/currency_formatter.dart';
 import 'package:siddhivinayak_enterprise/core/utils/date_helper.dart';
-import 'package:siddhivinayak_enterprise/modules/purchase/providers/purchase_entry_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/providers/purchase_entry_provider.dart';
 
 class _T {
   static const gradientStart = Color(0xFF4F6EF7);
@@ -30,14 +30,14 @@ class _T {
   );
 }
 
-class PurchaseListScreen extends StatefulWidget {
-  const PurchaseListScreen({super.key});
+class PurchaseTab extends StatefulWidget {
+  const PurchaseTab({super.key});
 
   @override
-  State<PurchaseListScreen> createState() => _PurchaseListScreenState();
+  State<PurchaseTab> createState() => _PurchaseTabState();
 }
 
-class _PurchaseListScreenState extends State<PurchaseListScreen> {
+class _PurchaseTabState extends State<PurchaseTab> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
   String? _statusFilter;
@@ -103,10 +103,11 @@ class _PurchaseListScreenState extends State<PurchaseListScreen> {
     return Container(
       color: _T.bg,
       child: SafeArea(
+        top: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(context, pad),
+            _buildHeader(pad),
             _buildSearchFilterBar(pad),
             Expanded(child: _buildPurchaseList(gap)),
           ],
@@ -115,43 +116,28 @@ class _PurchaseListScreenState extends State<PurchaseListScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, double pad) {
+  Widget _buildHeader(double pad) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(pad, pad, pad, 0),
+      padding: EdgeInsets.fromLTRB(pad, 12, pad, 0),
       child: Row(
         children: [
-          InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: _T.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _T.divider),
-              ),
-              child: const Icon(Icons.arrow_back_rounded, size: 18, color: _T.textDark),
-            ),
-          ),
-          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Purchase Management',
+                  'Purchases',
                   style: TextStyle(
-                    fontSize: context.isMobile ? 22 : 26,
+                    fontSize: MediaQuery.of(context).size.width < 600 ? 20 : 22,
                     fontWeight: FontWeight.w800,
                     color: _T.textDark,
                     letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Text(
                   'View and manage all purchase orders',
-                  style: const TextStyle(fontSize: 13, color: _T.textMuted),
+                  style: const TextStyle(fontSize: 12, color: _T.textMuted),
                 ),
               ],
             ),
@@ -160,7 +146,7 @@ class _PurchaseListScreenState extends State<PurchaseListScreen> {
           _GradientButton(
             label: 'New Purchase',
             icon: Icons.add_rounded,
-            onTap: () => context.push('/purchases/create'),
+            onTap: () => context.push('/finance/purchases/create'),
           ),
         ],
       ),
@@ -169,7 +155,7 @@ class _PurchaseListScreenState extends State<PurchaseListScreen> {
 
   Widget _buildSearchFilterBar(double pad) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(pad, 16, pad, 0),
+      padding: EdgeInsets.fromLTRB(pad, 12, pad, 0),
       child: Column(
         children: [
           Row(
@@ -372,7 +358,7 @@ class _PurchaseListScreenState extends State<PurchaseListScreen> {
                 _GradientButton(
                   label: 'Create Purchase',
                   icon: Icons.add_rounded,
-                  onTap: () => context.push('/purchases/create'),
+                  onTap: () => context.push('/finance/purchases/create'),
                 ),
               ],
             ),
@@ -386,8 +372,8 @@ class _PurchaseListScreenState extends State<PurchaseListScreen> {
             final purchase = purchases[index];
             return _PurchaseCard(
               purchase: purchase,
-              onTap: () => context.push('/purchases/${purchase['id']}'),
-              onEdit: () => context.push('/purchases/${purchase['id']}/edit'),
+              onTap: () => context.push('/finance/purchases/${purchase['id']}'),
+              onEdit: () => context.push('/finance/purchases/${purchase['id']}/edit'),
               onDelete: () => _confirmDelete(context, purchase),
             ).animate().fadeIn(duration: 250.ms).slideY(begin: 0.04, end: 0);
           },

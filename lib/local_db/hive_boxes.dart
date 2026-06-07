@@ -32,4 +32,20 @@ class HiveBoxes {
   static Box<Map> purchaseBox() {
     return Hive.box<Map>('purchases');
   }
+
+  static Box<Map> whatsappBox() {
+    return Hive.box<Map>('whatsapp_history');
+  }
+
+  static Box<Map> aadhaarImagesBox() {
+    return Hive.box<Map>('aadhaar_images_box');
+  }
+
+  static Box<Map> customersBox() {
+    return Hive.box<Map>('customers');
+  }
+
+  static Box<Map> invoiceItemsBox() {
+    return Hive.box<Map>('invoice_items');
+  }
 }

@@ -32,6 +32,7 @@ class StorageKeys {
   static const String attendanceBox = 'attendance_box';
   static const String salaryBox = 'salary_box';
   static const String salaryHistoryBox = 'salary_history_box';
+  static const String aadhaarImagesBox = 'aadhaar_images_box';
 
   static const String reportsBox = 'reports_box';
   static const String salesReportsBox = 'sales_reports_box';
@@ -47,4 +48,5 @@ class StorageKeys {
   static const String backupBox = 'backup_box';
   static const String alertsBox = 'alerts_box';
   static const String returnsBox = 'returns_box';
+  static const String whatsappHistoryBox = 'whatsapp_history_box';
 }

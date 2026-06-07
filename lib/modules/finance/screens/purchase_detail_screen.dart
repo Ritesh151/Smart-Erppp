@@ -7,8 +7,8 @@ import 'package:provider/provider.dart';
 import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
 import 'package:siddhivinayak_enterprise/core/utils/currency_formatter.dart';
 import 'package:siddhivinayak_enterprise/core/utils/date_helper.dart';
-import 'package:siddhivinayak_enterprise/modules/purchase/providers/purchase_entry_provider.dart';
-import 'package:siddhivinayak_enterprise/modules/purchase/services/purchase_pdf_service.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/providers/purchase_entry_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/services/purchase_pdf_service.dart';
 
 class _T {
   static const gradientStart = Color(0xFF4F6EF7);
@@ -389,7 +389,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                   label: 'Edit Purchase',
                   icon: Icons.edit_outlined,
                   color: _T.info,
-                  onTap: () => context.push('/purchases/${widget.purchaseId}/edit'),
+                  onTap: () => context.push('/finance/purchases/${widget.purchaseId}/edit'),
                 ),
               _ActionButton(
                 label: 'Export PDF',

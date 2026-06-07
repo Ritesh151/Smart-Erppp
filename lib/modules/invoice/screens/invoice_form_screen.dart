@@ -16,6 +16,8 @@ import 'package:siddhivinayak_enterprise/core/widgets/app_text_field.dart';
 import 'package:siddhivinayak_enterprise/core/widgets/product_selector_dialog.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/providers/customer_provider.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/providers/invoice_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/providers/whatsapp_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/widgets/whatsapp_send_button.dart';
 import 'package:siddhivinayak_enterprise/modules/products/providers/product_provider.dart';
 
 // ── Shared brand tokens (mirrors dashboard_screen.dart) ──────────────────────
@@ -106,6 +108,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
   String? _editInvoiceId;
   String? _editInvoiceNumber;
   bool    _isSaving         = false;
+  bool    _sendViaWhatsApp  = false;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   @override
@@ -2151,10 +2154,50 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
   // ── Action buttons ─────────────────────────────────────────────────────────
   Widget _buildActionButtons(BuildContext context) {
     final provider = context.read<InvoiceProvider>();
+    final hasPhone = provider.editingCustomerPhone.isNotEmpty;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final isNarrow = constraints.maxWidth < 580;
+
+        final whatsappToggle = hasPhone && !_isEditMode
+            ? Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _sendViaWhatsApp
+                      ? const Color(0xFF25D366).withOpacity(0.08)
+                      : _T.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: _sendViaWhatsApp
+                        ? const Color(0xFF25D366).withOpacity(0.3)
+                        : _T.divider,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.chat_bubble_rounded,
+                        color: const Color(0xFF25D366), size: 20),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Send invoice via WhatsApp after saving',
+                        style: TextStyle(
+                            fontSize: 13, color: _T.textDark),
+                      ),
+                    ),
+                    Switch(
+                      value: _sendViaWhatsApp,
+                      activeColor: const Color(0xFF25D366),
+                      onChanged: (v) =>
+                          setState(() => _sendViaWhatsApp = v),
+                    ),
+                  ],
+                ),
+              )
+            : const SizedBox.shrink();
 
         final cancelBtn = SizedBox(
           height: 52,
@@ -2198,6 +2241,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
         if (isNarrow) {
           return Column(
             children: [
+              whatsappToggle,
               SizedBox(width: double.infinity, child: cancelBtn),
               const SizedBox(height: 12),
               SizedBox(width: double.infinity, child: draftBtn),
@@ -2209,15 +2253,21 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
           );
         }
 
-        return Row(
+        return Column(
           children: [
-            Expanded(child: cancelBtn),
-            const SizedBox(width: 14),
-            Expanded(child: draftBtn),
-            if (!_isEditMode) ...[
-              const SizedBox(width: 14),
-              Expanded(child: sendBtn),
-            ],
+            whatsappToggle,
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: cancelBtn),
+                const SizedBox(width: 14),
+                Expanded(child: draftBtn),
+                if (!_isEditMode) ...[
+                  const SizedBox(width: 14),
+                  Expanded(child: sendBtn),
+                ],
+              ],
+            ),
           ],
         );
       },
@@ -2259,6 +2309,22 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               ? 'Invoice updated successfully'
               : 'Invoice created successfully',
         );
+
+        if (!_isEditMode &&
+            _sendViaWhatsApp &&
+            provider.editingCustomerPhone.isNotEmpty) {
+          final whatsappProvider = context.read<WhatsAppProvider>();
+          final items = provider.editingItems;
+          final invoice = provider.selectedInvoice;
+          if (invoice != null) {
+            await whatsappProvider.sendInvoiceWithAutoMessage(
+              customerPhone: provider.editingCustomerPhone,
+              invoice: invoice,
+              items: items,
+            );
+          }
+        }
+
         context.pop();
       }
     } catch (e) {

@@ -7,7 +7,7 @@ import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart
 import 'package:siddhivinayak_enterprise/core/widgets/app_text_field.dart';
 import 'package:siddhivinayak_enterprise/core/widgets/product_selector_dialog.dart';
 import 'package:siddhivinayak_enterprise/modules/products/providers/product_provider.dart';
-import 'package:siddhivinayak_enterprise/modules/purchase/providers/purchase_entry_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/providers/purchase_entry_provider.dart';
 
 class _T {
   static const gradientStart = Color(0xFF4F6EF7);

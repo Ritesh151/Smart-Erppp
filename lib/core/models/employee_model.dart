@@ -43,8 +43,10 @@ class EmployeeModel extends HiveObject {
   @HiveField(18)
   final String? aadharNumber;
   @HiveField(19)
-  final DateTime createdAt;
+  final String? aadhaarImagePath;
   @HiveField(20)
+  final DateTime createdAt;
+  @HiveField(21)
   final DateTime updatedAt;
 
   EmployeeModel({
@@ -67,6 +69,7 @@ class EmployeeModel extends HiveObject {
     this.ifscCode,
     this.panNumber,
     this.aadharNumber,
+    this.aadhaarImagePath,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -164,6 +167,7 @@ class EmployeeModel extends HiveObject {
     String? ifscCode,
     String? panNumber,
     String? aadharNumber,
+    String? aadhaarImagePath,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -187,6 +191,7 @@ class EmployeeModel extends HiveObject {
       ifscCode: ifscCode ?? this.ifscCode,
       panNumber: panNumber ?? this.panNumber,
       aadharNumber: aadharNumber ?? this.aadharNumber,
+      aadhaarImagePath: aadhaarImagePath ?? this.aadhaarImagePath,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

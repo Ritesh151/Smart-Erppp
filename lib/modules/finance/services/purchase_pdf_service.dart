@@ -43,10 +43,10 @@ class PurchasePdfService {
           <td class="num">$idx</td>
           <td>${_escapeHtml(productName)}${hsnCode != '-' ? '<br><span class="td-hsn">HSN: $hsnCode</span>' : ''}</td>
           <td class="right">${_formatNumber(qty)}</td>
-          <td class="right">₹${_formatNumber(price)}</td>
+          <td class="right">\u{20B9}${_formatNumber(price)}</td>
           <td class="right">${_formatNumber(gst)}%</td>
           <td class="right">${_formatNumber(disc)}%</td>
-          <td class="right">₹${_formatNumber(total)}</td>
+          <td class="right">\u{20B9}${_formatNumber(total)}</td>
         </tr>''';
     }).join('\n');
 
@@ -424,7 +424,7 @@ class PurchasePdfService {
         <td class="right"><strong>Total</strong></td>
         <td class="right">${_formatNumber(totalQty)}</td>
         <td colspan="2"></td>
-        <td class="right">₹${_formatNumber(totalAmount)}</td>
+        <td class="right">\u{20B9}${_formatNumber(totalAmount)}</td>
       </tr>
     </tfoot>
   </table>
@@ -438,19 +438,19 @@ class PurchasePdfService {
       <p class="bg-title">Summary</p>
       <div class="sum-row">
         <span class="sr-label">Subtotal</span>
-        <span class="sr-val">₹${_formatNumber(subtotal)}</span>
+        <span class="sr-val">\u{20B9}${_formatNumber(subtotal)}</span>
       </div>
       <div class="sum-row">
         <span class="sr-label">GST Amount</span>
-        <span class="sr-val">₹${_formatNumber(gstAmount)}</span>
+        <span class="sr-val">\u{20B9}${_formatNumber(gstAmount)}</span>
       </div>
       <div class="sum-row">
         <span class="sr-label">Discount</span>
-        <span class="sr-val">₹${_formatNumber(discountAmount)}</span>
+        <span class="sr-val">\u{20B9}${_formatNumber(discountAmount)}</span>
       </div>
       <div class="sum-row">
         <span class="sr-label">Grand Total</span>
-        <span class="sr-val">₹${_formatNumber(totalAmount)}</span>
+        <span class="sr-val">\u{20B9}${_formatNumber(totalAmount)}</span>
       </div>
     </div>
 

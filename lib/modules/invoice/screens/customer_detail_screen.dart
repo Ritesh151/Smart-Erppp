@@ -2,55 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import 'package:siddhivinayak_enterprise/core/constants/app_constants.dart';
 import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
-import 'package:siddhivinayak_enterprise/core/extensions/date_extensions.dart';
 import 'package:siddhivinayak_enterprise/core/models/customer_model.dart';
 import 'package:siddhivinayak_enterprise/core/models/invoice_model.dart';
-import 'package:siddhivinayak_enterprise/core/theme/theme_extensions.dart';
-import 'package:siddhivinayak_enterprise/core/widgets/app_button.dart';
-import 'package:siddhivinayak_enterprise/core/widgets/empty_state_widget.dart';
+import 'package:siddhivinayak_enterprise/core/utils/currency_formatter.dart';
+import 'package:siddhivinayak_enterprise/core/utils/date_helper.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/providers/customer_provider.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/providers/invoice_provider.dart';
 
 class _T {
-  static const gradientStart = Color(0xFF4F6EF7);
-  static const gradientEnd = Color(0xFF7C3AED);
-  static const bg = Color(0xFFF5F7FA);
-  static const white = Colors.white;
-  static const textDark = Color(0xFF111827);
-  static const textMid = Color(0xFF374151);
-  static const textMuted = Color(0xFF6B7280);
-  static const textLight = Color(0xFF9CA3AF);
-  static const divider = Color(0xFFE5E7EB);
+  static const primaryStart = Color(0xFF6366F1);
+  static const primaryEnd = Color(0xFF7C3AED);
+  static const bg = Color(0xFFF8FAFC);
+  static const surface = Colors.white;
+  static const border = Color(0xFFE2E8F0);
+  static const textPrimary = Color(0xFF0F172A);
+  static const textSecondary = Color(0xFF475569);
+  static const textTertiary = Color(0xFF94A3B8);
   static const success = Color(0xFF10B981);
   static const warning = Color(0xFFF59E0B);
-  static const danger = Color(0xFFEF4444);
+  static const danger = Color(0xFFF43F5E);
+  static const successBg = Color(0xFFECFDF5);
+  static const warningBg = Color(0xFFFFFBEB);
+  static const dangerBg = Color(0xFFFFF1F2);
 
   static const Gradient brandGradient = LinearGradient(
-    colors: [gradientStart, gradientEnd],
+    colors: [primaryStart, primaryEnd],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static BoxDecoration card({double radius = 16}) => BoxDecoration(
-        color: white,
+        color: surface,
         borderRadius: BorderRadius.circular(radius),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1E2A6E).withOpacity(0.06),
-            blurRadius: 20,
-            spreadRadius: 0,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: border),
+        boxShadow: [BoxShadow(color: Color(0xFF0F172A).withOpacity(0.04), blurRadius: 16, offset: Offset(0, 4))],
       );
 }
 
 class CustomerDetailScreen extends StatefulWidget {
   final String customerId;
-
   const CustomerDetailScreen({super.key, required this.customerId});
 
   @override
@@ -62,20 +55,16 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final customerProvider = context.read<CustomerProvider>();
-      final invoiceProvider = context.read<InvoiceProvider>();
-      if (customerProvider.customers.isEmpty) {
-        customerProvider.loadCustomers();
-      }
-      if (invoiceProvider.invoices.isEmpty) {
-        invoiceProvider.loadInvoices();
-      }
+      final cp = context.read<CustomerProvider>();
+      final ip = context.read<InvoiceProvider>();
+      if (cp.customers.isEmpty) cp.loadCustomers();
+      if (ip.invoices.isEmpty) ip.loadInvoices();
     });
   }
 
-  CustomerModel? _findCustomer(CustomerProvider provider) {
+  CustomerModel? _findCustomer(CustomerProvider p) {
     try {
-      return provider.customers.firstWhere((c) => c.id == widget.customerId);
+      return p.customers.firstWhere((c) => c.id == widget.customerId);
     } catch (_) {
       return null;
     }
@@ -84,105 +73,83 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer2<CustomerProvider, InvoiceProvider>(
-      builder: (context, customerProvider, invoiceProvider, _) {
-        final customer = _findCustomer(customerProvider);
-
+      builder: (context, cp, ip, _) {
+        final customer = _findCustomer(cp);
         if (customer == null) {
           return Container(
             color: _T.bg,
-            child: const Center(
-              child: CircularProgressIndicator(
-                color: _T.gradientStart,
-                strokeWidth: 2.5,
-              ),
-            ),
+            child: const Center(child: CircularProgressIndicator(color: _T.primaryStart, strokeWidth: 2.5)),
           );
         }
 
-        final customerInvoices = invoiceProvider.invoices
-            .where((inv) => inv.customerId == widget.customerId)
-            .toList()
+        final invoices = ip.invoices.where((inv) => inv.customerId == widget.customerId).toList()
           ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-        final totalBilled = customerInvoices.fold<double>(
-            0, (sum, inv) => sum + inv.totalAmount);
-        final paidCount =
-            customerInvoices.where((i) => i.status == InvoiceStatus.paid).length;
-        final overdueCount = customerInvoices
-            .where((i) => i.status == InvoiceStatus.overdue)
-            .length;
+        final totalBilled = invoices.fold<double>(0, (s, i) => s + i.totalAmount);
+        final paidCount = invoices.where((i) => i.status == InvoiceStatus.paid).length;
+        final overdueCount = invoices.where((i) => i.status == InvoiceStatus.overdue).length;
+        final lastActivity = invoices.isNotEmpty ? invoices.first.createdAt : null;
+        final accountAge = DateTime.now().difference(customer.createdAt).inDays;
+        final isMobile = context.isMobile;
+        final pad = isMobile ? 16.0 : 24.0;
+        final gap = isMobile ? 16.0 : 20.0;
 
-        return Container(
-          color: _T.bg,
-          child: SafeArea(
+        return Scaffold(
+          backgroundColor: _T.bg,
+          body: SafeArea(
             child: RefreshIndicator(
-              color: _T.gradientStart,
-              onRefresh: () async {
-                await Future.wait([
-                  customerProvider.loadCustomers(),
-                  invoiceProvider.loadInvoices(),
-                ]);
-              },
+              color: _T.primaryStart,
+              onRefresh: () async => Future.wait([cp.loadCustomers(), ip.loadInvoices()]),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.all(context.isMobile ? 16 : 24),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHeader(context, customer)
-                        .animate()
-                        .fadeIn(duration: 300.ms)
-                        .slideX(begin: -0.04, end: 0),
-                    SizedBox(height: context.isMobile ? 18 : 24),
-                    _buildStatsRow(context, customerInvoices.length, totalBilled,
-                            paidCount, overdueCount)
-                        .animate()
-                        .fadeIn(delay: 80.ms, duration: 300.ms)
-                        .slideY(begin: 0.08, end: 0),
-                    SizedBox(height: context.isMobile ? 18 : 24),
-                    if (context.isDesktop)
-                      Row(
+                    _buildPremiumHeader(customer, isMobile).animate().fadeIn(duration: 300.ms).slideY(begin: -0.04, end: 0),
+                    Padding(
+                      padding: EdgeInsets.all(pad),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            flex: 4,
-                            child: _buildCustomerInfoCard(context, customer)
-                                .animate()
-                                .fadeIn(delay: 120.ms, duration: 300.ms)
-                                .slideY(begin: 0.08, end: 0),
-                          ),
-                          const SizedBox(width: 24),
-                          Expanded(
-                            flex: 6,
-                            child: _buildInvoicesSection(
-                                    context, customerInvoices, invoiceProvider)
-                                .animate()
-                                .fadeIn(delay: 160.ms, duration: 300.ms)
-                                .slideY(begin: 0.08, end: 0),
-                          ),
-                        ],
-                      )
-                    else
-                      Column(
-                        children: [
-                          _buildCustomerInfoCard(context, customer)
-                              .animate()
-                              .fadeIn(delay: 120.ms, duration: 300.ms)
-                              .slideY(begin: 0.08, end: 0),
-                          const SizedBox(height: 18),
-                          _buildInvoicesSection(
-                                  context, customerInvoices, invoiceProvider)
-                              .animate()
-                              .fadeIn(delay: 160.ms, duration: 300.ms)
-                              .slideY(begin: 0.08, end: 0),
+                          _buildAnalyticsCard(invoices.length, totalBilled, paidCount, overdueCount, lastActivity, accountAge, isMobile)
+                              .animate().fadeIn(delay: 80.ms, duration: 300.ms).slideY(begin: 0.08, end: 0),
+                          SizedBox(height: gap),
+                          if (context.isDesktop)
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 4,
+                                  child: Column(
+                                    children: [
+                                      _buildContactInfoCard(customer, isMobile).animate().fadeIn(delay: 120.ms, duration: 300.ms).slideY(begin: 0.08, end: 0),
+                                      SizedBox(height: gap),
+                                      _buildAddressCard(customer).animate().fadeIn(delay: 140.ms, duration: 300.ms).slideY(begin: 0.08, end: 0),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 20),
+                                Expanded(
+                                  flex: 6,
+                                  child: _buildInvoicesSection(invoices, isMobile)
+                                      .animate().fadeIn(delay: 160.ms, duration: 300.ms).slideY(begin: 0.08, end: 0),
+                                ),
+                              ],
+                            )
+                          else
+                            Column(
+                              children: [
+                                _buildContactInfoCard(customer, isMobile).animate().fadeIn(delay: 120.ms, duration: 300.ms).slideY(begin: 0.08, end: 0),
+                                SizedBox(height: gap),
+                                _buildAddressCard(customer).animate().fadeIn(delay: 140.ms, duration: 300.ms).slideY(begin: 0.08, end: 0),
+                                SizedBox(height: gap),
+                                _buildInvoicesSection(invoices, isMobile).animate().fadeIn(delay: 160.ms, duration: 300.ms).slideY(begin: 0.08, end: 0),
+                              ],
+                            ),
+                          SizedBox(height: gap),
+                          _buildActionsPanel(customer, cp, isMobile).animate().fadeIn(delay: 200.ms, duration: 300.ms).slideY(begin: 0.08, end: 0),
                         ],
                       ),
-                    SizedBox(height: context.isMobile ? 24 : 28),
-                    _buildActionPanel(context, customer, customerProvider)
-                        .animate()
-                        .fadeIn(delay: 200.ms, duration: 300.ms)
-                        .slideY(begin: 0.08, end: 0),
-                    const SizedBox(height: 8),
+                    ),
                   ],
                 ),
               ),
@@ -193,564 +160,280 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  // ── Header ────────────────────────────────────────────────────────────────
-  Widget _buildHeader(BuildContext context, CustomerModel customer) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 600;
-
-        final backBtn = _IconBtn(
-          icon: Icons.arrow_back_rounded,
-          onTap: () => context.go('/customers'),
-        );
-
-        final nameBlock = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              customer.name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: context.isMobile ? 22 : 28,
-                fontWeight: FontWeight.w800,
-                color: _T.textDark,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                _topPill(
-                    icon: Icons.email_outlined,
-                    value: customer.email ?? 'No email'),
-                if (customer.phone != null)
-                  _topPill(
-                      icon: Icons.phone_rounded, value: customer.phone!),
-              ],
-            ),
-          ],
-        );
-
-        final badge = _buildActiveBadge(customer.isActive);
-
-        if (isNarrow) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildPremiumHeader(CustomerModel customer, bool isMobile) {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: _T.brandGradient,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(isMobile ? 16 : 24, isMobile ? 12 : 16, isMobile ? 16 : 24, isMobile ? 20 : 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [_backButton(), const Spacer(), _buildStatusChip(customer.isActive)]),
+          SizedBox(height: isMobile ? 16 : 20),
+          Row(
             children: [
-              Row(
-                children: [
-                  backBtn,
-                  const SizedBox(width: 14),
-                  Expanded(child: nameBlock),
-                ],
+              CircleAvatar(
+                radius: isMobile ? 28 : 34,
+                backgroundColor: Colors.white.withOpacity(0.18),
+                child: Text(customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
+                    style: TextStyle(fontSize: isMobile ? 24 : 30, fontWeight: FontWeight.w700, color: Colors.white)),
               ),
-              const SizedBox(height: 14),
-              badge,
+              SizedBox(width: isMobile ? 14 : 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(customer.name, maxLines: 2, overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: isMobile ? 22 : 28, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
+                    const SizedBox(height: 4),
+                    Text(customer.id.length > 8 ? '#${customer.id.substring(0, 8).toUpperCase()}' : '#${customer.id}',
+                        style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.65), fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
             ],
-          );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            backBtn,
-            const SizedBox(width: 16),
-            Expanded(child: nameBlock),
-            const SizedBox(width: 16),
-            badge,
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _topPill({required IconData icon, required String value}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: _T.gradientStart.withOpacity(0.07),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: _T.gradientStart.withOpacity(0.12)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: _T.gradientStart),
-          const SizedBox(width: 6),
-          Text(
-            value,
-            style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: _T.textDark),
           ),
+          SizedBox(height: isMobile ? 10 : 14),
+          Row(children: [
+            Icon(Icons.calendar_today_rounded, size: 14, color: Colors.white.withOpacity(0.65)),
+            const SizedBox(width: 6),
+            Text('Customer since ${DateHelper.display(customer.createdAt)}',
+                style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.65), fontWeight: FontWeight.w500)),
+          ]),
         ],
       ),
     );
   }
 
-  Widget _buildActiveBadge(bool isActive) {
-    final color = isActive ? _T.success : _T.textMuted;
-    final label = isActive ? 'ACTIVE' : 'INACTIVE';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-                color: color,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.5),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Stats row ─────────────────────────────────────────────────────────────
-  Widget _buildStatsRow(BuildContext context, int totalInvoices,
-      double totalBilled, int paidCount, int overdueCount) {
-    String formatAmount(double v) {
-      if (v >= 10000000) return '₹${(v / 10000000).toStringAsFixed(1)}Cr';
-      if (v >= 100000) return '₹${(v / 100000).toStringAsFixed(1)}L';
-      if (v >= 1000) return '₹${(v / 1000).toStringAsFixed(1)}K';
-      return '₹${v.toStringAsFixed(0)}';
-    }
-
-    final stats = [
-      {
-        'label': 'Total Invoices',
-        'value': '$totalInvoices',
-        'icon': Icons.receipt_long_rounded,
-        'color': _T.gradientStart,
-        'bg': const Color(0xFFEEF2FF),
-      },
-      {
-        'label': 'Total Billed',
-        'value': formatAmount(totalBilled),
-        'icon': Icons.currency_rupee_rounded,
-        'color': const Color(0xFF10B981),
-        'bg': const Color(0xFFECFDF5),
-      },
-      {
-        'label': 'Paid',
-        'value': '$paidCount',
-        'icon': Icons.check_circle_outline_rounded,
-        'color': const Color(0xFF10B981),
-        'bg': const Color(0xFFECFDF5),
-      },
-      {
-        'label': 'Overdue',
-        'value': '$overdueCount',
-        'icon': Icons.error_outline_rounded,
-        'color': _T.danger,
-        'bg': const Color(0xFFFEF2F2),
-      },
-    ];
-
-    return LayoutBuilder(builder: (context, constraints) {
-      final crossCount = context.isMobile ? 2 : 4;
-      final spacing = context.isMobile ? 12.0 : 16.0;
-
-      return GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: stats.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossCount,
-          crossAxisSpacing: spacing,
-          mainAxisSpacing: spacing,
-          childAspectRatio: context.isMobile ? 1.6 : 2.2,
+  Widget _backButton() {
+    return GestureDetector(
+      onTap: () => context.pop(),
+      child: Container(
+        width: 40, height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.15)),
         ),
-        itemBuilder: (context, i) {
-          final s = stats[i];
-          final color = s['color'] as Color;
-          final bg = s['bg'] as Color;
-          return Container(
-            padding: EdgeInsets.all(context.isMobile ? 14 : 16),
-            decoration: BoxDecoration(
-              color: _T.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _T.divider, width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF1E2A6E).withOpacity(0.05),
-                  blurRadius: 14,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: context.isMobile ? 38 : 44,
-                  height: context.isMobile ? 38 : 44,
-                  decoration: BoxDecoration(
-                    color: bg,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(s['icon'] as IconData,
-                      color: color, size: context.isMobile ? 18 : 20),
-                ),
-                SizedBox(width: context.isMobile ? 10 : 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        s['value'] as String,
-                        style: TextStyle(
-                          fontSize: context.isMobile ? 17 : 20,
-                          fontWeight: FontWeight.w800,
-                          color: _T.textDark,
-                          letterSpacing: -0.3,
+        child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(bool isActive) {
+    final color = isActive ? _T.success : _T.textTertiary;
+    final bg = isActive ? _T.successBg : _T.border;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg.withOpacity(0.25), borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 6),
+        Text(isActive ? 'ACTIVE' : 'INACTIVE',
+            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+      ]),
+    );
+  }
+
+  Widget _buildAnalyticsCard(int invCount, double totalBilled, int paidCount,
+      int overdueCount, DateTime? lastActivity, int accountAge, bool isMobile) {
+    final stats = [
+      ['$invCount', 'Total Invoices', Icons.receipt_long_rounded, _T.primaryStart, _T.primaryStart.withOpacity(0.08)],
+      [CurrencyFormatter.compact(totalBilled), 'Total Billed', Icons.currency_rupee_rounded, _T.success, _T.successBg],
+      [lastActivity != null ? DateHelper.display(lastActivity) : 'N/A', 'Last Activity', Icons.history_rounded, _T.warning, _T.warningBg],
+      ['$accountAge days', 'Account Age', Icons.schedule_rounded, _T.textSecondary, _T.border],
+    ];
+    return Container(
+      width: double.infinity, padding: EdgeInsets.all(isMobile ? 14 : 16), decoration: _T.card(),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sectionHeader(Icons.analytics_rounded, 'Analytics', 'Customer performance overview'),
+        SizedBox(height: isMobile ? 14 : 16),
+        GridView.builder(
+          shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+          itemCount: stats.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: isMobile ? 2 : 4, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: isMobile ? 1.4 : 2.0,
+          ),
+          itemBuilder: (context, i) {
+            final s = stats[i];
+            return Container(
+              padding: EdgeInsets.all(isMobile ? 12 : 14),
+              decoration: BoxDecoration(color: s[4] as Color, borderRadius: BorderRadius.circular(12)),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(s[2] as IconData, color: s[3] as Color, size: isMobile ? 16 : 18),
+                SizedBox(height: isMobile ? 8 : 10),
+                Text(s[0] as String,
+                    style: TextStyle(fontSize: isMobile ? 16 : 18, fontWeight: FontWeight.w800, color: _T.textPrimary, letterSpacing: -0.3)),
+                const SizedBox(height: 2),
+                Text(s[1] as String, style: const TextStyle(fontSize: 11, color: _T.textSecondary, fontWeight: FontWeight.w500)),
+              ]),
+            );
+          },
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildContactInfoCard(CustomerModel customer, bool isMobile) {
+    final items = [
+      [Icons.email_outlined, 'Email', customer.email ?? 'Not provided', null],
+      [Icons.phone_rounded, 'Phone', customer.phone ?? 'Not provided', null],
+      [Icons.assignment_rounded, 'GST Number', customer.gstNumber ?? 'Not provided', 'GST'],
+      [Icons.location_city_rounded, 'City', customer.city ?? 'Not provided', null],
+      [Icons.map_rounded, 'State', customer.state ?? 'Not provided', null],
+      [Icons.pin_drop_rounded, 'Pincode', customer.pincode ?? 'Not provided', null],
+    ];
+    return Container(
+      width: double.infinity, padding: EdgeInsets.all(isMobile ? 16 : 20), decoration: _T.card(),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sectionHeader(Icons.contact_page_rounded, 'Contact Information', 'Email, phone & address details'),
+        SizedBox(height: isMobile ? 14 : 16),
+        GridView.builder(
+          shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+          itemCount: items.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: isMobile ? 1 : 2, crossAxisSpacing: 12, mainAxisSpacing: 8, childAspectRatio: 5.5,
+          ),
+          itemBuilder: (context, i) {
+            final item = items[i];
+            return Row(children: [
+              Container(width: 36, height: 36,
+                decoration: BoxDecoration(color: _T.primaryStart.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+                child: Icon(item[0] as IconData, size: 16, color: _T.primaryStart),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Row(children: [
+                    Text(item[1] as String, style: const TextStyle(fontSize: 10, color: _T.textTertiary, fontWeight: FontWeight.w500)),
+                    if (item[3] != null) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: _T.warningBg, borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: _T.warning.withOpacity(0.3)),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        s['label'] as String,
-                        style: TextStyle(
-                          fontSize: context.isMobile ? 10 : 11,
-                          color: _T.textMuted,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        child: Text(item[3] as String, style: const TextStyle(fontSize: 8, color: _T.warning, fontWeight: FontWeight.w700)),
                       ),
                     ],
+                  ]),
+                  const SizedBox(height: 2),
+                  Text(item[2] as String, style: const TextStyle(fontSize: 13, color: _T.textPrimary, fontWeight: FontWeight.w600),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                ]),
+              ),
+            ]);
+          },
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildAddressCard(CustomerModel customer) {
+    final hasAddress = customer.address != null && customer.address!.isNotEmpty;
+    return Container(
+      width: double.infinity, padding: const EdgeInsets.all(20), decoration: _T.card(),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sectionHeader(Icons.home_rounded, 'Address', 'Registered business address'),
+        const SizedBox(height: 14),
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(width: 40, height: 40,
+            decoration: BoxDecoration(color: _T.successBg, borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.location_on_rounded, size: 18, color: _T.success),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(hasAddress ? customer.address! : 'No address provided',
+                  style: const TextStyle(fontSize: 13, color: _T.textPrimary, fontWeight: FontWeight.w600, height: 1.5)),
+              if (hasAddress && (customer.city != null || customer.state != null || customer.pincode != null))
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    [if (customer.city != null) customer.city, if (customer.state != null) customer.state, if (customer.pincode != null) customer.pincode].join(', '),
+                    style: const TextStyle(fontSize: 12, color: _T.textSecondary),
                   ),
                 ),
-              ],
+            ]),
+          ),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _buildInvoicesSection(List<InvoiceModel> invoices, bool isMobile) {
+    return Container(
+      width: double.infinity, padding: EdgeInsets.all(isMobile ? 16 : 20), decoration: _T.card(),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Expanded(child: _sectionHeader(Icons.receipt_long_rounded, 'Invoices', '${invoices.length} invoice(s) for this customer')),
+          if (invoices.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: _T.primaryStart.withOpacity(0.08), borderRadius: BorderRadius.circular(20)),
+              child: Text('${invoices.length}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _T.primaryStart)),
+            ),
+        ]),
+        SizedBox(height: isMobile ? 14 : 16),
+        if (invoices.isEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 32),
+            child: Center(
+              child: Column(children: [
+                Icon(Icons.receipt_long_outlined, size: 48, color: _T.textTertiary.withOpacity(0.5)),
+                const SizedBox(height: 12),
+                const Text('No Invoices', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _T.textSecondary)),
+                const SizedBox(height: 4),
+                const Text('This customer has no invoices yet.', style: TextStyle(fontSize: 12, color: _T.textTertiary)),
+              ]),
             ),
           )
-              .animate()
-              .fadeIn(delay: (i * 60).ms, duration: 280.ms)
-              .slideY(begin: 0.1, end: 0);
-        },
-      );
-    });
-  }
-
-  // ── Customer info card ────────────────────────────────────────────────────
-  Widget _buildCustomerInfoCard(BuildContext context, CustomerModel customer) {
-    return Container(
-      width: double.infinity,
-      decoration: _T.card(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: _sectionHeader(
-              title: 'Customer Details',
-              subtitle: 'Contact and address information',
-              icon: Icons.person_rounded,
-            ),
+        else
+          Column(
+            children: invoices.asMap().entries.map((e) => Padding(
+              padding: EdgeInsets.only(bottom: e.key < invoices.length - 1 ? 10 : 0),
+              child: _buildInvoiceCard(e.value),
+            )).toList(),
           ),
-          Container(height: 1, color: _T.divider),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-            child: Column(
-              children: [
-                _buildInfoRow('Name', customer.name),
-                _buildInfoRow('Email', customer.email ?? 'N/A'),
-                _buildInfoRow('Phone', customer.phone ?? 'N/A'),
-                _buildInfoRow('Address', customer.address ?? 'N/A'),
-                _buildInfoRow('GST Number', customer.gstNumber ?? 'N/A'),
-                _buildInfoRow('City', customer.city ?? 'N/A'),
-                _buildInfoRow('State', customer.state ?? 'N/A'),
-                _buildInfoRow('Pincode', customer.pincode ?? 'N/A'),
-                _buildInfoRow(
-                    'Status', customer.isActive ? 'Active' : 'Inactive',
-                    valueColor:
-                        customer.isActive ? _T.success : _T.textMuted),
-              ],
-            ),
-          ),
-          Container(height: 1, color: _T.divider),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-            child: Column(
-              children: [
-                _buildInfoRow(
-                    'Created On', customer.createdAt.toFormattedDateTime()),
-                _buildInfoRow(
-                    'Last Updated', customer.updatedAt.toFormattedDateTime()),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value, {Color? valueColor}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 11),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: _T.divider, width: 0.8)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 4,
-            child: Text(
-              label,
-              style: const TextStyle(
-                  color: _T.textMuted,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Flexible(
-            flex: 6,
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: valueColor ?? _T.textDark,
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _sectionHeader({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-  }) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            gradient: _T.brandGradient,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: _T.gradientStart.withOpacity(0.25),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Icon(icon, color: Colors.white, size: 18),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: _T.textDark)),
-              const SizedBox(height: 2),
-              Text(subtitle,
-                  style:
-                      const TextStyle(fontSize: 11, color: _T.textMuted)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ── Invoices section ──────────────────────────────────────────────────────
-  Widget _buildInvoicesSection(
-    BuildContext context,
-    List<InvoiceModel> invoices,
-    InvoiceProvider provider,
-  ) {
-    return Container(
-      width: double.infinity,
-      decoration: _T.card(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: _T.brandGradient,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _T.gradientStart.withOpacity(0.25),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.receipt_long_rounded,
-                      color: Colors.white, size: 18),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Invoice History',
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: _T.textDark),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${invoices.length} invoice(s) for this customer',
-                        style: const TextStyle(
-                            fontSize: 11, color: _T.textMuted),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: _T.gradientStart.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${invoices.length}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: _T.gradientStart,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(height: 1, color: _T.divider),
-          if (invoices.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: EmptyStateWidget(
-                icon: Icons.receipt_long_outlined,
-                title: 'No Invoices',
-                message: 'This customer has no invoices yet.',
-              ),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Column(
-                children: invoices
-                    .asMap()
-                    .entries
-                    .map((e) => Padding(
-                          padding: EdgeInsets.only(
-                              bottom: e.key < invoices.length - 1 ? 10 : 8),
-                          child: _buildInvoiceCard(e.value),
-                        ))
-                    .toList(),
-              ),
-            ),
-        ],
-      ),
+      ]),
     );
   }
 
   Widget _buildInvoiceCard(InvoiceModel invoice) {
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       onTap: () => context.push('/invoices/${invoice.id}'),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _T.divider.withOpacity(0.7)),
+          color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border),
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: _T.gradientStart.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.receipt_outlined,
-                  size: 16, color: _T.gradientStart),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    invoice.invoiceNumber,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: _T.textDark,
-                        fontSize: 13),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    invoice.invoiceDate.toFormattedDate(),
-                    style: const TextStyle(
-                        fontSize: 11, color: _T.textMuted),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            _buildInvoiceStatusChip(invoice.status),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '₹${invoice.totalAmount.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: _T.textDark,
-                      fontSize: 13),
-                ),
-              ],
-            ),
-            const SizedBox(width: 4),
-            const Icon(Icons.chevron_right_rounded,
-                color: _T.textLight, size: 18),
-          ],
-        ),
+        child: Row(children: [
+          Container(width: 36, height: 36,
+            decoration: BoxDecoration(color: _T.primaryStart.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.receipt_outlined, size: 16, color: _T.primaryStart),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(invoice.invoiceNumber, style: const TextStyle(fontWeight: FontWeight.w700, color: _T.textPrimary, fontSize: 13)),
+              const SizedBox(height: 3),
+              Text(DateHelper.display(invoice.invoiceDate), style: const TextStyle(fontSize: 11, color: _T.textTertiary)),
+            ]),
+          ),
+          _buildInvoiceStatusChip(invoice.status),
+          const SizedBox(width: 10),
+          Text(CurrencyFormatter.format(invoice.totalAmount), style: const TextStyle(fontWeight: FontWeight.w800, color: _T.textPrimary, fontSize: 13)),
+          const SizedBox(width: 4),
+          const Icon(Icons.chevron_right_rounded, color: _T.textTertiary, size: 18),
+        ]),
       ),
     );
   }
@@ -758,241 +441,128 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   Widget _buildInvoiceStatusChip(InvoiceStatus status) {
     late Color color;
     late String label;
-    late IconData icon;
-
     switch (status) {
-      case InvoiceStatus.draft:
-        color = _T.textMuted;
-        label = 'DRAFT';
-        icon = Icons.edit_outlined;
-      case InvoiceStatus.sent:
-        color = _T.gradientStart;
-        label = 'SENT';
-        icon = Icons.send_outlined;
-      case InvoiceStatus.paid:
-        color = _T.success;
-        label = 'PAID';
-        icon = Icons.check_circle_outline_rounded;
-      case InvoiceStatus.partiallyPaid:
-        color = _T.warning;
-        label = 'PARTIAL';
-        icon = Icons.timelapse_rounded;
-      case InvoiceStatus.overdue:
-        color = _T.danger;
-        label = 'OVERDUE';
-        icon = Icons.error_outline_rounded;
-      case InvoiceStatus.cancelled:
-        color = _T.danger;
-        label = 'CANCELLED';
-        icon = Icons.cancel_outlined;
+      case InvoiceStatus.draft: color = _T.textTertiary; label = 'DRAFT';
+      case InvoiceStatus.sent: color = _T.primaryStart; label = 'SENT';
+      case InvoiceStatus.paid: color = _T.success; label = 'PAID';
+      case InvoiceStatus.partiallyPaid: color = _T.warning; label = 'PARTIAL';
+      case InvoiceStatus.overdue: color = _T.danger; label = 'OVERDUE';
+      case InvoiceStatus.cancelled: color = _T.danger; label = 'CANCELLED';
     }
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.2)),
+        color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withOpacity(0.2)),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-            color: color,
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.3),
-      ),
+      child: Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
     );
   }
 
-  // ── Action panel ──────────────────────────────────────────────────────────
-  Widget _buildActionPanel(BuildContext context, CustomerModel customer,
-      CustomerProvider provider) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 560;
-
-        final deleteBtn = SizedBox(
-          height: 52,
-          child: AppButton(
-            text: 'Delete Customer',
-            variant: AppButtonVariant.outline,
-            onPressed: () => _confirmDelete(context, customer, provider),
+  Widget _buildActionsPanel(CustomerModel customer, CustomerProvider provider, bool isMobile) {
+    return Container(
+      width: double.infinity, padding: const EdgeInsets.all(20), decoration: _T.card(),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sectionHeader(Icons.flash_on_rounded, 'Quick Actions', 'Manage customer account'),
+        SizedBox(height: isMobile ? 14 : 16),
+        GridView.builder(
+          shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+          itemCount: 4,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: isMobile ? 2 : 4, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: isMobile ? 1.3 : 2.5,
           ),
-        );
-
-        final editBtn = Container(
-          decoration: BoxDecoration(
-            gradient: _T.brandGradient,
-            borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
-            boxShadow: [
-              BoxShadow(
-                color: _T.gradientStart.withOpacity(0.28),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: SizedBox(
-            height: 52,
-            child: AppButton(
-              text: 'Edit Customer Details',
-              variant: AppButtonVariant.primary,
-              onPressed: () =>
-                  context.push('/customers/${customer.id}/edit'),
-            ),
-          ),
-        );
-
-        if (isNarrow) {
-          return Column(
-            children: [
-              editBtn,
-              const SizedBox(height: 12),
-              deleteBtn,
-            ],
-          );
-        }
-
-        return Row(
-          children: [
-            Expanded(child: deleteBtn),
-            const SizedBox(width: 16),
-            Expanded(child: editBtn),
-          ],
-        );
-      },
-    );
-  }
-
-  // ── Delete dialog ─────────────────────────────────────────────────────────
-  void _confirmDelete(BuildContext context, CustomerModel customer,
-      CustomerProvider provider) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: _T.white,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(22)),
-          title: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: _T.danger.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.delete_outline_rounded,
-                    color: _T.danger, size: 18),
-              ),
-              const SizedBox(width: 12),
-              const Text('Delete Customer?',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 17)),
-            ],
-          ),
-          content: Text(
-            'Are you sure you want to permanently delete "${customer.name}"? This action cannot be undone.',
-            style: const TextStyle(
-                color: _T.textMuted, fontSize: 14, height: 1.6),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel',
-                  style: TextStyle(color: _T.textMuted)),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: _T.danger,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: TextButton(
-                onPressed: () async {
-                  try {
-                    await provider.deleteCustomer(customer.id);
-                    if (dialogContext.mounted) {
-                      Navigator.pop(dialogContext);
-                    }
-                    if (context.mounted) {
-                      context.go('/customers');
-                      context.showSnackBar(
-                          'Customer deleted successfully');
-                    }
-                  } catch (e) {
-                    if (dialogContext.mounted) {
-                      Navigator.pop(dialogContext);
-                    }
-                    if (context.mounted) {
-                      context.showSnackBar(
-                          'Failed to delete customer: $e',
-                          isError: true);
-                    }
-                  }
-                },
-                child: const Text('Delete',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700)),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-// ── Reusable icon button ───────────────────────────────────────────────────
-class _IconBtn extends StatefulWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _IconBtn({required this.icon, required this.onTap});
-
-  @override
-  State<_IconBtn> createState() => _IconBtnState();
-}
-
-class _IconBtnState extends State<_IconBtn> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: _hovered
-                ? _T.gradientStart.withOpacity(0.06)
-                : _T.white,
-            borderRadius: BorderRadius.circular(13),
-            border: Border.all(
-              color: _hovered
-                  ? _T.gradientStart.withOpacity(0.3)
-                  : _T.divider,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF1E2A6E).withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Icon(widget.icon,
-              color: _hovered ? _T.gradientStart : _T.textDark,
-              size: 20),
+          itemBuilder: (context, i) {
+            switch (i) {
+              case 0: return _buildActionButton('Edit', Icons.edit_rounded, _T.primaryStart, () => context.push('/customers/${customer.id}/edit'));
+              case 1: return _buildActionButton('Delete', Icons.delete_outline_rounded, _T.danger, () => _confirmDelete(customer, provider));
+              case 2: return _buildActionButton('Call', Icons.phone_rounded, _T.success,
+                  customer.phone != null ? () => launchUrl(Uri.parse('tel:${customer.phone}')) : null);
+              case 3: return _buildActionButton('WhatsApp', Icons.chat_rounded, const Color(0xFF25D366),
+                  customer.phone != null ? () => launchUrl(Uri.parse('https://wa.me/${customer.phone!.replaceAll(RegExp(r'[^\d+]'), '')}')) : null);
+              default: return const SizedBox();
+            }
+          },
         ),
+      ]),
+    );
+  }
+
+  Widget _buildActionButton(String label, IconData icon, Color bgColor, VoidCallback? onTap) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: bgColor.withOpacity(0.08), borderRadius: BorderRadius.circular(12), border: Border.all(color: bgColor.withOpacity(0.15)),
+        ),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(icon, color: bgColor, size: 22),
+          const SizedBox(height: 6),
+          Text(label, style: TextStyle(fontSize: 12, color: bgColor, fontWeight: FontWeight.w700)),
+        ]),
+      ),
+    );
+  }
+
+  Widget _sectionHeader(IconData icon, String title, String subtitle) {
+    return Row(children: [
+      Container(width: 36, height: 36,
+        decoration: BoxDecoration(
+          gradient: _T.brandGradient, borderRadius: BorderRadius.circular(10),
+          boxShadow: [BoxShadow(color: _T.primaryStart.withOpacity(0.2), blurRadius: 6, offset: const Offset(0, 2))],
+        ),
+        child: Icon(icon, color: Colors.white, size: 17),
+      ),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _T.textPrimary)),
+          Text(subtitle, style: const TextStyle(fontSize: 11, color: _T.textTertiary)),
+        ]),
+      ),
+    ]);
+  }
+
+  void _confirmDelete(CustomerModel customer, CustomerProvider provider) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _T.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(children: [
+          Container(width: 36, height: 36,
+            decoration: BoxDecoration(color: _T.dangerBg, borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.delete_outline_rounded, color: _T.danger, size: 18),
+          ),
+          const SizedBox(width: 12),
+          const Text('Delete Customer?', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+        ]),
+        content: Text('Are you sure you want to permanently delete "${customer.name}"? This action cannot be undone.',
+            style: const TextStyle(color: _T.textSecondary, fontSize: 14, height: 1.6)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel', style: TextStyle(color: _T.textSecondary, fontWeight: FontWeight.w600))),
+          Container(
+            decoration: BoxDecoration(color: _T.danger, borderRadius: BorderRadius.circular(10)),
+            child: TextButton(
+              onPressed: () async {
+                try {
+                  await provider.deleteCustomer(customer.id);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (context.mounted) {
+                    context.go('/customers');
+                    context.showSnackBar('Customer deleted successfully');
+                  }
+                } catch (e) {
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (context.mounted) {
+                    context.showSnackBar('Failed to delete customer: $e', isError: true);
+                  }
+                }
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ],
       ),
     );
   }

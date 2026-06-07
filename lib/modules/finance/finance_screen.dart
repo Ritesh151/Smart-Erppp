@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:siddhivinayak_enterprise/core/widgets/app_scaffold.dart';
 import 'package:siddhivinayak_enterprise/modules/finance/providers/finance_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/widgets/purchase_tab.dart';
 import 'finance_sales_tab.dart';
-import 'finance_purchases_tab.dart';
 
 class FinanceScreen extends StatefulWidget {
   const FinanceScreen({super.key});
@@ -54,7 +54,7 @@ class _FinanceScreenState extends State<FinanceScreen>
               controller: _tabController,
               children: const [
                 FinanceSalesTab(),
-                FinancePurchasesTab(),
+                PurchaseTab(),
               ],
             ),
           ),
@@ -66,7 +66,7 @@ class _FinanceScreenState extends State<FinanceScreen>
   Widget _getFloatingActionButton() {
     if (_tabController.index == 1) {
       return FloatingActionButton(
-        onPressed: () => context.go('/purchases/create'),
+        onPressed: () => context.go('/finance/purchases/create'),
         child: const Icon(Icons.add),
       );
     }

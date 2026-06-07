@@ -31,10 +31,10 @@ class AppRoutes {
   static const String employeeEdit = '/payroll/:id/edit';
   static const String employeeAdd = '/payroll/add';
   static const String employeeHistory = '/payroll/:id/history';
-  static const String purchases = '/purchases';
-  static const String purchaseCreate = '/purchases/create';
-  static const String purchaseDetails = '/purchases/:id';
-  static const String purchaseEdit = '/purchases/:id/edit';
+  static const String whatsappHistory = '/whatsapp-history';
+  static const String financePurchaseCreate = '/finance/purchases/create';
+  static const String financePurchaseDetails = '/finance/purchases/:id';
+  static const String financePurchaseEdit = '/finance/purchases/:id/edit';
   
   static List<String> get protectedRoutes => [
     dashboard,
@@ -45,7 +45,6 @@ class AppRoutes {
     payroll,
     reports,
     settings,
-    purchases,
   ];
   
   static bool isProtectedRoute(String route) {

@@ -48,11 +48,6 @@ class _SidebarMenuState extends State<SidebarMenu> {
           route: AppRoutes.finance,
         ),
         _SidebarItem(
-          icon: Icons.shopping_bag_rounded,
-          label: 'Purchases',
-          route: AppRoutes.purchases,
-        ),
-        _SidebarItem(
           icon: Icons.people_outline_rounded,
           label: 'Customers',
           route: AppRoutes.customers,
@@ -86,7 +81,6 @@ class _SidebarMenuState extends State<SidebarMenu> {
     if (route == AppRoutes.products   && currentRoute.startsWith('/products'))  return true;
     if (route == AppRoutes.customers  && currentRoute.startsWith('/customers')) return true;
     if (route == AppRoutes.invoices   && currentRoute.startsWith('/invoices'))  return true;
-    if (route == AppRoutes.purchases  && currentRoute.startsWith('/purchases')) return true;
     if (route == AppRoutes.payroll    && currentRoute.startsWith('/payroll'))   return true;
     if (route == AppRoutes.finance    && currentRoute.startsWith('/finance'))   return true;
     if (route == AppRoutes.expenses   && currentRoute.startsWith('/expenses'))  return true;

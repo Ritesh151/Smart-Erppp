@@ -77,4 +77,53 @@ class EmployeeRepository {
       return [];
     }
   }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Aadhaar Image Path Operations
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /// Get employees with Aadhaar images
+  Future<List<EmployeeModel>> getEmployeesWithAadhaar() async {
+    try {
+      final employees = await getAll();
+      return employees.where((e) => e.aadhaarImagePath != null).toList();
+    } catch (e, stackTrace) {
+      Logger.error('Failed to get employees with Aadhaar images', e, stackTrace);
+      return [];
+    }
+  }
+
+  /// Update employee Aadhaar image path
+  Future<void> updateAadhaarImagePath(String employeeId, String imagePath) async {
+    try {
+      final employee = await getById(employeeId);
+      if (employee != null) {
+        final updatedEmployee = employee.copyWith(
+          aadhaarImagePath: imagePath,
+          updatedAt: DateTime.now(),
+        );
+        await update(updatedEmployee);
+      }
+    } catch (e, stackTrace) {
+      Logger.error('Failed to update employee Aadhaar image path', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Clear employee Aadhaar image path
+  Future<void> clearAadhaarImagePath(String employeeId) async {
+    try {
+      final employee = await getById(employeeId);
+      if (employee != null) {
+        final updatedEmployee = employee.copyWith(
+          aadhaarImagePath: null,
+          updatedAt: DateTime.now(),
+        );
+        await update(updatedEmployee);
+      }
+    } catch (e, stackTrace) {
+      Logger.error('Failed to clear employee Aadhaar image path', e, stackTrace);
+      rethrow;
+    }
+  }
 }

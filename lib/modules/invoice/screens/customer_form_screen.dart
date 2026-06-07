@@ -1,49 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'package:siddhivinayak_enterprise/core/constants/app_constants.dart';
 import 'package:siddhivinayak_enterprise/core/extensions/context_extensions.dart';
 import 'package:siddhivinayak_enterprise/core/models/customer_model.dart';
-import 'package:siddhivinayak_enterprise/core/routes/app_routes.dart';
-import 'package:siddhivinayak_enterprise/core/theme/theme_extensions.dart';
-import 'package:siddhivinayak_enterprise/core/widgets/app_button.dart';
-import 'package:siddhivinayak_enterprise/core/widgets/app_text_field.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/providers/customer_provider.dart';
 
 class _T {
-  static const gradientStart = Color(0xFF4F6EF7);
+  static const gradientStart = Color(0xFF6366F1);
   static const gradientEnd = Color(0xFF7C3AED);
-  static const bg = Color(0xFFF5F7FA);
+  static const bg = Color(0xFFF8FAFC);
   static const white = Colors.white;
-  static const textDark = Color(0xFF111827);
-  static const textMid = Color(0xFF374151);
-  static const textMuted = Color(0xFF6B7280);
-  static const textLight = Color(0xFF9CA3AF);
-  static const divider = Color(0xFFE5E7EB);
+  static const border = Color(0xFFE2E8F0);
+  static const textPrimary = Color(0xFF0F172A);
+  static const textSecondary = Color(0xFF475569);
+  static const textTertiary = Color(0xFF94A3B8);
+  static const textDisabled = Color(0xFFCBD5E1);
   static const success = Color(0xFF10B981);
-  static const warning = Color(0xFFF59E0B);
-  static const danger = Color(0xFFEF4444);
+  static const danger = Color(0xFFF43F5E);
+  static const indigo50 = Color(0xFFEEF2FF);
+  static const indigo100 = Color(0xFFE0E7FF);
 
   static const Gradient brandGradient = LinearGradient(
     colors: [gradientStart, gradientEnd],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-
-  static BoxDecoration card({double radius = 16}) => BoxDecoration(
-        color: white,
-        borderRadius: BorderRadius.circular(radius),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1E2A6E).withOpacity(0.06),
-            blurRadius: 20,
-            spreadRadius: 0,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      );
 }
 
 class CustomerFormScreen extends StatefulWidget {
@@ -135,77 +117,25 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: _T.bg,
-      child: SafeArea(
+    final isMobile = context.isMobile;
+
+    return Scaffold(
+      backgroundColor: _T.bg,
+      body: SafeArea(
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.all(context.isMobile ? 16 : 24),
+            padding: EdgeInsets.all(isMobile ? 16 : 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildFormHeader(context)
-                    .animate()
-                    .fadeIn(duration: 280.ms)
-                    .slideX(begin: -0.04, end: 0),
-                SizedBox(height: context.isMobile ? 18 : 24),
-                if (context.isDesktop)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 5,
-                        child: _buildContactInfoCard(context)
-                            .animate()
-                            .fadeIn(delay: 80.ms, duration: 280.ms)
-                            .slideY(begin: 0.08, end: 0),
-                      ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        flex: 5,
-                        child: Column(
-                          children: [
-                            _buildAddressCard(context)
-                                .animate()
-                                .fadeIn(delay: 120.ms, duration: 280.ms)
-                                .slideY(begin: 0.08, end: 0),
-                            const SizedBox(height: 18),
-                            _buildStatusCard(context)
-                                .animate()
-                                .fadeIn(delay: 160.ms, duration: 280.ms)
-                                .slideY(begin: 0.08, end: 0),
-                          ],
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  Column(
-                    children: [
-                      _buildContactInfoCard(context)
-                          .animate()
-                          .fadeIn(delay: 80.ms, duration: 280.ms)
-                          .slideY(begin: 0.08, end: 0),
-                      const SizedBox(height: 18),
-                      _buildAddressCard(context)
-                          .animate()
-                          .fadeIn(delay: 120.ms, duration: 280.ms)
-                          .slideY(begin: 0.08, end: 0),
-                      const SizedBox(height: 18),
-                      _buildStatusCard(context)
-                          .animate()
-                          .fadeIn(delay: 160.ms, duration: 280.ms)
-                          .slideY(begin: 0.08, end: 0),
-                    ],
-                  ),
-                SizedBox(height: context.isMobile ? 24 : 30),
-                _buildActionButtons(context)
-                    .animate()
-                    .fadeIn(delay: 200.ms, duration: 280.ms)
-                    .slideY(begin: 0.08, end: 0),
-                const SizedBox(height: 8),
+                _buildHeader(),
+                SizedBox(height: isMobile ? 24 : 28),
+                if (isMobile) _buildMobileLayout() else _buildDesktopLayout(),
+                SizedBox(height: isMobile ? 24 : 28),
+                _buildActionButtons(),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -214,504 +144,544 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     );
   }
 
-  // ── Header ────────────────────────────────────────────────────────────────
-  Widget _buildFormHeader(BuildContext context) {
-    final modeBadge = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-      decoration: BoxDecoration(
-        color: _T.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _T.divider),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1E2A6E).withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: _isEditMode ? _T.warning : _T.success,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            _isEditMode ? 'Editing Mode' : 'New Customer',
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-              color: _T.textDark,
-            ),
-          ),
-        ],
-      ),
-    );
-
-    final titleBlock = Column(
+  Widget _buildDesktopLayout() {
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          _isEditMode ? 'Update Customer' : 'Create Customer',
-          style: TextStyle(
-            fontSize: context.isMobile ? 22 : 28,
-            fontWeight: FontWeight.w800,
-            color: _T.textDark,
-            letterSpacing: -0.5,
+        Expanded(
+          child: Column(
+            children: [
+              _buildContactInfoCard(),
+              const SizedBox(height: 20),
+              _buildAddressCard(),
+            ],
           ),
         ),
-        const SizedBox(height: 5),
-        Text(
-          _isEditMode
-              ? 'Modify customer contact and address details.'
-              : 'Enter customer information and contact details.',
-          style: const TextStyle(fontSize: 13, color: _T.textMuted),
+        const SizedBox(width: 20),
+        Expanded(
+          child: Column(
+            children: [
+              _buildGstLocationCard(),
+              const SizedBox(height: 20),
+              _buildStatusCard(),
+            ],
+          ),
         ),
       ],
     );
-
-    return LayoutBuilder(builder: (context, constraints) {
-      final isNarrow = constraints.maxWidth < 620;
-
-      if (isNarrow) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _IconBtn(icon: Icons.arrow_back_rounded, onTap: () => context.pop()),
-                const SizedBox(width: 14),
-                Expanded(child: titleBlock),
-              ],
-            ),
-            const SizedBox(height: 16),
-            modeBadge,
-          ],
-        );
-      }
-
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _IconBtn(icon: Icons.arrow_back_rounded, onTap: () => context.pop()),
-          const SizedBox(width: 16),
-          Expanded(child: titleBlock),
-          const SizedBox(width: 16),
-          modeBadge,
-        ],
-      );
-    });
   }
 
-  // ── Contact info card ─────────────────────────────────────────────────────
-  Widget _buildContactInfoCard(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: _T.card(),
+  Widget _buildMobileLayout() {
+    return Column(
+      children: [
+        _buildContactInfoCard(),
+        const SizedBox(height: 16),
+        _buildGstLocationCard(),
+        const SizedBox(height: 16),
+        _buildAddressCard(),
+        const SizedBox(height: 16),
+        _buildStatusCard(),
+      ],
+    );
+  }
+
+  Widget _buildHeader() {
+    final title = _isEditMode ? 'Edit Customer' : 'Add Customer';
+    final subtitle = _isEditMode
+        ? 'Modify customer contact and location details'
+        : 'Enter customer information and contact details';
+
+    return Row(
+      children: [
+        _BackButton(onTap: () => context.pop()),
+        const SizedBox(width: 14),
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            gradient: _T.brandGradient,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child:
+              const Icon(Icons.person_rounded, color: Colors.white, size: 22),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: _T.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: _T.textTertiary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContactInfoCard() {
+    return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionHeader(
+            icon: Icons.person_rounded,
             title: 'Contact Information',
             subtitle: 'Basic customer contact details',
-            icon: Icons.person_rounded,
-          ),
-          const SizedBox(height: 22),
-          AppTextField(
-            controller: _nameController,
-            label: 'Customer Name *',
-            hintText: 'e.g. ABC Enterprises',
-            prefixIcon: const Icon(Icons.business_rounded),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Customer name is required';
-              }
-              if (value.trim().length < 2) {
-                return 'Name must be at least 2 characters';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          AppTextField(
-            controller: _emailController,
-            label: 'Email',
-            hintText: 'e.g. contact@abc.com',
-            prefixIcon: const Icon(Icons.email_outlined),
-            keyboardType: TextInputType.emailAddress,
-            validator: (value) {
-              if (value != null && value.isNotEmpty) {
-                if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                  return 'Enter a valid email address';
-                }
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          AppTextField(
-            controller: _phoneController,
-            label: 'Phone',
-            hintText: 'e.g. 9876543210',
-            prefixIcon: const Icon(Icons.phone_rounded),
-            keyboardType: TextInputType.phone,
-            validator: (value) {
-              if (value != null &&
-                  value.isNotEmpty &&
-                  !RegExp(r'^\d{6,15}$').hasMatch(value)) {
-                return 'Enter a valid phone number (digits only)';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          AppTextField(
-            controller: _gstController,
-            label: 'GST Number',
-            hintText: 'e.g. 27AABCU9603R1ZX',
-            prefixIcon: const Icon(Icons.receipt_rounded),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Address card ──────────────────────────────────────────────────────────
-  Widget _buildAddressCard(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: _T.card(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader(
-            title: 'Address Details',
-            subtitle: 'Customer location and address information',
-            icon: Icons.location_on_rounded,
-          ),
-          const SizedBox(height: 22),
-          AppTextField(
-            controller: _addressController,
-            label: 'Address',
-            hintText: 'e.g. 123, Main Street',
-            prefixIcon: const Icon(Icons.home_outlined),
-            maxLines: 3,
-          ),
-          const SizedBox(height: 16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 520;
-              if (isNarrow) {
-                return Column(
-                  children: [
-                    AppTextField(
-                      controller: _cityController,
-                      label: 'City',
-                      hintText: 'e.g. Mumbai',
-                      prefixIcon: const Icon(Icons.location_city_rounded),
-                    ),
-                    const SizedBox(height: 16),
-                    AppTextField(
-                      controller: _stateController,
-                      label: 'State',
-                      hintText: 'e.g. Maharashtra',
-                      prefixIcon: const Icon(Icons.map_rounded),
-                    ),
-                    const SizedBox(height: 16),
-                    AppTextField(
-                      controller: _pincodeController,
-                      label: 'Pincode',
-                      hintText: 'e.g. 400001',
-                      prefixIcon:
-                          const Icon(Icons.markunread_mailbox_rounded),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value != null &&
-                            value.isNotEmpty &&
-                            !RegExp(r'^\d{5,10}$').hasMatch(value)) {
-                          return 'Enter a valid pincode';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                );
-              }
-              return Row(
-                children: [
-                  Expanded(
-                    child: AppTextField(
-                      controller: _cityController,
-                      label: 'City',
-                      hintText: 'e.g. Mumbai',
-                      prefixIcon: const Icon(Icons.location_city_rounded),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: AppTextField(
-                      controller: _stateController,
-                      label: 'State',
-                      hintText: 'e.g. Maharashtra',
-                      prefixIcon: const Icon(Icons.map_rounded),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: AppTextField(
-                      controller: _pincodeController,
-                      label: 'Pincode',
-                      hintText: 'e.g. 400001',
-                      prefixIcon:
-                          const Icon(Icons.markunread_mailbox_rounded),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value != null &&
-                            value.isNotEmpty &&
-                            !RegExp(r'^\d{5,10}$').hasMatch(value)) {
-                          return 'Enter a valid pincode';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Status card ───────────────────────────────────────────────────────────
-  Widget _buildStatusCard(BuildContext context) {
-    final activeColor = _isActive ? _T.success : _T.warning;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: _T.card(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader(
-            title: 'Account Status',
-            subtitle: 'Customer account visibility',
-            icon: Icons.toggle_on_rounded,
           ),
           const SizedBox(height: 20),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          _responsiveGrid(
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: _inputDecoration(
+                  label: 'Name',
+                  hint: 'e.g. ABC Enterprises',
+                  required: true,
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return 'Customer name is required';
+                  }
+                  if (v.trim().length < 2) {
+                    return 'Name must be at least 2 characters';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _emailController,
+                decoration: _inputDecoration(
+                  label: 'Email',
+                  hint: 'e.g. contact@abc.com',
+                ),
+                keyboardType: TextInputType.emailAddress,
+                validator: (v) {
+                  if (v != null && v.isNotEmpty) {
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
+                      return 'Enter a valid email address';
+                    }
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _phoneController,
+                decoration: _inputDecoration(
+                  label: 'Phone',
+                  hint: 'e.g. 9876543210',
+                ),
+                keyboardType: TextInputType.phone,
+                validator: (v) {
+                  if (v != null &&
+                      v.isNotEmpty &&
+                      !RegExp(r'^\d{6,15}$').hasMatch(v)) {
+                    return 'Enter a valid phone number (digits only)';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGstLocationCard() {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(
+            icon: Icons.receipt_rounded,
+            title: 'GST & Location',
+            subtitle: 'Tax and address details',
+          ),
+          const SizedBox(height: 20),
+          _responsiveGrid(
+            children: [
+              TextFormField(
+                controller: _gstController,
+                decoration: _inputDecoration(
+                  label: 'GST Number',
+                  hint: 'e.g. 27AABCU9603R1ZX',
+                ),
+              ),
+              TextFormField(
+                controller: _cityController,
+                decoration: _inputDecoration(
+                  label: 'City',
+                  hint: 'e.g. Mumbai',
+                ),
+              ),
+              TextFormField(
+                controller: _stateController,
+                decoration: _inputDecoration(
+                  label: 'State',
+                  hint: 'e.g. Maharashtra',
+                ),
+              ),
+              TextFormField(
+                controller: _pincodeController,
+                decoration: _inputDecoration(
+                  label: 'Pincode',
+                  hint: 'e.g. 400001',
+                ),
+                keyboardType: TextInputType.number,
+                validator: (v) {
+                  if (v != null &&
+                      v.isNotEmpty &&
+                      !RegExp(r'^\d{5,10}$').hasMatch(v)) {
+                    return 'Enter a valid pincode';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddressCard() {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(
+            icon: Icons.location_on_rounded,
+            title: 'Address',
+            subtitle: 'Full customer address',
+          ),
+          const SizedBox(height: 20),
+          TextFormField(
+            controller: _addressController,
+            decoration: _inputDecoration(
+              label: 'Address',
+              hint: 'e.g. 123, Main Street, Landmark',
+            ),
+            maxLines: 3,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusCard() {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(
+            icon: Icons.toggle_on_rounded,
+            title: 'Status',
+            subtitle: 'Customer account visibility',
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: activeColor.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: activeColor.withOpacity(0.18)),
+              color: _isActive
+                  ? _T.success.withOpacity(0.08)
+                  : _T.textDisabled.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color:
+                    _isActive ? _T.success.withOpacity(0.2) : _T.border,
+              ),
             ),
             child: Row(
               children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: activeColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _isActive
-                        ? Icons.check_circle_outline_rounded
-                        : Icons.pause_circle_outline_rounded,
-                    color: activeColor,
-                    size: 22,
-                  ),
+                Icon(
+                  _isActive
+                      ? Icons.check_circle_rounded
+                      : Icons.cancel_rounded,
+                  color: _isActive ? _T.success : _T.textTertiary,
+                  size: 22,
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 180),
-                        child: Text(
-                          _isActive ? 'Customer Active' : 'Customer Inactive',
-                          key: ValueKey(_isActive),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: _T.textDark,
-                          ),
+                      Text(
+                        _isActive ? 'Active' : 'Inactive',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: _T.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 3),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 180),
-                        child: Text(
-                          _isActive
-                              ? 'Visible in customer listings'
-                              : 'Hidden from listings',
-                          key: ValueKey('sub_$_isActive'),
-                          style: const TextStyle(
-                              fontSize: 11, color: _T.textMuted),
+                      const SizedBox(height: 2),
+                      Text(
+                        _isActive
+                            ? 'Visible in customer listings and invoices'
+                            : 'Hidden from all listings',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: _T.textTertiary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
                 Switch(
                   value: _isActive,
-                  onChanged: (value) => setState(() => _isActive = value),
+                  onChanged: (v) => setState(() => _isActive = v),
                   activeColor: _T.gradientStart,
                   activeTrackColor: _T.gradientStart.withOpacity(0.25),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          // Status hint row
-          Row(
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: activeColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                _isActive
-                    ? 'This customer will appear in invoices and reports.'
-                    : 'This customer will be hidden from all listings.',
-                style: const TextStyle(fontSize: 11, color: _T.textMuted),
-              ),
-            ],
-          ),
         ],
       ),
     );
   }
 
-  // ── Action buttons ────────────────────────────────────────────────────────
-  Widget _buildActionButtons(BuildContext context) {
+  Widget _buildActionButtons() {
     final provider = context.read<CustomerProvider>();
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final isNarrow = constraints.maxWidth < 520;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 520;
 
-      final cancelBtn = SizedBox(
-        height: 52,
-        child: AppButton(
-          text: 'Cancel',
-          variant: AppButtonVariant.outline,
+        final cancelButton = OutlinedButton(
           onPressed: () => context.pop(),
-        ),
-      );
-
-      final submitBtn = Container(
-        decoration: BoxDecoration(
-          gradient: _isSaving ? null : _T.brandGradient,
-          color: _isSaving ? Colors.grey.shade400 : null,
-          borderRadius:
-              BorderRadius.circular(AppConstants.defaultBorderRadius),
-          boxShadow: _isSaving
-              ? null
-              : [
-                  BoxShadow(
-                    color: _T.gradientStart.withOpacity(0.28),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-        ),
-        child: SizedBox(
-          height: 52,
-          child: AppButton(
-            text: _isEditMode ? 'Update Customer' : 'Create Customer',
-            variant: AppButtonVariant.primary,
-            isLoading: _isSaving,
-            onPressed: _isSaving ? null : () => _submitForm(provider),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            side: const BorderSide(color: _T.border),
+            backgroundColor: _T.white,
           ),
-        ),
-      );
+          child: const Text(
+            'Cancel',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: _T.textSecondary,
+            ),
+          ),
+        );
 
-      if (isNarrow) {
-        return Column(
+        final saveButton = Container(
+          decoration: BoxDecoration(
+            gradient: _T.brandGradient,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: _isSaving
+                ? null
+                : [
+                    BoxShadow(
+                      color: _T.gradientStart.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: _isSaving ? null : () => _submitForm(provider),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _isSaving
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      _isEditMode ? 'Save Changes' : 'Create Customer',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+            ),
+          ),
+        );
+
+        if (isNarrow) {
+          return Column(
+            children: [
+              saveButton,
+              const SizedBox(height: 12),
+              cancelButton,
+            ],
+          );
+        }
+
+        return Row(
           children: [
-            submitBtn,
-            const SizedBox(height: 12),
-            cancelBtn,
+            Expanded(child: cancelButton),
+            const SizedBox(width: 16),
+            Expanded(child: saveButton),
           ],
         );
-      }
-
-      return Row(
-        children: [
-          Expanded(child: cancelBtn),
-          const SizedBox(width: 16),
-          Expanded(child: submitBtn),
-        ],
-      );
-    });
+      },
+    );
   }
 
-  // ── Section header ────────────────────────────────────────────────────────
   Widget _buildSectionHeader({
+    required IconData icon,
     required String title,
     required String subtitle,
-    required IconData icon,
   }) {
     return Row(
       children: [
         Container(
-          width: 40,
-          height: 40,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             gradient: _T.brandGradient,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: _T.gradientStart.withOpacity(0.25),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: Colors.white, size: 18),
         ),
         const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: _T.textDark)),
-              const SizedBox(height: 2),
-              Text(subtitle,
-                  style:
-                      const TextStyle(fontSize: 11, color: _T.textMuted)),
-            ],
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: _T.textPrimary,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 12,
+                color: _T.textTertiary,
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  // ── Submit ────────────────────────────────────────────────────────────────
+  Widget _responsiveGrid({required List<Widget> children, int columns = 2}) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 520;
+        if (!isWide || columns <= 1) {
+          return Column(
+            children: children.asMap().entries.map((e) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: e.key < children.length - 1 ? 16 : 0,
+                ),
+                child: e.value,
+              );
+            }).toList(),
+          );
+        }
+
+        final rows = <List<Widget>>[];
+        for (var i = 0; i < children.length; i += columns) {
+          rows.add(
+            children.sublist(i, (i + columns).clamp(0, children.length)),
+          );
+        }
+
+        return Column(
+          children: rows.map((row) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: rows.last == row ? 0 : 16,
+              ),
+              child: Row(
+                children: () {
+                  final tiles = <Widget>[];
+                  for (var i = 0; i < row.length; i++) {
+                    if (i > 0) tiles.add(const SizedBox(width: 16));
+                    tiles.add(Expanded(child: row[i]));
+                  }
+                  return tiles;
+                }(),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String label,
+    required String hint,
+    bool required = false,
+  }) {
+    return InputDecoration(
+      labelText: required ? '$label *' : label,
+      hintText: hint,
+      filled: true,
+      fillColor: _T.white,
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _T.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _T.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _T.gradientStart, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _T.danger),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _T.danger, width: 1.5),
+      ),
+      labelStyle: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: _T.textSecondary,
+      ),
+      hintStyle: const TextStyle(
+        fontSize: 14,
+        color: _T.textDisabled,
+      ),
+    );
+  }
+
   Future<void> _submitForm(CustomerProvider provider) async {
     if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
@@ -774,7 +744,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
               ? 'Customer updated successfully'
               : 'Customer created successfully',
         );
-        context.go(AppRoutes.customers);
+        context.pop();
       }
     } catch (e) {
       if (mounted) {
@@ -786,18 +756,43 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
   }
 }
 
-// ── Reusable icon button ───────────────────────────────────────────────────
-class _IconBtn extends StatefulWidget {
-  final IconData icon;
-  final VoidCallback onTap;
+class _Card extends StatelessWidget {
+  final Widget child;
 
-  const _IconBtn({required this.icon, required this.onTap});
+  const _Card({required this.child});
 
   @override
-  State<_IconBtn> createState() => _IconBtnState();
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _T.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _T.border),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
 }
 
-class _IconBtnState extends State<_IconBtn> {
+class _BackButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _BackButton({required this.onTap});
+
+  @override
+  State<_BackButton> createState() => _BackButtonState();
+}
+
+class _BackButtonState extends State<_BackButton> {
   bool _hovered = false;
 
   @override
@@ -810,28 +805,19 @@ class _IconBtnState extends State<_IconBtn> {
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          width: 44,
-          height: 44,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
-            color: _hovered ? _T.gradientStart.withOpacity(0.06) : _T.white,
-            borderRadius: BorderRadius.circular(13),
+            color: _hovered ? _T.indigo50 : _T.white,
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: _hovered
-                  ? _T.gradientStart.withOpacity(0.3)
-                  : _T.divider,
+              color: _hovered ? _T.indigo100 : _T.border,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF1E2A6E).withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: Icon(
-            widget.icon,
-            color: _hovered ? _T.gradientStart : _T.textDark,
+            Icons.arrow_back_rounded,
             size: 20,
+            color: _hovered ? _T.gradientStart : _T.textPrimary,
           ),
         ),
       ),

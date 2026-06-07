@@ -27,17 +27,22 @@ import 'package:siddhivinayak_enterprise/modules/expenses/providers/expense_prov
 import 'package:siddhivinayak_enterprise/modules/invoice/repositories/customer_repository.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/repositories/invoice_repository.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/repositories/payment_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/repositories/whatsapp_repository.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/services/customer_service.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/services/invoice_service.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/services/payment_service.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/services/pdf_service.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/services/whatsapp_service.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/providers/customer_provider.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/providers/invoice_provider.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/providers/payment_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/providers/whatsapp_provider.dart';
 import 'package:siddhivinayak_enterprise/modules/payroll/repositories/employee_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/repositories/aadhaar_repository.dart';
 import 'package:siddhivinayak_enterprise/modules/payroll/repositories/attendance_repository.dart';
 import 'package:siddhivinayak_enterprise/modules/payroll/repositories/salary_repository.dart';
 import 'package:siddhivinayak_enterprise/modules/payroll/services/employee_service.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/services/image_storage_service.dart';
 import 'package:siddhivinayak_enterprise/modules/payroll/services/attendance_service.dart';
 import 'package:siddhivinayak_enterprise/modules/payroll/services/salary_service.dart';
 import 'package:siddhivinayak_enterprise/modules/payroll/services/payroll_service.dart';
@@ -81,9 +86,9 @@ import 'package:siddhivinayak_enterprise/modules/settings/services/settings_filt
 import 'package:siddhivinayak_enterprise/modules/settings/providers/settings_provider.dart';
 import 'package:siddhivinayak_enterprise/modules/settings/providers/notification_provider.dart';
 import 'package:siddhivinayak_enterprise/modules/settings/providers/preferences_provider.dart';
-import 'package:siddhivinayak_enterprise/modules/purchase/repositories/purchase_entry_repository.dart';
-import 'package:siddhivinayak_enterprise/modules/purchase/services/purchase_entry_service.dart';
-import 'package:siddhivinayak_enterprise/modules/purchase/providers/purchase_entry_provider.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/repositories/purchase_entry_repository.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/services/purchase_entry_service.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/providers/purchase_entry_provider.dart';
 
 void main() {
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -198,6 +203,7 @@ Future<void> _initializeHiveBoxes() async {
     StorageKeys.paymentsBox,
     StorageKeys.invoiceItemsBox,
     StorageKeys.returnsBox,
+    StorageKeys.aadhaarImagesBox,
   ];
 
   for (final boxName in boxes) {
@@ -220,6 +226,23 @@ Future<void> _initializeHiveBoxes() async {
   ];
 
   for (final boxName in extraBoxes) {
+    try {
+      if (!Hive.isBoxOpen(boxName)) {
+        await Hive.openBox(boxName);
+        Logger.debug('Opened box: $boxName');
+      } else {
+        Logger.debug('Box already open: $boxName');
+      }
+    } catch (e) {
+      Logger.warning('Failed to open box: $boxName', e);
+    }
+  }
+
+  final whatsappBoxes = [
+    StorageKeys.whatsappHistoryBox,
+  ];
+
+  for (final boxName in whatsappBoxes) {
     try {
       if (!Hive.isBoxOpen(boxName)) {
         await Hive.openBox(boxName);
@@ -478,11 +501,51 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
               },
             ),
 
+            // WhatsApp Module Services & State
+            Provider<WhatsAppRepository>(
+              create: (_) {
+                return WhatsAppRepository(
+                    StorageService<Map<dynamic, dynamic>>(StorageKeys.whatsappHistoryBox));
+              },
+            ),
+            Provider<WhatsAppService>(
+              create: (context) => WhatsAppService(
+                repository: context.read<WhatsAppRepository>(),
+              ),
+            ),
+            ChangeNotifierProvider<WhatsAppProvider>(
+              create: (context) {
+                final provider = WhatsAppProvider(context.read<WhatsAppService>());
+                provider.onDataChanged = () {
+                  try {
+                    context.read<DashboardProvider>().refresh();
+                  } catch (_) {}
+                };
+                provider.loadHistory();
+                return provider;
+              },
+            ),
+
             // Payroll Module Services & State
+            Provider<AadhaarRepository>(
+              create: (_) {
+                return AadhaarRepository(StorageService<Map<dynamic, dynamic>>(StorageKeys.aadhaarImagesBox));
+              },
+            ),
+            Provider<ImageStorageService>(
+              create: (_) => ImageStorageService(),
+            ),
             Provider<EmployeeRepository>(
               create: (_) {
                 return EmployeeRepository(StorageService<Map<dynamic, dynamic>>(StorageKeys.employeesBox));
               },
+            ),
+            Provider<EmployeeService>(
+              create: (context) => EmployeeService(
+                context.read<EmployeeRepository>(),
+                aadhaarRepository: context.read<AadhaarRepository>(),
+                imageStorageService: context.read<ImageStorageService>(),
+              ),
             ),
             Provider<AttendanceRepository>(
               create: (_) {
@@ -496,9 +559,6 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
                   historyStorage: StorageService<Map<dynamic, dynamic>>(StorageKeys.salaryHistoryBox),
                 );
               },
-            ),
-            Provider<EmployeeService>(
-              create: (context) => EmployeeService(context.read<EmployeeRepository>()),
             ),
 
             // Finance Module Services & State
@@ -531,7 +591,7 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
                 return provider;
               },
             ),
-            // Purchase Module Services & State
+            // Finance Purchase Module Services & State
             Provider<PurchaseEntryRepository>(
               create: (_) {
                 return PurchaseEntryRepository(StorageService<Map<dynamic, dynamic>>(StorageKeys.purchaseBox));
@@ -599,6 +659,7 @@ class _SiddhivinayakEnterpriseAppState extends State<SiddhivinayakEnterpriseApp>
             ChangeNotifierProvider<EmployeeProvider>(
               create: (context) => EmployeeProvider(
                 context.read<EmployeeService>(),
+                imageStorageService: context.read<ImageStorageService>(),
               )..loadEmployees(),
             ),
             ChangeNotifierProvider<AttendanceProvider>(

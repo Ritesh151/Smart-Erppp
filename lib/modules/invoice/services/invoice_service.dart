@@ -457,4 +457,128 @@ class InvoiceService {
     }
   }
 
+  // ???????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+  // WhatsApp Integration Methods
+  // ???????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+
+  /// Send invoice via WhatsApp with automatic message generation
+  /// This method generates a WhatsApp message and returns the formatted message
+  Future<String> generateWhatsAppMessage({
+    required InvoiceModel invoice,
+    required List<InvoiceItemModel> items,
+    bool useShortFormat = false,
+  }) async {
+    try {
+      if (invoice.customerName.trim().isEmpty) {
+        throw ValidationException('Customer name is required');
+      }
+
+      final sb = StringBuffer();
+
+      sb.writeln('Hello ${invoice.customerName},');
+      sb.writeln('');
+      sb.writeln('Thank you for your purchase from Siddhivinayak Enterprise.');
+      sb.writeln('');
+      sb.writeln('Invoice Details:');
+      sb.writeln('---------------------------');
+      sb.writeln('Invoice No: ${invoice.invoiceNumber}');
+      sb.writeln('');
+
+      if (useShortFormat) {
+        // Short format - show first 3 items only
+        sb.writeln('Items:');
+        for (final item in items.take(3)) {
+          sb.writeln('* ${item.productName} x ${item.quantity.toInt()}');
+        }
+        if (items.length > 3) {
+          sb.writeln('... and ${items.length - 3} more items');
+        }
+      } else {
+        // Detailed format - show all items with prices
+        for (final item in items) {
+          final lineTotal = item.unitPrice * item.quantity;
+          sb.writeln('* ${item.productName} x ${item.quantity.toInt()} = Rs.${lineTotal.toStringAsFixed(0)}');
+        }
+      }
+
+      sb.writeln('');
+      sb.writeln('---------------------------');
+      sb.writeln('Subtotal: Rs.${invoice.subtotal.toStringAsFixed(0)}');
+      sb.writeln('Tax: Rs.${invoice.taxAmount.toStringAsFixed(0)}');
+      sb.writeln('');
+      sb.writeln('Total Amount: Rs.${invoice.totalAmount.toStringAsFixed(0)}');
+      sb.writeln('');
+      sb.writeln('We appreciate your business.');
+      sb.writeln('');
+      sb.writeln('Thank You,');
+      sb.writeln('Siddhivinayak Enterprise');
+
+      if (invoice.customerPhone != null && invoice.customerPhone!.isNotEmpty) {
+        sb.writeln('');
+        sb.writeln('Contact: ${invoice.customerPhone}');
+      }
+
+      return sb.toString();
+    } catch (e, stackTrace) {
+      Logger.error('Failed to generate WhatsApp message', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Get WhatsApp send history for an invoice
+  Future<List<InvoiceModel>> getSentInvoicesViaWhatsApp() async {
+    try {
+      // This would be implemented using WhatsApp repository
+      // For now, return empty list as placeholder
+      return [];
+    } catch (e, stackTrace) {
+      Logger.error('Failed to get WhatsApp sent invoices', e, stackTrace);
+      return [];
+    }
+  }
+
+  /// Check if invoice was sent via WhatsApp
+  Future<bool> wasInvoiceSentViaWhatsApp(String invoiceId) async {
+    try {
+      // This would be implemented using WhatsApp repository
+      return false;
+    } catch (e, stackTrace) {
+      Logger.error('Failed to check WhatsApp sent status', e, stackTrace);
+      return false;
+    }
+  }
+
+  /// Format phone number for WhatsApp
+  String formatPhoneNumberForWhatsApp(String phoneNumber) {
+    // Remove all non-digit characters
+    var cleaned = phoneNumber.replaceAll(RegExp(r'\D'), '');
+    
+    // Add country code if missing (default to +91 for India)
+    if (!cleaned.startsWith('91')) {
+      if (cleaned.length == 10) {
+        cleaned = '91$cleaned';
+      }
+    }
+    
+    // Ensure + prefix
+    if (!cleaned.startsWith('+')) {
+      cleaned = '+$cleaned';
+    }
+    
+    return cleaned;
+  }
+
+  /// Validate phone number for WhatsApp
+  bool isValidPhoneNumberForWhatsApp(String phoneNumber) {
+    // Remove all non-digit characters
+    final cleaned = phoneNumber.replaceAll(RegExp(r'\D'), '');
+    
+    // Check minimum length (10 digits for most countries)
+    if (cleaned.length < 10) return false;
+    
+    // Check maximum length (15 digits - E.164 standard)
+    if (cleaned.length > 15) return false;
+    
+    return true;
+  }
 }

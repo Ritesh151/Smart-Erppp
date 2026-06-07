@@ -15,6 +15,7 @@ import 'package:siddhivinayak_enterprise/modules/invoice/screens/invoices_screen
 import 'package:siddhivinayak_enterprise/modules/invoice/screens/invoice_form_screen.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/screens/invoice_detail_screen.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/screens/payment_history_screen.dart';
+import 'package:siddhivinayak_enterprise/modules/invoice/screens/whatsapp_history_screen.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/screens/customers_screen.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/screens/customer_form_screen.dart';
 import 'package:siddhivinayak_enterprise/modules/invoice/screens/customer_detail_screen.dart';
@@ -26,6 +27,7 @@ import 'package:siddhivinayak_enterprise/modules/payroll/screens/payroll_screen.
 import 'package:siddhivinayak_enterprise/modules/payroll/payroll_dashboard_screen.dart';
 import 'package:siddhivinayak_enterprise/modules/payroll/add_employee_screen.dart';
 import 'package:siddhivinayak_enterprise/modules/payroll/edit_employee_screen.dart';
+import 'package:siddhivinayak_enterprise/modules/payroll/screens/employee_details_screen.dart';
 import 'package:siddhivinayak_enterprise/modules/payroll/salary_payment_screen.dart';
 import 'package:siddhivinayak_enterprise/modules/payroll/salary_history_screen.dart';
 import 'package:siddhivinayak_enterprise/modules/payroll/attendance_screen.dart';
@@ -38,9 +40,8 @@ import 'package:siddhivinayak_enterprise/modules/reports/stock_statement_screen.
 import 'package:siddhivinayak_enterprise/modules/reports/profit_loss_screen.dart';
 import 'package:siddhivinayak_enterprise/modules/reports/payroll_report_screen.dart';
 import 'package:siddhivinayak_enterprise/modules/settings/screens/settings_screen.dart';
-import 'package:siddhivinayak_enterprise/modules/purchase/screens/purchase_list_screen.dart';
-import 'package:siddhivinayak_enterprise/modules/purchase/screens/purchase_entry_screen.dart';
-import 'package:siddhivinayak_enterprise/modules/purchase/screens/purchase_detail_screen.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/screens/purchase_entry_screen.dart';
+import 'package:siddhivinayak_enterprise/modules/finance/screens/purchase_detail_screen.dart';
 
 class AppRouter {
   final AuthProvider _authProvider;
@@ -131,6 +132,40 @@ class AppRouter {
           state: state,
           child: const FinanceScreen(),
         ),
+        routes: [
+          GoRoute(
+            path: 'purchases/create',
+            name: 'finance-purchase-create',
+            pageBuilder: (context, state) => _buildShellPage(
+              context: context,
+              state: state,
+              child: const PurchaseEntryScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'purchases/:id',
+            name: 'finance-purchase-detail',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return _buildShellPage(
+                context: context,
+                state: state,
+                child: PurchaseDetailScreen(purchaseId: id),
+              );
+            },
+          ),
+          GoRoute(
+            path: 'purchases/:id/edit',
+            name: 'finance-purchase-edit',
+            pageBuilder: (context, state) {
+              return _buildShellPage(
+                context: context,
+                state: state,
+                child: const PurchaseEntryScreen(),
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.invoices,
@@ -301,40 +336,54 @@ class AppRouter {
             ),
           ),
           GoRoute(
-            path: ':id/edit',
-            name: 'payroll-edit',
+            path: ':id',
+            name: 'payroll-detail',
             pageBuilder: (context, state) {
               final id = state.pathParameters['id']!;
               return _buildShellPage(
                 context: context,
                 state: state,
-                child: EditEmployeeScreen(employeeId: id),
+                child: EmployeeDetailsScreen(employeeId: id),
               );
             },
-          ),
-          GoRoute(
-            path: ':id/salary',
-            name: 'payroll-salary',
-            pageBuilder: (context, state) {
-              final id = state.pathParameters['id']!;
-              return _buildShellPage(
-                context: context,
-                state: state,
-                child: SalaryPaymentScreen(employeeId: id),
-              );
-            },
-          ),
-          GoRoute(
-            path: ':id/history',
-            name: 'payroll-history',
-            pageBuilder: (context, state) {
-              final id = state.pathParameters['id']!;
-              return _buildShellPage(
-                context: context,
-                state: state,
-                child: SalaryHistoryScreen(employeeId: id),
-              );
-            },
+            routes: [
+              GoRoute(
+                path: 'edit',
+                name: 'payroll-edit',
+                pageBuilder: (context, state) {
+                  final id = state.pathParameters['id']!;
+                  return _buildShellPage(
+                    context: context,
+                    state: state,
+                    child: EditEmployeeScreen(employeeId: id),
+                  );
+                },
+              ),
+              GoRoute(
+                path: 'salary',
+                name: 'payroll-salary',
+                pageBuilder: (context, state) {
+                  final id = state.pathParameters['id']!;
+                  return _buildShellPage(
+                    context: context,
+                    state: state,
+                    child: SalaryPaymentScreen(employeeId: id),
+                  );
+                },
+              ),
+              GoRoute(
+                path: 'history',
+                name: 'payroll-history',
+                pageBuilder: (context, state) {
+                  final id = state.pathParameters['id']!;
+                  return _buildShellPage(
+                    context: context,
+                    state: state,
+                    child: SalaryHistoryScreen(employeeId: id),
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -421,48 +470,15 @@ class AppRouter {
           child: const SettingsScreen(),
         ),
       ),
+
       GoRoute(
-        path: AppRoutes.purchases,
-        name: 'purchases',
+        path: AppRoutes.whatsappHistory,
+        name: 'whatsapp-history',
         pageBuilder: (context, state) => _buildShellPage(
           context: context,
           state: state,
-          child: const PurchaseListScreen(),
+          child: const WhatsAppHistoryScreen(),
         ),
-        routes: [
-          GoRoute(
-            path: 'create',
-            name: 'purchase-create',
-            pageBuilder: (context, state) => _buildShellPage(
-              context: context,
-              state: state,
-              child: const PurchaseEntryScreen(),
-            ),
-          ),
-          GoRoute(
-            path: ':id',
-            name: 'purchase-detail',
-            pageBuilder: (context, state) {
-              final id = state.pathParameters['id']!;
-              return _buildShellPage(
-                context: context,
-                state: state,
-                child: PurchaseDetailScreen(purchaseId: id),
-              );
-            },
-          ),
-          GoRoute(
-            path: ':id/edit',
-            name: 'purchase-edit',
-            pageBuilder: (context, state) {
-              return _buildShellPage(
-                context: context,
-                state: state,
-                child: const PurchaseEntryScreen(),
-              );
-            },
-          ),
-        ],
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

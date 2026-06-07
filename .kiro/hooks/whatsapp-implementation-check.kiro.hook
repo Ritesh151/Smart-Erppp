@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "WhatsApp Implementation Hook",
+  "description": "Create WhatsApp service and related files for invoice notification system",
+  "version": "1",
+  "when": {
+    "type": "preTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Verify that all WhatsApp service files are being created with proper architecture before proceeding with implementation. Check that:\n1. WhatsApp service follows clean architecture principles\n2. WhatsApp provider extends ChangeNotifier correctly\n3. Message template service generates professional business messages\n4. WhatsApp helper handles platform-specific logic properly\n5. All models are Hive-compatible with proper adapters\n\nDo NOT create any files yet, just verify the approach and provide feedback."
+  }
+}
